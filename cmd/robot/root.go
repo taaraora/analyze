@@ -1,10 +1,10 @@
-package cmd
+package robot
 
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/supergiant/robot/robot"
+	"github.com/supergiant/robot"
 )
 
 const (
