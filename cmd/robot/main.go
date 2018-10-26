@@ -1,9 +1,10 @@
 package main
 
 import (
+	"log"
+
 	"github.com/spf13/cobra"
 	"github.com/supergiant/robot/cmd/robot/run"
-	"log"
 )
 
 func newRootCommand() *cobra.Command {

@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/supergiant/robot"
 	"github.com/supergiant/robot/pkg/config"
 	"github.com/supergiant/robot/pkg/logger"
 )
@@ -24,7 +25,7 @@ func run(cmd *cobra.Command, _ []string) error {
 		return errors.Wrap(flagReadError, "unable to get config flag value")
 	}
 
-	cfg := &Config{}
+	cfg := &robot.Config{}
 
 	// configFileReadError is not critical due to possibility that configuration is done by environment variables
 	configFileReadError := config.ReadFromFiles(cfg, configFilePaths)
