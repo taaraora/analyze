@@ -2,6 +2,7 @@ module github.com/supergiant/robot
 
 require (
 	github.com/BurntSushi/toml v0.3.0 // indirect
+	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -12,6 +13,7 @@ require (
 	github.com/onsi/ginkgo v1.6.0 // indirect
 	github.com/onsi/gomega v1.4.1 // indirect
 	github.com/pelletier/go-toml v1.2.0 // indirect
+	github.com/pkg/errors v0.8.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.0.6
 	github.com/spf13/afero v1.1.1 // indirect
