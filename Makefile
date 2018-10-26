@@ -5,15 +5,16 @@ CURRENT_DIR := $(patsubst %/,%,$(dir $(MAKEFILE_PATH)))
 
 
 define LINT
-	if [ ! -x "`which golangci-lint 2>/dev/null`" ]; \
+	if [ ! -x "`which revive 2>/dev/null`" ]; \
     then \
-    	@echo "golangci-lint linter not found."; \
+    	@echo "revive linter not found."; \
     	@echo "Installing linter... into ${GOPATH}/bin"; \
-    	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b ${GOPATH}/bin v1.10.2 ; \
+    	go get -u github.com/mgechev/revive ; \
     fi
 
 	@echo "Running code linters..."
-	golangci-lint run -j 4 -v
+	revive
+	@echo "Running code linters finished."
 endef
 
 
