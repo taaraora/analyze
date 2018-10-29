@@ -1,0 +1,103 @@
+swagger: '2.0'
+info:
+  version: 0.0.1
+  title: Robot Service
+definitions:
+  error:
+    type: object
+    required:
+    - message
+    properties:
+      code:
+        type: integer
+        format: int64
+      message:
+        type: string
+  RecommendationPlugin:
+    type: "object"
+    description: "RecommendationPlugin represents the installed recommendation plugin"
+    properties:
+      Id:
+        description: |
+          unique ID of installed plugin
+          basically it is slugged URI of plugin repository name e. g. supergiant-request-limits-check
+        type: "string"
+      Version:
+        description: "plugin version, major version shall be equal to robots version"
+        type: "string"
+      Name:
+        description: "name is the name of the plugin."
+        type: "string"
+      Description:
+        description: "detailed plugin description"
+        type: "string"
+      Status:
+        description: "plugin status"
+        type: "string"
+      InstalledAt:
+        type: "string"
+        format: "dateTime"
+        description: "date/Time the plugin was installed"
+  CheckResult:
+    type: "object"
+    description: "CheckResult represents the single result of Check function invocation of specific plugin."
+    properties:
+      Id:
+        description: "unique UUID of Check function invocation of specific plugin"
+        type: "string"
+      Name:
+        description: "check name"
+        type: "string"
+      CompletedAt:
+        type: "string"
+        format: "dateTime"
+        description: "date/Time of check execution"
+      ExecutionStatus:
+        description: "shows check execution errors"
+        type: "string"
+      CheckStatus:
+        description: "shows check status"
+        type: "string"
+        enum: [RED, YELLOW, GREEN]
+      Description:
+        description: "detailed check result description"
+        type: "string"
+      PossibleActions:
+        description: "list of possible actions to fix caveats check was found"
+        type: "array"
+        items:
+          $ref: "#/definitions/PluginAction"
+  PluginAction:
+    type: "object"
+    description: "CheckResult represents the single result of Check function invocation of specific plugin."
+    properties:
+      Id:
+        description: "unique UUID of plugin action"
+        type: "string"
+      Description:
+        description: "detailed action description"
+        type: "string"
+paths:
+  /recommendation_plugins:
+    get:
+      summary: "Returns list of the installed recommendation plugins"
+      produces:
+      - application/json
+      operationId: getRecomendationPlugins
+      responses:
+        200:
+          description: no error
+          schema:
+            type: "object"
+            properties:
+              InstalledRecommendationPlugins:
+                type: "array"
+                description: "installed plugins"
+                items:
+                  $ref: "#/definitions/RecommendationPlugin"
+              TotalCount:
+                type: "integer"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
