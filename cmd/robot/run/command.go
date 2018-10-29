@@ -1,12 +1,14 @@
 package run
 
 import (
+	"github.com/go-openapi/loads"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-
 	"github.com/supergiant/robot"
 	"github.com/supergiant/robot/pkg/config"
 	"github.com/supergiant/robot/pkg/logger"
+	"github.com/supergiant/robot/swagger/gen/restapi"
+	"github.com/supergiant/robot/swagger/gen/restapi/operations"
 )
 
 func NewCommand() *cobra.Command {
@@ -45,6 +47,21 @@ func run(cmd *cobra.Command, _ []string) error {
 
 	if cfgValidationError := cfg.Validate(); cfgValidationError != nil {
 		return errors.Wrap(cfgValidationError, "config validation error")
+	}
+
+	swaggerSpec, specDocumentCreationError := loads.Analyzed(restapi.SwaggerJSON, "2.0")
+	if specDocumentCreationError != nil {
+		return errors.Wrap(specDocumentCreationError, "unable to create spec analyzed document")
+	}
+
+	api := operations.NewRobotAPI(swaggerSpec)
+	server := restapi.NewServer(api)
+	defer server.Shutdown()
+	server.Port = 9091
+	server.ConfigureAPI()
+
+	if err := server.Serve(); err != nil {
+		mainLogger.Fatal(err)
 	}
 
 	return nil
