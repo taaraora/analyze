@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/supergiant/robot/pkg/storage"
 	"github.com/supergiant/robot/swagger/gen/models"
@@ -19,19 +20,37 @@ func NewRecommendationPluginsHandler(storage storage.Interface) operations.GetRe
 
 func (h *recommendationPluginsHandler) Handle(params operations.GetRecommendationPluginsParams) middleware.Responder {
 
-	result := &operations.GetRecommendationPluginsOKBody{
-		InstalledRecommendationPlugins: []*models.RecommendationPlugin{},
-		TotalCount:                     1,
+	pluginRaw, err := h.storage.GetAll(context.Background(), "/robot/plugins/")
+
+	if err != nil {
+		r := operations.NewGetRecommendationPluginsDefault(500)
+		msg := err.Error()
+		r.Payload = &models.Error{
+			Code:    500,
+			Message: &msg,
+		}
+		return r
 	}
 
-	result.InstalledRecommendationPlugins = append(result.InstalledRecommendationPlugins, &models.RecommendationPlugin{
-		Description: "",
-		ID:          "d6fde92930d4715a2b49857d24b940956b26d2d3",
-		InstalledAt: "2018-05-04T01:14:52Z",
-		Name:        "limit/requests checker",
-		Status:      "OK",
-		Version:     "v0.0.1",
-	})
+	result := &operations.GetRecommendationPluginsOKBody{
+		InstalledRecommendationPlugins: []*models.RecommendationPlugin{},
+		TotalCount:                     int64(len(pluginRaw)),
+	}
+
+	for _, rawPlugin := range pluginRaw {
+		p := &models.RecommendationPlugin{}
+		err := p.UnmarshalBinary(rawPlugin)
+		if err != nil {
+			r := operations.NewGetRecommendationPluginsDefault(500)
+			msg := err.Error()
+			r.Payload = &models.Error{
+				Code:    500,
+				Message: &msg,
+			}
+			return r
+		}
+		result.InstalledRecommendationPlugins = append(result.InstalledRecommendationPlugins, p)
+	}
 
 	return operations.NewGetRecommendationPluginsOK().WithPayload(result)
 }

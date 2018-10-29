@@ -6,4 +6,4 @@ api:
     server_port: 9091
 etcd:
     endpoints:
-        - "localhost:2379"
+        - "localhost:2399"
