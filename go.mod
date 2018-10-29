@@ -2,6 +2,7 @@ module github.com/supergiant/robot
 
 require (
 	github.com/BurntSushi/toml v0.3.0 // indirect
+	github.com/coreos/etcd v3.3.10+incompatible
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/go-openapi/errors v0.17.2
@@ -13,7 +14,7 @@ require (
 	github.com/go-openapi/swag v0.17.2
 	github.com/go-openapi/validate v0.17.2
 	github.com/go-swagger/go-swagger v0.17.2 // indirect
-	github.com/golang/protobuf v1.2.0 // indirect
+	github.com/gogo/protobuf v1.1.1 // indirect
 	github.com/gorilla/handlers v1.4.0 // indirect
 	github.com/gorilla/mux v1.6.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -37,9 +38,8 @@ require (
 	github.com/toqueteos/webbrowser v1.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac // indirect
 	golang.org/x/net v0.0.0-20181005035420-146acd28ed58
-	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
-	golang.org/x/sys v0.0.0-20180828065106-d99a578cf41b // indirect
 	golang.org/x/tools v0.0.0-20181026183834-f60e5f99f081 // indirect
+	google.golang.org/grpc v1.16.0 // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect

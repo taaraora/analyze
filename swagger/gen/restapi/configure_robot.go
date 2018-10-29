@@ -4,16 +4,13 @@ package restapi
 
 import (
 	"crypto/tls"
-	"fmt"
 	"github.com/rakyll/statik/fs"
-	"github.com/supergiant/robot/swagger/gen/models"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 
-	errors "github.com/go-openapi/errors"
-	runtime "github.com/go-openapi/runtime"
-	middleware "github.com/go-openapi/runtime/middleware"
-
+	"github.com/go-openapi/errors"
+	"github.com/go-openapi/runtime"
 	"github.com/supergiant/robot/swagger/gen/restapi/operations"
 
 	_ "github.com/supergiant/robot/statik"
@@ -39,26 +36,9 @@ func configureAPI(api *operations.RobotAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
-	api.GetRecomendationPluginsHandler = operations.GetRecomendationPluginsHandlerFunc(func(params operations.GetRecomendationPluginsParams) middleware.Responder {
-
-		result := &operations.GetRecomendationPluginsOKBody{
-			InstalledRecommendationPlugins: []*models.RecommendationPlugin{},
-			TotalCount:                     1,
-		}
-
-		result.InstalledRecommendationPlugins = append(result.InstalledRecommendationPlugins, &models.RecommendationPlugin{
-			Description: "",
-			ID:          "d6fde92930d4715a2b49857d24b940956b26d2d3",
-			InstalledAt: "2018-05-04T01:14:52Z",
-			Name:        "limit/requests checker",
-			Status:      "OK",
-			Version:     "v0.0.1",
-		})
-
-		return operations.NewGetRecomendationPluginsOK().WithPayload(result)
-	})
-
 	api.ServerShutdown = func() {}
+
+	api.Logger = logrus.Infof
 
 	return setupGlobalMiddleware(api.Serve(setupMiddlewares))
 }
@@ -93,7 +73,6 @@ func uiMiddleware(handler http.Handler) http.Handler {
 		panic(err)
 	}
 	staticServer := http.FileServer(statikFS)
-	fmt.Println("ONE")
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -104,7 +83,6 @@ func uiMiddleware(handler http.Handler) http.Handler {
 		}
 		// Serving ./swagger-ui/
 		if strings.Index(r.URL.Path, "/swagger-ui/") == 0 {
-			fmt.Println("TWO")
 			http.StripPrefix("/swagger-ui/", staticServer).ServeHTTP(w, r)
 			return
 		}

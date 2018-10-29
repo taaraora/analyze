@@ -23,6 +23,7 @@ func init() {
     "title": "Robot Service",
     "version": "0.0.1"
   },
+  "basePath": "/api/v1",
   "paths": {
     "/recommendation_plugins": {
       "get": {
@@ -30,7 +31,7 @@ func init() {
           "application/json"
         ],
         "summary": "Returns list of the installed recommendation plugins",
-        "operationId": "getRecomendationPlugins",
+        "operationId": "getRecommendationPlugins",
         "responses": {
           "200": {
             "description": "no error",
@@ -172,6 +173,7 @@ func init() {
     "title": "Robot Service",
     "version": "0.0.1"
   },
+  "basePath": "/api/v1",
   "paths": {
     "/recommendation_plugins": {
       "get": {
@@ -179,7 +181,7 @@ func init() {
           "application/json"
         ],
         "summary": "Returns list of the installed recommendation plugins",
-        "operationId": "getRecomendationPlugins",
+        "operationId": "getRecommendationPlugins",
         "responses": {
           "200": {
             "description": "no error",

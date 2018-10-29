@@ -1,3 +1,9 @@
 logging:
     level: debug
     formatter: TXT
+api:
+    server_host: "localhost"
+    server_port: 9091
+etcd:
+    endpoints:
+        - "localhost:2379"

@@ -37,8 +37,8 @@ func NewRobotAPI(spec *loads.Document) *RobotAPI {
 		BearerAuthenticator: security.BearerAuth,
 		JSONConsumer:        runtime.JSONConsumer(),
 		JSONProducer:        runtime.JSONProducer(),
-		GetRecomendationPluginsHandler: GetRecomendationPluginsHandlerFunc(func(params GetRecomendationPluginsParams) middleware.Responder {
-			return middleware.NotImplemented("operation GetRecomendationPlugins has not yet been implemented")
+		GetRecommendationPluginsHandler: GetRecommendationPluginsHandlerFunc(func(params GetRecommendationPluginsParams) middleware.Responder {
+			return middleware.NotImplemented("operation GetRecommendationPlugins has not yet been implemented")
 		}),
 	}
 }
@@ -71,8 +71,8 @@ type RobotAPI struct {
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
 
-	// GetRecomendationPluginsHandler sets the operation handler for the get recomendation plugins operation
-	GetRecomendationPluginsHandler GetRecomendationPluginsHandler
+	// GetRecommendationPluginsHandler sets the operation handler for the get recommendation plugins operation
+	GetRecommendationPluginsHandler GetRecommendationPluginsHandler
 
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
@@ -136,8 +136,8 @@ func (o *RobotAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
-	if o.GetRecomendationPluginsHandler == nil {
-		unregistered = append(unregistered, "GetRecomendationPluginsHandler")
+	if o.GetRecommendationPluginsHandler == nil {
+		unregistered = append(unregistered, "GetRecommendationPluginsHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -241,7 +241,7 @@ func (o *RobotAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/recommendation_plugins"] = NewGetRecomendationPlugins(o.context, o.GetRecomendationPluginsHandler)
+	o.handlers["GET"]["/recommendation_plugins"] = NewGetRecommendationPlugins(o.context, o.GetRecommendationPluginsHandler)
 
 }
 

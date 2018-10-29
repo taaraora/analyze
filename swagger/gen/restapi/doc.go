@@ -6,7 +6,7 @@ Package restapi Robot Service
     Schemes:
       http
     Host: localhost
-    BasePath: /
+    BasePath: /api/v1
     Version: 0.0.1
 
     Consumes:
