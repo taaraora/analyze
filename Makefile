@@ -25,3 +25,17 @@ default: lint
 .PHONY: lint
 lint:
 	@$(call LINT)
+
+.PHONY: validate
+validate:
+	swagger validate ./swagger/api-spec.yml
+
+.PHONY: gen
+gen: validate
+	swagger generate server \
+		--target=./swagger/gen \
+		--spec=./swagger/api-spec.yml \
+		--exclude-main \
+		--name=robot
+	cp ./swagger/api-spec.yml ./swagger/ui/api-spec.yml
+	statik -f -src=${CURRENT_DIR}/swagger/ui
