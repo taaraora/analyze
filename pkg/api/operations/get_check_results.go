@@ -69,9 +69,6 @@ type GetCheckResultsOKBody struct {
 
 	// existing checks
 	CheckResults []*models.CheckResult `json:"CheckResults"`
-
-	// total count
-	TotalCount int64 `json:"TotalCount,omitempty"`
 }
 
 // Validate validates this get check results o k body

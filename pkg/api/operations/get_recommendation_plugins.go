@@ -69,9 +69,6 @@ type GetRecommendationPluginsOKBody struct {
 
 	// installed plugins
 	InstalledRecommendationPlugins []*models.RecommendationPlugin `json:"InstalledRecommendationPlugins"`
-
-	// total count
-	TotalCount int64 `json:"TotalCount,omitempty"`
 }
 
 // Validate validates this get recommendation plugins o k body

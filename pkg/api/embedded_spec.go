@@ -44,9 +44,6 @@ func init() {
                   "items": {
                     "$ref": "#/definitions/CheckResult"
                   }
-                },
-                "TotalCount": {
-                  "type": "integer"
                 }
               }
             }
@@ -79,9 +76,6 @@ func init() {
                   "items": {
                     "$ref": "#/definitions/RecommendationPlugin"
                   }
-                },
-                "TotalCount": {
-                  "type": "integer"
                 }
               }
             }
@@ -229,9 +223,6 @@ func init() {
                   "items": {
                     "$ref": "#/definitions/CheckResult"
                   }
-                },
-                "TotalCount": {
-                  "type": "integer"
                 }
               }
             }
@@ -264,9 +255,6 @@ func init() {
                   "items": {
                     "$ref": "#/definitions/RecommendationPlugin"
                   }
-                },
-                "TotalCount": {
-                  "type": "integer"
                 }
               }
             }

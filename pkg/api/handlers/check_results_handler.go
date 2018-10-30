@@ -34,7 +34,6 @@ func (h *checkResultsHandler) Handle(params operations.GetCheckResultsParams) mi
 
 	result := &operations.GetCheckResultsOKBody{
 		CheckResults: []*models.CheckResult{},
-		TotalCount:   int64(len(resultsRaw)),
 	}
 
 	for _, rawResult := range resultsRaw {

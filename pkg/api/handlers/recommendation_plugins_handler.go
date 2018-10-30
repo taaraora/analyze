@@ -34,7 +34,6 @@ func (h *recommendationPluginsHandler) Handle(params operations.GetRecommendatio
 
 	result := &operations.GetRecommendationPluginsOKBody{
 		InstalledRecommendationPlugins: []*models.RecommendationPlugin{},
-		TotalCount:                     int64(len(pluginRaw)),
 	}
 
 	for _, rawPlugin := range pluginRaw {

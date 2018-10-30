@@ -96,8 +96,6 @@ paths:
                 description: "installed plugins"
                 items:
                   $ref: "#/definitions/RecommendationPlugin"
-              TotalCount:
-                type: "integer"
         default:
           description: error
           schema:
@@ -119,8 +117,6 @@ paths:
                 description: "existing checks"
                 items:
                   $ref: "#/definitions/CheckResult"
-              TotalCount:
-                type: "integer"
         default:
           description: error
           schema:
