@@ -20,9 +20,9 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// NewRobotAPI creates a new Robot instance
-func NewRobotAPI(spec *loads.Document) *RobotAPI {
-	return &RobotAPI{
+// NewAnalyzeAPI creates a new Analyze instance
+func NewAnalyzeAPI(spec *loads.Document) *AnalyzeAPI {
+	return &AnalyzeAPI{
 		handlers:            make(map[string]map[string]http.Handler),
 		formats:             strfmt.Default,
 		defaultConsumes:     "application/json",
@@ -46,8 +46,8 @@ func NewRobotAPI(spec *loads.Document) *RobotAPI {
 	}
 }
 
-/*RobotAPI the robot API */
-type RobotAPI struct {
+/*AnalyzeAPI the analyze API */
+type AnalyzeAPI struct {
 	spec            *loads.Document
 	context         *middleware.Context
 	handlers        map[string]map[string]http.Handler
@@ -95,42 +95,42 @@ type RobotAPI struct {
 }
 
 // SetDefaultProduces sets the default produces media type
-func (o *RobotAPI) SetDefaultProduces(mediaType string) {
+func (o *AnalyzeAPI) SetDefaultProduces(mediaType string) {
 	o.defaultProduces = mediaType
 }
 
 // SetDefaultConsumes returns the default consumes media type
-func (o *RobotAPI) SetDefaultConsumes(mediaType string) {
+func (o *AnalyzeAPI) SetDefaultConsumes(mediaType string) {
 	o.defaultConsumes = mediaType
 }
 
 // SetSpec sets a spec that will be served for the clients.
-func (o *RobotAPI) SetSpec(spec *loads.Document) {
+func (o *AnalyzeAPI) SetSpec(spec *loads.Document) {
 	o.spec = spec
 }
 
 // DefaultProduces returns the default produces media type
-func (o *RobotAPI) DefaultProduces() string {
+func (o *AnalyzeAPI) DefaultProduces() string {
 	return o.defaultProduces
 }
 
 // DefaultConsumes returns the default consumes media type
-func (o *RobotAPI) DefaultConsumes() string {
+func (o *AnalyzeAPI) DefaultConsumes() string {
 	return o.defaultConsumes
 }
 
 // Formats returns the registered string formats
-func (o *RobotAPI) Formats() strfmt.Registry {
+func (o *AnalyzeAPI) Formats() strfmt.Registry {
 	return o.formats
 }
 
 // RegisterFormat registers a custom format validator
-func (o *RobotAPI) RegisterFormat(name string, format strfmt.Format, validator strfmt.Validator) {
+func (o *AnalyzeAPI) RegisterFormat(name string, format strfmt.Format, validator strfmt.Validator) {
 	o.formats.Add(name, format, validator)
 }
 
-// Validate validates the registrations in the RobotAPI
-func (o *RobotAPI) Validate() error {
+// Validate validates the registrations in the AnalyzeAPI
+func (o *AnalyzeAPI) Validate() error {
 	var unregistered []string
 
 	if o.JSONConsumer == nil {
@@ -157,26 +157,26 @@ func (o *RobotAPI) Validate() error {
 }
 
 // ServeErrorFor gets a error handler for a given operation id
-func (o *RobotAPI) ServeErrorFor(operationID string) func(http.ResponseWriter, *http.Request, error) {
+func (o *AnalyzeAPI) ServeErrorFor(operationID string) func(http.ResponseWriter, *http.Request, error) {
 	return o.ServeError
 }
 
 // AuthenticatorsFor gets the authenticators for the specified security schemes
-func (o *RobotAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) map[string]runtime.Authenticator {
+func (o *AnalyzeAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) map[string]runtime.Authenticator {
 
 	return nil
 
 }
 
 // Authorizer returns the registered authorizer
-func (o *RobotAPI) Authorizer() runtime.Authorizer {
+func (o *AnalyzeAPI) Authorizer() runtime.Authorizer {
 
 	return nil
 
 }
 
 // ConsumersFor gets the consumers for the specified media types
-func (o *RobotAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consumer {
+func (o *AnalyzeAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consumer {
 
 	result := make(map[string]runtime.Consumer)
 	for _, mt := range mediaTypes {
@@ -196,7 +196,7 @@ func (o *RobotAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consumer
 }
 
 // ProducersFor gets the producers for the specified media types
-func (o *RobotAPI) ProducersFor(mediaTypes []string) map[string]runtime.Producer {
+func (o *AnalyzeAPI) ProducersFor(mediaTypes []string) map[string]runtime.Producer {
 
 	result := make(map[string]runtime.Producer)
 	for _, mt := range mediaTypes {
@@ -216,7 +216,7 @@ func (o *RobotAPI) ProducersFor(mediaTypes []string) map[string]runtime.Producer
 }
 
 // HandlerFor gets a http.Handler for the provided operation method and path
-func (o *RobotAPI) HandlerFor(method, path string) (http.Handler, bool) {
+func (o *AnalyzeAPI) HandlerFor(method, path string) (http.Handler, bool) {
 	if o.handlers == nil {
 		return nil, false
 	}
@@ -231,8 +231,8 @@ func (o *RobotAPI) HandlerFor(method, path string) (http.Handler, bool) {
 	return h, ok
 }
 
-// Context returns the middleware context for the robot API
-func (o *RobotAPI) Context() *middleware.Context {
+// Context returns the middleware context for the analyze API
+func (o *AnalyzeAPI) Context() *middleware.Context {
 	if o.context == nil {
 		o.context = middleware.NewRoutableContext(o.spec, o, nil)
 	}
@@ -240,7 +240,7 @@ func (o *RobotAPI) Context() *middleware.Context {
 	return o.context
 }
 
-func (o *RobotAPI) initHandlerCache() {
+func (o *AnalyzeAPI) initHandlerCache() {
 	o.Context() // don't care about the result, just that the initialization happened
 
 	if o.handlers == nil {
@@ -261,7 +261,7 @@ func (o *RobotAPI) initHandlerCache() {
 
 // Serve creates a http handler to serve the API over HTTP
 // can be used directly in http.ListenAndServe(":8000", api.Serve(nil))
-func (o *RobotAPI) Serve(builder middleware.Builder) http.Handler {
+func (o *AnalyzeAPI) Serve(builder middleware.Builder) http.Handler {
 	o.Init()
 
 	if o.Middleware != nil {
@@ -271,18 +271,18 @@ func (o *RobotAPI) Serve(builder middleware.Builder) http.Handler {
 }
 
 // Init allows you to just initialize the handler cache, you can then recompose the middleware as you see fit
-func (o *RobotAPI) Init() {
+func (o *AnalyzeAPI) Init() {
 	if len(o.handlers) == 0 {
 		o.initHandlerCache()
 	}
 }
 
 // RegisterConsumer allows you to add (or override) a consumer for a media type.
-func (o *RobotAPI) RegisterConsumer(mediaType string, consumer runtime.Consumer) {
+func (o *AnalyzeAPI) RegisterConsumer(mediaType string, consumer runtime.Consumer) {
 	o.customConsumers[mediaType] = consumer
 }
 
 // RegisterProducer allows you to add (or override) a producer for a media type.
-func (o *RobotAPI) RegisterProducer(mediaType string, producer runtime.Producer) {
+func (o *AnalyzeAPI) RegisterProducer(mediaType string, producer runtime.Producer) {
 	o.customProducers[mediaType] = producer
 }

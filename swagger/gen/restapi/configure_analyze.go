@@ -9,20 +9,20 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-openapi/errors"
-	"github.com/go-openapi/runtime"
-	"github.com/supergiant/robot/swagger/gen/restapi/operations"
+	errors "github.com/go-openapi/errors"
+	runtime "github.com/go-openapi/runtime"
+	middleware "github.com/go-openapi/runtime/middleware"
 
-	_ "github.com/supergiant/robot/statik"
+	"github.com/supergiant/robot/swagger/gen/restapi/operations"
 )
 
-//go:generate swagger generate server --target ../gen --name Robot --spec ../swagger/api-spec.yml --exclude-main
+//go:generate swagger generate server --target ../swagger/gen --name Analyze --spec ../swagger/api-spec.yml --exclude-main
 
-func configureFlags(api *operations.RobotAPI) {
+func configureFlags(api *operations.AnalyzeAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
 }
 
-func configureAPI(api *operations.RobotAPI) http.Handler {
+func configureAPI(api *operations.AnalyzeAPI) http.Handler {
 	// configure the api here
 	api.ServeError = errors.ServeError
 
@@ -36,9 +36,9 @@ func configureAPI(api *operations.RobotAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
-	api.ServerShutdown = func() {}
-
 	api.Logger = logrus.Infof
+
+	api.ServerShutdown = func() {}
 
 	return setupGlobalMiddleware(api.Serve(setupMiddlewares))
 }

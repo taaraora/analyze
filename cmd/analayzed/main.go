@@ -68,8 +68,8 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return errors.Wrap(specDocumentCreationError, "unable to create spec analyzed document")
 	}
 
-	robotAPI := operations.NewRobotAPI(swaggerSpec)
-	server := restapi.NewServer(robotAPI)
+	analyzeAPI := operations.NewAnalyzeAPI(swaggerSpec)
+	server := restapi.NewServer(analyzeAPI)
 	defer server.Shutdown()
 	server.Port = cfg.API.ServerPort
 	server.Host = cfg.API.ServerHost
@@ -80,8 +80,8 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	}
 	defer storage.Close()
 
-	robotAPI.GetRecommendationPluginsHandler = api.NewRecommendationPluginsHandler(storage)
-	robotAPI.GetCheckResultsHandler = api.NewCheckResultsHandler(storage)
+	analyzeAPI.GetRecommendationPluginsHandler = api.NewRecommendationPluginsHandler(storage)
+	analyzeAPI.GetCheckResultsHandler = api.NewCheckResultsHandler(storage)
 	server.ConfigureAPI()
 
 	if err := server.Serve(); err != nil {
