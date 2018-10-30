@@ -12,6 +12,8 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
+
+	_ "github.com/supergiant/robot/statik"
 )
 
 //go:generate swagger generate server --target ../pkg --name Analyze --spec ../swagger/api-spec.yml --server-package api --exclude-main

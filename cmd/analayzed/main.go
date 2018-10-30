@@ -28,7 +28,7 @@ func main() {
 	command.PersistentFlags().StringArrayP(
 		"config",
 		"c",
-		[]string{"./analyzed.yaml", "/etc/analyzed/analyzed.yaml", "$HOME/analyzed.yaml"},
+		[]string{"./config.yaml", "/etc/analyzed/config.yaml", "$HOME/.analyzed/config.yaml"},
 		"config file path")
 
 	if err := command.Execute(); err != nil {
