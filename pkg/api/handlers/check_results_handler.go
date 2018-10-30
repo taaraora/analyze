@@ -1,11 +1,11 @@
-package api
+package handlers
 
 import (
 	"context"
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/supergiant/robot/pkg/api/operations"
+	"github.com/supergiant/robot/pkg/models"
 	"github.com/supergiant/robot/pkg/storage"
-	"github.com/supergiant/robot/swagger/gen/models"
-	"github.com/supergiant/robot/swagger/gen/restapi/operations"
 )
 
 type checkResultsHandler struct {

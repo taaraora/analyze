@@ -6,12 +6,12 @@ import (
 	"crypto/tls"
 	"github.com/rakyll/statik/fs"
 	"github.com/sirupsen/logrus"
+	"github.com/supergiant/robot/pkg/api/operations"
 	"net/http"
 	"strings"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
-	"github.com/supergiant/robot/swagger/gen/restapi/operations"
 )
 
 //go:generate swagger generate server --target ../pkg --name Analyze --spec ../swagger/api-spec.yml --server-package api --exclude-main

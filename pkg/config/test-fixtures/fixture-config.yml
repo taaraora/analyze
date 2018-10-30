@@ -1,0 +1,14 @@
+connection:
+    vhost: /test/123
+    server: rpc.qbox.io
+    port: 5671
+    username: test
+    password:
+    use_tls: true
+    skip_tls_certificate_verifying: true
+    connection_tries: 3
+    connection_try_timeout: 5s
+pods:
+    - "pod1"
+    - "pod2"
+    - "pod3"

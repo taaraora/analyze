@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/supergiant/robot/pkg/api/handlers"
 	"log"
 
 	"github.com/supergiant/robot/pkg/api"
@@ -80,8 +81,8 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	}
 	defer storage.Close()
 
-	analyzeAPI.GetRecommendationPluginsHandler = api.NewRecommendationPluginsHandler(storage)
-	analyzeAPI.GetCheckResultsHandler = api.NewCheckResultsHandler(storage)
+	analyzeAPI.GetRecommendationPluginsHandler = handlers.NewRecommendationPluginsHandler(storage)
+	analyzeAPI.GetCheckResultsHandler = handlers.NewCheckResultsHandler(storage)
 	server.ConfigureAPI()
 
 	if err := server.Serve(); err != nil {

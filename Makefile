@@ -44,3 +44,7 @@ gen: validate
 		--existing-models=./pkg/models
 	cp ./swagger/api-spec.yml ./swagger/ui/api-spec.yml
 	statik -f -src=${CURRENT_DIR}/swagger/ui
+
+.PHONY: test
+test:
+	go test -race ./...
