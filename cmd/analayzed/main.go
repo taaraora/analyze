@@ -3,16 +3,16 @@ package main
 import (
 	"log"
 
+	"github.com/supergiant/robot/pkg/api"
+	"github.com/supergiant/robot/pkg/api/operations"
+
 	"github.com/go-openapi/loads"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/supergiant/robot"
-	"github.com/supergiant/robot/api"
 	"github.com/supergiant/robot/pkg/config"
 	"github.com/supergiant/robot/pkg/logger"
 	"github.com/supergiant/robot/pkg/storage/etcd"
-	"github.com/supergiant/robot/swagger/gen/restapi"
-	"github.com/supergiant/robot/swagger/gen/restapi/operations"
 )
 
 func main() {
@@ -63,13 +63,13 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return errors.Wrap(cfgValidationError, "config validation error")
 	}
 
-	swaggerSpec, specDocumentCreationError := loads.Analyzed(restapi.SwaggerJSON, "2.0")
+	swaggerSpec, specDocumentCreationError := loads.Analyzed(api.SwaggerJSON, "2.0")
 	if specDocumentCreationError != nil {
 		return errors.Wrap(specDocumentCreationError, "unable to create spec analyzed document")
 	}
 
 	analyzeAPI := operations.NewAnalyzeAPI(swaggerSpec)
-	server := restapi.NewServer(analyzeAPI)
+	server := api.NewServer(analyzeAPI)
 	defer server.Shutdown()
 	server.Port = cfg.API.ServerPort
 	server.Host = cfg.API.ServerHost

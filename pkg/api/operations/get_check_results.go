@@ -14,7 +14,7 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 	swag "github.com/go-openapi/swag"
 
-	models "github.com/supergiant/robot/swagger/gen/models"
+	models "github.com/supergiant/robot/pkg/models"
 )
 
 // GetCheckResultsHandlerFunc turns a function with the right signature into a get check results handler

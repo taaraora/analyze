@@ -1,6 +1,6 @@
 // This file is safe to edit. Once it exists it will not be overwritten
 
-package restapi
+package api
 
 import (
 	"crypto/tls"
@@ -9,14 +9,12 @@ import (
 	"net/http"
 	"strings"
 
-	errors "github.com/go-openapi/errors"
-	runtime "github.com/go-openapi/runtime"
-	middleware "github.com/go-openapi/runtime/middleware"
-
+	"github.com/go-openapi/errors"
+	"github.com/go-openapi/runtime"
 	"github.com/supergiant/robot/swagger/gen/restapi/operations"
 )
 
-//go:generate swagger generate server --target ../swagger/gen --name Analyze --spec ../swagger/api-spec.yml --exclude-main
+//go:generate swagger generate server --target ../pkg --name Analyze --spec ../swagger/api-spec.yml --server-package api --exclude-main
 
 func configureFlags(api *operations.AnalyzeAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }

@@ -32,10 +32,15 @@ validate:
 
 .PHONY: gen
 gen: validate
+	swagger generate model \
+    		--target=./pkg \
+    		--spec=./swagger/api-spec.yml
 	swagger generate server \
-		--target=./swagger/gen \
+		--target=./pkg \
+		--server-package=api \
 		--spec=./swagger/api-spec.yml \
 		--exclude-main \
 		--name=analyze
+		--existing-models=./pkg/models
 	cp ./swagger/api-spec.yml ./swagger/ui/api-spec.yml
 	statik -f -src=${CURRENT_DIR}/swagger/ui

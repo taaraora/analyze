@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	models "github.com/supergiant/robot/swagger/gen/models"
+	models "github.com/supergiant/robot/pkg/models"
 )
 
 // GetRecommendationPluginsOKCode is the HTTP code returned for type GetRecommendationPluginsOK
