@@ -5,16 +5,25 @@ CURRENT_DIR := $(patsubst %/,%,$(dir $(MAKEFILE_PATH)))
 
 
 define LINT
-	if [ ! -x "`which revive 2>/dev/null`" ]; \
-    then \
-    	@echo "revive linter not found."; \
-    	@echo "Installing linter... into ${GOPATH}/bin"; \
-    	go get -u github.com/mgechev/revive ; \
-    fi
-
 	@echo "Running code linters..."
 	revive
 	@echo "Running code linters finished."
+endef
+
+define TOOLS
+		if [ ! -x "`which revive 2>/dev/null`" ]; \
+        then \
+        	@echo "revive linter not found."; \
+        	@echo "Installing linter... into ${GOPATH}/bin"; \
+        	go get -u github.com/mgechev/revive ; \
+        fi
+
+        if [ ! -x "`which swagger 2>/dev/null`" ]; \
+        then \
+        	@echo "swagger not found."; \
+        	@echo "Installing swagger... into ${GOPATH}/bin"; \
+        	go get -u github.com/go-swagger/go-swagger/cmd/swagger ; \
+        fi
 endef
 
 
@@ -23,11 +32,11 @@ default: lint
 
 
 .PHONY: lint
-lint:
+lint: tools
 	@$(call LINT)
 
 .PHONY: validate
-validate:
+validate: tools
 	swagger validate ./swagger/api-spec.yml
 
 .PHONY: gen
@@ -48,3 +57,7 @@ gen: validate
 .PHONY: test
 test:
 	go test -race ./...
+
+.PHONY: tools
+tools:
+	@$(call TOOLS)
