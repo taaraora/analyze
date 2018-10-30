@@ -35,7 +35,7 @@ func (o *GetCheckResultsURL) SetBasePath(bp string) {
 func (o *GetCheckResultsURL) Build() (*url.URL, error) {
 	var result url.URL
 
-	var _path = "/check_results"
+	var _path = "/check"
 
 	_basePath := o._basePath
 	if _basePath == "" {

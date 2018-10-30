@@ -35,7 +35,7 @@ func (o *GetRecommendationPluginsURL) SetBasePath(bp string) {
 func (o *GetRecommendationPluginsURL) Build() (*url.URL, error) {
 	var result url.URL
 
-	var _path = "/recommendation_plugins"
+	var _path = "/plugin"
 
 	_basePath := o._basePath
 	if _basePath == "" {

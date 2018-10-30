@@ -79,7 +79,7 @@ definitions:
         description: "detailed action description"
         type: "string"
 paths:
-  /recommendation_plugins:
+  /plugin:
     get:
       summary: "Returns list of the installed recommendation plugins"
       produces:
@@ -102,7 +102,7 @@ paths:
           description: error
           schema:
             $ref: "#/definitions/error"
-  /check_results:
+  /check:
     get:
       summary: "Returns list of check results produced by installed plugins"
       produces:

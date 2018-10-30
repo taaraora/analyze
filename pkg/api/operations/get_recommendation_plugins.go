@@ -35,7 +35,7 @@ func NewGetRecommendationPlugins(ctx *middleware.Context, handler GetRecommendat
 	return &GetRecommendationPlugins{Context: ctx, Handler: handler}
 }
 
-/*GetRecommendationPlugins swagger:route GET /recommendation_plugins getRecommendationPlugins
+/*GetRecommendationPlugins swagger:route GET /plugin getRecommendationPlugins
 
 Returns list of the installed recommendation plugins
 

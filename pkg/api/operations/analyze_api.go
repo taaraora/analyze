@@ -250,12 +250,12 @@ func (o *AnalyzeAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/check_results"] = NewGetCheckResults(o.context, o.GetCheckResultsHandler)
+	o.handlers["GET"]["/check"] = NewGetCheckResults(o.context, o.GetCheckResultsHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/recommendation_plugins"] = NewGetRecommendationPlugins(o.context, o.GetRecommendationPluginsHandler)
+	o.handlers["GET"]["/plugin"] = NewGetRecommendationPlugins(o.context, o.GetRecommendationPluginsHandler)
 
 }
 

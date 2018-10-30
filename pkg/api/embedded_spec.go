@@ -25,7 +25,7 @@ func init() {
   },
   "basePath": "/api/v1",
   "paths": {
-    "/check_results": {
+    "/check": {
       "get": {
         "produces": [
           "application/json"
@@ -60,7 +60,7 @@ func init() {
         }
       }
     },
-    "/recommendation_plugins": {
+    "/plugin": {
       "get": {
         "produces": [
           "application/json"
@@ -210,7 +210,7 @@ func init() {
   },
   "basePath": "/api/v1",
   "paths": {
-    "/check_results": {
+    "/check": {
       "get": {
         "produces": [
           "application/json"
@@ -245,7 +245,7 @@ func init() {
         }
       }
     },
-    "/recommendation_plugins": {
+    "/plugin": {
       "get": {
         "produces": [
           "application/json"
