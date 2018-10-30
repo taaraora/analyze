@@ -4,11 +4,13 @@ package api
 
 import (
 	"crypto/tls"
-	"github.com/rakyll/statik/fs"
-	"github.com/sirupsen/logrus"
-	"github.com/supergiant/robot/pkg/api/operations"
 	"net/http"
 	"strings"
+
+	"github.com/rakyll/statik/fs"
+	"github.com/sirupsen/logrus"
+
+	"github.com/supergiant/robot/pkg/api/operations"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"

@@ -1,10 +1,11 @@
 package config_test
 
 import (
-	"github.com/supergiant/robot/pkg/config"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/supergiant/robot/pkg/config"
 
 	"github.com/spf13/viper"
 )

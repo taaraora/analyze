@@ -2,6 +2,7 @@ package robot
 
 import (
 	"github.com/coreos/etcd/clientv3"
+
 	"github.com/supergiant/robot/pkg/api"
 	"github.com/supergiant/robot/pkg/logger"
 )

@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"context"
+
 	"github.com/go-openapi/runtime/middleware"
+
 	"github.com/supergiant/robot/pkg/api/operations"
 	"github.com/supergiant/robot/pkg/models"
 	"github.com/supergiant/robot/pkg/storage"

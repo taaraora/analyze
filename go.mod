@@ -41,7 +41,7 @@ require (
 	golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac // indirect
 	golang.org/x/net v0.0.0-20181005035420-146acd28ed58
 	golang.org/x/sys v0.0.0-20181030142055-f7626d0b1519 // indirect
-	golang.org/x/tools v0.0.0-20181030000716-a0a13e073c7b // indirect
+	golang.org/x/tools v0.0.0-20181030151751-bb28844c46df // indirect
 	google.golang.org/grpc v1.16.0 // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect

@@ -2,8 +2,10 @@ package etcd
 
 import (
 	"context"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/pkg/errors"
+
 	"github.com/supergiant/robot/pkg/storage"
 )
 

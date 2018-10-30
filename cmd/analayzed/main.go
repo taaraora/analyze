@@ -1,19 +1,19 @@
 package main
 
 import (
-	"github.com/supergiant/robot/pkg/api/handlers"
 	"log"
 
+	"github.com/supergiant/robot"
 	"github.com/supergiant/robot/pkg/api"
+	"github.com/supergiant/robot/pkg/api/handlers"
 	"github.com/supergiant/robot/pkg/api/operations"
+	"github.com/supergiant/robot/pkg/config"
+	"github.com/supergiant/robot/pkg/logger"
+	"github.com/supergiant/robot/pkg/storage/etcd"
 
 	"github.com/go-openapi/loads"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/supergiant/robot"
-	"github.com/supergiant/robot/pkg/config"
-	"github.com/supergiant/robot/pkg/logger"
-	"github.com/supergiant/robot/pkg/storage/etcd"
 )
 
 func main() {

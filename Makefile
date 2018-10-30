@@ -10,6 +10,10 @@ define LINT
 	@echo "Running code linters finished."
 endef
 
+define GOIMPORTS
+	goimports -v -w -local github.com/supergiant/robot ${CURRENT_DIR}
+endef
+
 define TOOLS
 		if [ ! -x "`which revive 2>/dev/null`" ]; \
         then \
@@ -61,3 +65,7 @@ test:
 .PHONY: tools
 tools:
 	@$(call TOOLS)
+
+.PHONY: goimports
+goimports:
+	@$(call GOIMPORTS)
