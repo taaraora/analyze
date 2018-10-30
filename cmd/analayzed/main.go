@@ -37,9 +37,9 @@ func main() {
 }
 
 func runCommand(cmd *cobra.Command, _ []string) error {
-	configFilePaths, flagReadError := cmd.Flags().GetStringArray("config")
-	if flagReadError != nil {
-		return errors.Wrap(flagReadError, "unable to get config flag value")
+	configFilePaths, err := cmd.Flags().GetStringArray("config")
+	if err != nil {
+		return errors.Wrap(err, "unable to get config flag value")
 	}
 
 	cfg := &robot.Config{}
@@ -47,8 +47,8 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	// configFileReadError is not critical due to possibility that configuration is done by environment variables
 	configFileReadError := config.ReadFromFiles(cfg, configFilePaths)
 
-	if envVariablesReadError := config.MergeEnv("RK", cfg); envVariablesReadError != nil {
-		return errors.Wrap(envVariablesReadError, "unable to merge env variables")
+	if err = config.MergeEnv("RK", cfg); err != nil {
+		return errors.Wrap(err, "unable to merge env variables")
 	}
 
 	log := logger.NewLogger(cfg.Logging).WithField("app", "robot")
@@ -60,30 +60,32 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		mainLogger.Warnf("unable to read config file, %v", configFileReadError)
 	}
 
-	if cfgValidationError := cfg.Validate(); cfgValidationError != nil {
-		return errors.Wrap(cfgValidationError, "config validation error")
+	if err := cfg.Validate(); err != nil {
+		return errors.Wrap(err, "config validation error")
 	}
-
-	swaggerSpec, specDocumentCreationError := loads.Analyzed(api.SwaggerJSON, "2.0")
-	if specDocumentCreationError != nil {
-		return errors.Wrap(specDocumentCreationError, "unable to create spec analyzed document")
-	}
-
-	analyzeAPI := operations.NewAnalyzeAPI(swaggerSpec)
-	server := api.NewServer(analyzeAPI)
-	defer server.Shutdown()
-	server.Port = cfg.API.ServerPort
-	server.Host = cfg.API.ServerHost
 
 	storage, err := etcd.NewETCDStorage(cfg.ETCD)
 	if err != nil {
-		return errors.Wrap(specDocumentCreationError, "unable to create ETCD client")
+		return errors.Wrap(err, "unable to create ETCD client")
 	}
+
 	defer storage.Close()
 
+	swaggerSpec, err := loads.Analyzed(api.SwaggerJSON, "2.0")
+	if err != nil {
+		return errors.Wrap(err, "unable to create spec analyzed document")
+	}
+
+	analyzeAPI := operations.NewAnalyzeAPI(swaggerSpec)
 	analyzeAPI.GetRecommendationPluginsHandler = handlers.NewRecommendationPluginsHandler(storage)
 	analyzeAPI.GetCheckResultsHandler = handlers.NewCheckResultsHandler(storage)
+
+	server := api.NewServer(analyzeAPI)
+	server.Port = cfg.API.ServerPort
+	server.Host = cfg.API.ServerHost
 	server.ConfigureAPI()
+
+	defer server.Shutdown()
 
 	if servingError := server.Serve(); servingError != nil {
 		return errors.Wrap(servingError, "unable to serve HTTP API")
