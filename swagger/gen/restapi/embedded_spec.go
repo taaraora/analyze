@@ -25,6 +25,41 @@ func init() {
   },
   "basePath": "/api/v1",
   "paths": {
+    "/check_results": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "Returns list of check results produced by installed plugins",
+        "operationId": "getCheckResults",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "CheckResults": {
+                  "description": "existing checks",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/CheckResult"
+                  }
+                },
+                "TotalCount": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
     "/recommendation_plugins": {
       "get": {
         "produces": [
@@ -175,6 +210,41 @@ func init() {
   },
   "basePath": "/api/v1",
   "paths": {
+    "/check_results": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "Returns list of check results produced by installed plugins",
+        "operationId": "getCheckResults",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "CheckResults": {
+                  "description": "existing checks",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/CheckResult"
+                  }
+                },
+                "TotalCount": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
     "/recommendation_plugins": {
       "get": {
         "produces": [

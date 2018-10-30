@@ -102,3 +102,26 @@ paths:
           description: error
           schema:
             $ref: "#/definitions/error"
+  /check_results:
+    get:
+      summary: "Returns list of check results produced by installed plugins"
+      produces:
+      - application/json
+      operationId: getCheckResults
+      responses:
+        200:
+          description: no error
+          schema:
+            type: "object"
+            properties:
+              CheckResults:
+                type: "array"
+                description: "existing checks"
+                items:
+                  $ref: "#/definitions/CheckResult"
+              TotalCount:
+                type: "integer"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"

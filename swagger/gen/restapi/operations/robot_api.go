@@ -37,6 +37,9 @@ func NewRobotAPI(spec *loads.Document) *RobotAPI {
 		BearerAuthenticator: security.BearerAuth,
 		JSONConsumer:        runtime.JSONConsumer(),
 		JSONProducer:        runtime.JSONProducer(),
+		GetCheckResultsHandler: GetCheckResultsHandlerFunc(func(params GetCheckResultsParams) middleware.Responder {
+			return middleware.NotImplemented("operation GetCheckResults has not yet been implemented")
+		}),
 		GetRecommendationPluginsHandler: GetRecommendationPluginsHandlerFunc(func(params GetRecommendationPluginsParams) middleware.Responder {
 			return middleware.NotImplemented("operation GetRecommendationPlugins has not yet been implemented")
 		}),
@@ -71,6 +74,8 @@ type RobotAPI struct {
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
 
+	// GetCheckResultsHandler sets the operation handler for the get check results operation
+	GetCheckResultsHandler GetCheckResultsHandler
 	// GetRecommendationPluginsHandler sets the operation handler for the get recommendation plugins operation
 	GetRecommendationPluginsHandler GetRecommendationPluginsHandler
 
@@ -134,6 +139,10 @@ func (o *RobotAPI) Validate() error {
 
 	if o.JSONProducer == nil {
 		unregistered = append(unregistered, "JSONProducer")
+	}
+
+	if o.GetCheckResultsHandler == nil {
+		unregistered = append(unregistered, "GetCheckResultsHandler")
 	}
 
 	if o.GetRecommendationPluginsHandler == nil {
@@ -237,6 +246,11 @@ func (o *RobotAPI) initHandlerCache() {
 	if o.handlers == nil {
 		o.handlers = make(map[string]map[string]http.Handler)
 	}
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/check_results"] = NewGetCheckResults(o.context, o.GetCheckResultsHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)

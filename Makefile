@@ -36,6 +36,6 @@ gen: validate
 		--target=./swagger/gen \
 		--spec=./swagger/api-spec.yml \
 		--exclude-main \
-		--name=robot
+		--name=analyze
 	cp ./swagger/api-spec.yml ./swagger/ui/api-spec.yml
 	statik -f -src=${CURRENT_DIR}/swagger/ui
