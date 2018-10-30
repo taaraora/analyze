@@ -77,7 +77,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 	storage, err := etcd.NewETCDStorage(cfg.ETCD)
 	if err != nil {
-		errors.Wrap(specDocumentCreationError, "unable to create ETCD client")
+		return errors.Wrap(specDocumentCreationError, "unable to create ETCD client")
 	}
 	defer storage.Close()
 
@@ -85,8 +85,8 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	analyzeAPI.GetCheckResultsHandler = handlers.NewCheckResultsHandler(storage)
 	server.ConfigureAPI()
 
-	if err := server.Serve(); err != nil {
-		mainLogger.Fatal(err)
+	if servingError := server.Serve(); servingError != nil {
+		return errors.Wrap(servingError, "unable to serve HTTP API")
 	}
 
 	return nil
