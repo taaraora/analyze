@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/go-openapi/runtime/middleware"
 
@@ -25,10 +26,10 @@ func (h *checkResultsHandler) Handle(params operations.GetCheckResultsParams) mi
 	resultsRaw, err := h.storage.GetAll(context.Background(), "/robot/check_results/")
 
 	if err != nil {
-		r := operations.NewGetCheckResultsDefault(500)
+		r := operations.NewGetCheckResultsDefault(http.StatusInternalServerError)
 		msg := err.Error()
 		r.Payload = &models.Error{
-			Code:    500,
+			Code:    http.StatusInternalServerError,
 			Message: &msg,
 		}
 		return r
@@ -42,10 +43,10 @@ func (h *checkResultsHandler) Handle(params operations.GetCheckResultsParams) mi
 		checkResult := &models.CheckResult{}
 		err := checkResult.UnmarshalBinary(rawResult)
 		if err != nil {
-			r := operations.NewGetCheckResultsDefault(500)
+			r := operations.NewGetCheckResultsDefault(http.StatusInternalServerError)
 			msg := err.Error()
 			r.Payload = &models.Error{
-				Code:    500,
+				Code:    http.StatusInternalServerError,
 				Message: &msg,
 			}
 			return r

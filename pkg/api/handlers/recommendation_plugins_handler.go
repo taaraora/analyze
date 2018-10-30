@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/go-openapi/runtime/middleware"
 
@@ -25,10 +26,10 @@ func (h *recommendationPluginsHandler) Handle(params operations.GetRecommendatio
 	pluginRaw, err := h.storage.GetAll(context.Background(), "/robot/plugins/")
 
 	if err != nil {
-		r := operations.NewGetRecommendationPluginsDefault(500)
+		r := operations.NewGetRecommendationPluginsDefault(http.StatusInternalServerError)
 		msg := err.Error()
 		r.Payload = &models.Error{
-			Code:    500,
+			Code:    http.StatusInternalServerError,
 			Message: &msg,
 		}
 		return r
@@ -42,10 +43,10 @@ func (h *recommendationPluginsHandler) Handle(params operations.GetRecommendatio
 		p := &models.RecommendationPlugin{}
 		err := p.UnmarshalBinary(rawPlugin)
 		if err != nil {
-			r := operations.NewGetRecommendationPluginsDefault(500)
+			r := operations.NewGetRecommendationPluginsDefault(http.StatusInternalServerError)
 			msg := err.Error()
 			r.Payload = &models.Error{
-				Code:    500,
+				Code:    http.StatusInternalServerError,
 				Message: &msg,
 			}
 			return r
