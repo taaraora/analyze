@@ -1,7 +1,9 @@
 package main
 
 import (
+	"github.com/sirupsen/logrus"
 	"log"
+	"os"
 
 	"github.com/supergiant/robot"
 	"github.com/supergiant/robot/pkg/api"
@@ -87,9 +89,18 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 	defer server.Shutdown()
 
+	loadEnvs(mainLogger)
+
 	if servingError := server.Serve(); servingError != nil {
 		return errors.Wrap(servingError, "unable to serve HTTP API")
 	}
 
 	return nil
+}
+
+func loadEnvs(logger logrus.FieldLogger)  {
+	kubeHost, _ := os.LookupEnv("KUBERNETES_SERVICE_HOST")
+	logger.Warnf("%s", kubeHost)
+	kubePort, _ := os.LookupEnv("KUBERNETES_SERVICE_PORT")
+	logger.Warnf("%s", kubePort)
 }
