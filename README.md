@@ -8,3 +8,12 @@ Also can be configured using environment variables:
 
 *AZ_LOGGING_LEVEL `debug`  
 *AZ_LOGGING_FORMATTER `TXT`  
+
+
+#Analyze deployment using HELM
+
+1. helm chart can be found on ./helm/analyze folder  
+2. check that you have access to the private docker registry - https://hub.docker.com/r/supergiant/analyze/
+3. generate secret of docker-registry and apply it to k8s cluster where you are planning to deploy helm chart. 
+I you need deatils how to generate secret for private docker registry please check following link - https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/  
+4. 
