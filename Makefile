@@ -3,6 +3,9 @@ SHELL := /bin/sh
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(patsubst %/,%,$(dir $(MAKEFILE_PATH)))
 
+DOCKER_IMAGE_NAME := supergiant/analyze
+DOCKER_IMAGE_TAG := $(shell git describe --tags --always | tr -d v || echo 'latest')
+
 
 define LINT
 	@echo "Running code linters..."
@@ -69,3 +72,13 @@ tools:
 .PHONY: goimports
 goimports:
 	@$(call GOIMPORTS)
+
+.PHONY: build-image
+build-image:
+	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) .
+	docker tag $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG):latest
+
+.PHONY: push
+push:
+	docker push $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+

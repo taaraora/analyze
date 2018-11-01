@@ -47,7 +47,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	// configFileReadError is not critical due to possibility that configuration is done by environment variables
 	configFileReadError := config.ReadFromFiles(cfg, configFilePaths)
 
-	if err = config.MergeEnv("RK", cfg); err != nil {
+	if err = config.MergeEnv("AZ", cfg); err != nil {
 		return errors.Wrap(err, "unable to merge env variables")
 	}
 
