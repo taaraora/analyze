@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/dre1080/recover"
 	"github.com/rakyll/statik/fs"
 	"github.com/sirupsen/logrus"
 
@@ -66,10 +67,16 @@ func setupMiddlewares(handler http.Handler) http.Handler {
 // The middleware configuration happens before anything, this middleware also applies to serving the swagger.json document.
 // So this is a good place to plug in a panic handling middleware, logging and metrics
 func setupGlobalMiddleware(handler http.Handler) http.Handler {
-	return uiMiddleware(handler)
+	handlerWithRecovery := recover.New(&recover.Options{
+		Log: logrus.Error,
+	})(handler)
+
+	handlerWithSwagger := swaggerMiddleware(handlerWithRecovery)
+
+	return handlerWithSwagger
 }
 
-func uiMiddleware(handler http.Handler) http.Handler {
+func swaggerMiddleware(handler http.Handler) http.Handler {
 	statikFS, err := fs.New()
 	if err != nil {
 		panic(err)
@@ -79,13 +86,13 @@ func uiMiddleware(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// Shortcut helpers for swagger-ui
-		if r.URL.Path == "/swagger-ui" || r.URL.Path == "/api/help" {
-			http.Redirect(w, r, "/swagger-ui/", http.StatusFound)
+		if r.URL.Path == "/api/v1/swagger-ui" || r.URL.Path == "/api/v1/help" {
+			http.Redirect(w, r, "/api/v1/swagger-ui/", http.StatusFound)
 			return
 		}
 		// Serving ./swagger-ui/
-		if strings.Index(r.URL.Path, "/swagger-ui/") == 0 {
-			http.StripPrefix("/swagger-ui/", staticServer).ServeHTTP(w, r)
+		if strings.Index(r.URL.Path, "/api/v1/swagger-ui/") == 0 {
+			http.StripPrefix("/api/v1/swagger-ui/", staticServer).ServeHTTP(w, r)
 			return
 		}
 		handler.ServeHTTP(w, r)

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
 	"log"
 	"os"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/supergiant/robot/pkg/logger"
 	"github.com/supergiant/robot/pkg/storage/etcd"
 
+	"github.com/sirupsen/logrus"
 	"github.com/go-openapi/loads"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -53,9 +53,15 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return errors.Wrap(err, "unable to merge env variables")
 	}
 
+	//TODO: try to unify APIs discovery which are hosted in k8s
+	//TODO: and rewrite config population logic
+	cfg.ETCD.Endpoints = append(cfg.ETCD.Endpoints, discoverETCDEndpoint())
+	cfg.KubeAPIServerURI = discoverKubeAPIServerURI()
+
 	log := logger.NewLogger(cfg.Logging).WithField("app", "robot")
 	mainLogger := log.WithField("component", "main")
 
+	logEnvs(mainLogger)
 	mainLogger.Infof("config: %+v", cfg)
 	mainLogger.Infof("config file name: %s", config.UsedFileName())
 	if configFileReadError != nil {
@@ -78,9 +84,17 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return errors.Wrap(err, "unable to create spec analyzed document")
 	}
 
+	//TODO: add request logging middleware
+	//TODO: add metrics middleware
 	analyzeAPI := operations.NewAnalyzeAPI(swaggerSpec)
-	analyzeAPI.GetRecommendationPluginsHandler = handlers.NewRecommendationPluginsHandler(storage)
-	analyzeAPI.GetCheckResultsHandler = handlers.NewCheckResultsHandler(storage)
+	analyzeAPI.GetRecommendationPluginsHandler = handlers.NewRecommendationPluginsHandler(
+		storage,
+		log.WithField("handler", "RecommendationPluginsHandler"),
+		)
+	analyzeAPI.GetCheckResultsHandler = handlers.NewCheckResultsHandler(
+		storage,
+		log.WithField("handler", "CheckResultsHandler"),
+		)
 
 	server := api.NewServer(analyzeAPI)
 	server.Port = cfg.API.ServerPort
@@ -89,8 +103,6 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 	defer server.Shutdown()
 
-	loadEnvs(mainLogger)
-
 	if servingError := server.Serve(); servingError != nil {
 		return errors.Wrap(servingError, "unable to serve HTTP API")
 	}
@@ -98,9 +110,20 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func loadEnvs(logger logrus.FieldLogger)  {
-	kubeHost, _ := os.LookupEnv("KUBERNETES_SERVICE_HOST")
-	logger.Warnf("%s", kubeHost)
-	kubePort, _ := os.LookupEnv("KUBERNETES_SERVICE_PORT")
-	logger.Warnf("%s", kubePort)
+func logEnvs(logger logrus.FieldLogger) {
+	for _, pair := range os.Environ() {
+		logger.Warnf("%s", pair)
+	}
+}
+
+func discoverETCDEndpoint() string {
+	etcdHost, _ := os.LookupEnv("ETCD_SERVICE_HOST")
+	etcdPort, _ := os.LookupEnv("ETCD_SERVICE_PORT")
+	return etcdHost + ":" + etcdPort
+}
+
+func discoverKubeAPIServerURI() string {
+	kubeAPIServerHost, _ := os.LookupEnv("KUBERNETES_SERVICE_HOST")
+	kubeAPIServerPort, _ := os.LookupEnv("KUBERNETES_SERVICE_PORT")
+	return kubeAPIServerHost + ":" + kubeAPIServerPort
 }

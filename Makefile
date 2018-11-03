@@ -82,3 +82,9 @@ build-image:
 push:
 	docker push $(DOCKER_IMAGE_NAME):latest
 
+.PHONY: gofmt
+gofmt:
+	go fmt ./...
+
+.PHONY: fmt
+fmt: gofmt goimports

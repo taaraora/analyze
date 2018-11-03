@@ -25,18 +25,15 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- if .Values.etcd.enable }}
+            - name: ETCD_DISCOVERY_DOMAIN
+              value: {{default (printf "%s-etcd" .Release.Name | trunc 63) .Values.etcd.discovery }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 80
               protocol: TCP
-#          livenessProbe:
-#            httpGet:
-#              path: /
-#              port: http
-#          readinessProbe:
-#            httpGet:
-#              path: /
-#              port: http
           volumeMounts:
               - name: config-volume
                 mountPath: "/etc/analyzed"

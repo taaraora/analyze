@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/go-openapi/runtime/middleware"
 
 	"github.com/supergiant/robot/pkg/api/operations"
@@ -13,11 +15,13 @@ import (
 
 type checkResultsHandler struct {
 	storage storage.Interface
+	log     logrus.FieldLogger
 }
 
-func NewCheckResultsHandler(storage storage.Interface) operations.GetCheckResultsHandler {
+func NewCheckResultsHandler(storage storage.Interface, logger logrus.FieldLogger) operations.GetCheckResultsHandler {
 	return &checkResultsHandler{
 		storage: storage,
+		log:     logger,
 	}
 }
 

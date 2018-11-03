@@ -3,7 +3,7 @@ logging:
     formatter: TXT
 api:
     server_host: "0.0.0.0"
-    server_port: 9091
+    server_port: 9092
 etcd:
     endpoints:
-        - "localhost:2399"
+        - "localhost:2400"

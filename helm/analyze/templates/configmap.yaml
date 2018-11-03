@@ -12,5 +12,4 @@ data:
      server_port: 9091
    etcd:
      endpoints:
-     - "localhost:2399"
 
