@@ -9,10 +9,10 @@ import (
 
 // Config  struct represents configuration of robot service
 type Config struct {
-	Logging logger.Config   `mapstructure:"logging"`
-	API     api.Config      `mapstructure:"api"`
-	ETCD    clientv3.Config `mapstructure:"etcd"`
-	KubeAPIServerURI    string `mapstructure:"kube_api_server_uri"`
+	Logging          logger.Config   `mapstructure:"logging"`
+	API              api.Config      `mapstructure:"api"`
+	ETCD             clientv3.Config `mapstructure:"etcd"`
+	KubeAPIServerURI string          `mapstructure:"kube_api_server_uri"`
 }
 
 // Validate checks configuration instance for correctness

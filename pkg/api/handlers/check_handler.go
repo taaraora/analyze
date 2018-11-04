@@ -5,9 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/sirupsen/logrus"
 
 	"github.com/supergiant/robot/pkg/api/operations"
 	"github.com/supergiant/robot/pkg/models"
@@ -28,7 +27,7 @@ func NewCheckResultsHandler(storage storage.Interface, logger logrus.FieldLogger
 
 func (h *checkResultsHandler) Handle(params operations.GetCheckResultsParams) middleware.Responder {
 	h.log.Infof("got request at: %v, request: %+v", time.Now(), params)
-	ctx, cancel := context.WithTimeout(context.Background(), 1 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	resultsRaw, err := h.storage.GetAll(ctx, "/robot/check_results/")
 

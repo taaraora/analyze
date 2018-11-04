@@ -12,9 +12,9 @@ import (
 	"github.com/supergiant/robot/pkg/logger"
 	"github.com/supergiant/robot/pkg/storage/etcd"
 
-	"github.com/sirupsen/logrus"
 	"github.com/go-openapi/loads"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -90,11 +90,11 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	analyzeAPI.GetRecommendationPluginsHandler = handlers.NewRecommendationPluginsHandler(
 		storage,
 		log.WithField("handler", "RecommendationPluginsHandler"),
-		)
+	)
 	analyzeAPI.GetCheckResultsHandler = handlers.NewCheckResultsHandler(
 		storage,
 		log.WithField("handler", "CheckResultsHandler"),
-		)
+	)
 
 	server := api.NewServer(analyzeAPI)
 	server.Port = cfg.API.ServerPort

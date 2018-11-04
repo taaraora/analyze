@@ -27,7 +27,7 @@ func NewRecommendationPluginsHandler(storage storage.Interface, logger logrus.Fi
 
 func (h *recommendationPluginsHandler) Handle(params operations.GetRecommendationPluginsParams) middleware.Responder {
 	h.log.Infof("got request at: %v, request: %+v", time.Now(), params)
-	ctx, cancel := context.WithTimeout(context.Background(), 1 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	pluginRaw, err := h.storage.GetAll(ctx, "/robot/plugins/")
 
