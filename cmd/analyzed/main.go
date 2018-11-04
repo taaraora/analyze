@@ -55,7 +55,9 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 	//TODO: try to unify APIs discovery which are hosted in k8s
 	//TODO: and rewrite config population logic
-	cfg.ETCD.Endpoints = append(cfg.ETCD.Endpoints, discoverETCDEndpoint())
+	if etcdEndpoint := discoverETCDEndpoint(); etcdEndpoint != "" {
+		cfg.ETCD.Endpoints = append(cfg.ETCD.Endpoints, discoverETCDEndpoint())
+	}
 	cfg.KubeAPIServerURI = discoverKubeAPIServerURI()
 
 	log := logger.NewLogger(cfg.Logging).WithField("app", "robot")
@@ -117,13 +119,19 @@ func logEnvs(logger logrus.FieldLogger) {
 }
 
 func discoverETCDEndpoint() string {
-	etcdHost, _ := os.LookupEnv("ETCD_SERVICE_HOST")
-	etcdPort, _ := os.LookupEnv("ETCD_SERVICE_PORT")
+	etcdHost, hostExists := os.LookupEnv("ETCD_SERVICE_HOST")
+	etcdPort, portExists := os.LookupEnv("ETCD_SERVICE_PORT")
+	if !hostExists || !portExists {
+		return ""
+	}
 	return etcdHost + ":" + etcdPort
 }
 
 func discoverKubeAPIServerURI() string {
-	kubeAPIServerHost, _ := os.LookupEnv("KUBERNETES_SERVICE_HOST")
-	kubeAPIServerPort, _ := os.LookupEnv("KUBERNETES_SERVICE_PORT")
+	kubeAPIServerHost, hostExists := os.LookupEnv("KUBERNETES_SERVICE_HOST")
+	kubeAPIServerPort, portExists := os.LookupEnv("KUBERNETES_SERVICE_PORT")
+	if !hostExists || !portExists {
+		return ""
+	}
 	return kubeAPIServerHost + ":" + kubeAPIServerPort
 }
