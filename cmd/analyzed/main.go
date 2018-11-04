@@ -58,7 +58,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	if etcdEndpoint := discoverETCDEndpoint(); etcdEndpoint != "" {
 		cfg.ETCD.Endpoints = append(cfg.ETCD.Endpoints, discoverETCDEndpoint())
 	}
-	cfg.KubeAPIServerURI = discoverKubeAPIServerURI()
+	cfg.K8sAPIServerURI = discoverKubeAPIServerURI()
 
 	log := logger.NewLogger(cfg.Logging).WithField("app", "robot")
 	mainLogger := log.WithField("component", "main")
