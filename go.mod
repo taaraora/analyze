@@ -3,7 +3,7 @@ module github.com/supergiant/robot
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/coreos/etcd v3.3.10+incompatible
-	github.com/dre1080/recover v0.0.0-20150930082637-1c296bbb3227 // indirect
+	github.com/dre1080/recover v0.0.0-20150930082637-1c296bbb3227
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.4.7 // indirect

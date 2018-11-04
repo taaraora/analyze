@@ -27,7 +27,9 @@ func NewRecommendationPluginsHandler(storage storage.Interface, logger logrus.Fi
 
 func (h *recommendationPluginsHandler) Handle(params operations.GetRecommendationPluginsParams) middleware.Responder {
 	h.log.Infof("got request at: %v, request: %+v", time.Now(), params)
-	pluginRaw, err := h.storage.GetAll(context.Background(), "/robot/plugins/")
+	ctx, cancel := context.WithTimeout(context.Background(), 1 * time.Second)
+	defer cancel()
+	pluginRaw, err := h.storage.GetAll(ctx, "/robot/plugins/")
 
 	if err != nil {
 		r := operations.NewGetRecommendationPluginsDefault(http.StatusInternalServerError)
@@ -58,5 +60,6 @@ func (h *recommendationPluginsHandler) Handle(params operations.GetRecommendatio
 		result.InstalledRecommendationPlugins = append(result.InstalledRecommendationPlugins, p)
 	}
 	h.log.Infof("request processing finished at: %v, request: %+v", time.Now(), params)
+
 	return operations.NewGetRecommendationPluginsOK().WithPayload(result)
 }
