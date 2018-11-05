@@ -26,7 +26,7 @@ func NewCheckResultsHandler(storage storage.Interface, logger logrus.FieldLogger
 }
 
 func (h *checkResultsHandler) Handle(params operations.GetCheckResultsParams) middleware.Responder {
-	h.log.Infof("got request at: %v, request: %+v", time.Now(), params)
+	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	resultsRaw, err := h.storage.GetAll(ctx, "/robot/check_results/")
@@ -59,7 +59,7 @@ func (h *checkResultsHandler) Handle(params operations.GetCheckResultsParams) mi
 		}
 		result.CheckResults = append(result.CheckResults, checkResult)
 	}
-	h.log.Infof("request processing finished at: %v, request: %+v", time.Now(), params)
+	h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
 
 	return operations.NewGetCheckResultsOK().WithPayload(result)
 }
