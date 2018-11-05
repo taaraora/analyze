@@ -88,3 +88,10 @@ gofmt:
 
 .PHONY: fmt
 fmt: gofmt goimports
+
+
+#all dependencies are "go get"-able for general dev environment usability.
+# To compile all protobuf files in this repository, run "make protobuf"
+.PHONY: protobuf
+protobuf:
+	docker run --rm -v ${CURRENT_DIR}/pkg/plugin:/defs namely/protoc-all:1.16_0 -i proto -l go -d /defs -o .

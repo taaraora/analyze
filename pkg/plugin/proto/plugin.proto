@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package proto;
+
+
+service Plugin {
+    rpc Check (CheckRequest) returns (CheckResponse);
+    rpc Action (ActionRequest) returns (ActionResponse);
+    rpc Configure (PluginConfig) returns (Empty);
+
+    //Graceful Shutdown Plugin
+    rpc Stop (Stop.Request) returns (Stop.Response);
+}
+
+message PluginConfig {
+    string cloud_provider_type = 1;
+    string FinancialAPIURI = 2;
+    string ApiServerURI = 3;
+    string MetricsURI = 4;
+}
+
+message Stop {
+    message Request {
+    }
+    message Response {
+        string error = 1;
+    }
+}
+
+message CheckRequest {}
+
+message CheckResponse {
+    CheckResult result = 1;
+    string error = 2;
+}
+
+message CheckResult {
+    CheckStatus status = 1;
+    string description = 2;
+    repeated Action actions = 3;
+}
+
+enum CheckStatus {
+    UNKNOWN_CHECK_STATUS = 0;
+    GREEN = 1;
+    YELLOW = 2;
+    RED = 3;
+}
+
+message Action {
+    string action_id = 1; // it is impossible ty make actions typed
+    string description = 2;
+}
+
+message ActionRequest {
+    string action_id = 1;
+}
+
+message ActionResponse {
+    string error = 2;
+}
+
+message Empty {
+
+}
