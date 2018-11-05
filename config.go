@@ -2,6 +2,7 @@ package robot
 
 import (
 	"strings"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/pkg/errors"
@@ -16,6 +17,7 @@ type Config struct {
 	API             api.Config      `mapstructure:"api"`
 	K8sAPIServerURI string          `mapstructure:"k8s_api_server_uri"`
 	ETCD            clientv3.Config `mapstructure:"etcd"`
+	CheckInterval   time.Duration   `mapstructure:"check_interval"`
 }
 
 // Validate checks configuration instance for correctness

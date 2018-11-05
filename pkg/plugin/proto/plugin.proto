@@ -4,12 +4,25 @@ package proto;
 
 
 service Plugin {
+    rpc Info(Empty) returns (PluginInfo);
     rpc Check (CheckRequest) returns (CheckResponse);
     rpc Action (ActionRequest) returns (ActionResponse);
     rpc Configure (PluginConfig) returns (Empty);
 
     //Graceful Shutdown Plugin
     rpc Stop (Stop.Request) returns (Stop.Response);
+}
+
+message PluginInfo {
+    //unique ID of plugin
+    //basically it is slugged URI of plugin repository name e. g. supergiant-underutilized-nodes
+    string id = 1;
+    //plugin version in semver format
+    string version = 2;
+    //short name of plugin
+    string name = 3;
+    // detailed plugin description
+    string description = 4;
 }
 
 message PluginConfig {
@@ -35,9 +48,11 @@ message CheckResponse {
 }
 
 message CheckResult {
-    CheckStatus status = 1;
-    string description = 2;
-    repeated Action actions = 3;
+    string execution_status = 1;
+    CheckStatus status = 2;
+    string name = 3;
+    string description = 4;
+    repeated Action actions = 5;
 }
 
 enum CheckStatus {

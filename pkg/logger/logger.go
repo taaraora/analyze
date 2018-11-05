@@ -20,11 +20,11 @@ const (
 )
 
 func (c Config) Validate() error {
-	if !(c.Formatter == TextFormatter || c.Formatter == JSONFormatter) {
+	if !(c.Formatter == TextFormatter || c.Formatter == JSONFormatter) && c.Formatter != "" {
 		return errors.New("incorrect logs formatter type")
 	}
 
-	if _, err := logrus.ParseLevel(c.Level); err != nil {
+	if _, err := logrus.ParseLevel(c.Level); c.Level != "" && err != nil {
 		return errors.New("incorrect logging level")
 	}
 
