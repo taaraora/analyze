@@ -3,8 +3,10 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/sirupsen/logrus"
 
 	"github.com/supergiant/robot/pkg/api/operations"
 	"github.com/supergiant/robot/pkg/models"
@@ -13,17 +15,21 @@ import (
 
 type checkResultsHandler struct {
 	storage storage.Interface
+	log     logrus.FieldLogger
 }
 
-func NewCheckResultsHandler(storage storage.Interface) operations.GetCheckResultsHandler {
+func NewCheckResultsHandler(storage storage.Interface, logger logrus.FieldLogger) operations.GetCheckResultsHandler {
 	return &checkResultsHandler{
 		storage: storage,
+		log:     logger,
 	}
 }
 
 func (h *checkResultsHandler) Handle(params operations.GetCheckResultsParams) middleware.Responder {
-
-	resultsRaw, err := h.storage.GetAll(context.Background(), "/robot/check_results/")
+	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	resultsRaw, err := h.storage.GetAll(ctx, "/robot/check_results/")
 
 	if err != nil {
 		r := operations.NewGetCheckResultsDefault(http.StatusInternalServerError)
@@ -53,6 +59,7 @@ func (h *checkResultsHandler) Handle(params operations.GetCheckResultsParams) mi
 		}
 		result.CheckResults = append(result.CheckResults, checkResult)
 	}
+	h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
 
 	return operations.NewGetCheckResultsOK().WithPayload(result)
 }

@@ -1,9 +1,13 @@
 logging:
-    level: debug
-    formatter: TXT
+  level: debug
+  formatter: TXT
+
 api:
-    server_host: "localhost"
-    server_port: 9091
+  server_host: 0.0.0.0
+  server_port: 9092
+
+k8s_api_server_uri: localhost:4443
+
 etcd:
-    endpoints:
-        - "localhost:2399"
+  endpoints:
+    - localhost:2379

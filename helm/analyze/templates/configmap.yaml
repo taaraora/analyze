@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: default-config
+data:
+  config.yaml: |
+   logging:
+     level: debug
+     formatter: TXT
+   api:
+     server_host: "0.0.0.0"
+     server_port: {{ .Values.service.internalPort }}
+   etcd:
+     endpoints:
+
