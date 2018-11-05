@@ -17,3 +17,4 @@ Also can be configured using environment variables:
 3. generate secret of docker-registry and apply it to k8s cluster where you are planning to deploy helm chart. 
 I you need deatils how to generate secret for private docker registry please check following link - https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/  
 4. ```helm install --debug analyze```
+5. 
