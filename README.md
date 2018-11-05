@@ -16,5 +16,5 @@ Also can be configured using environment variables:
 2. check that you have access to the private docker registry - https://hub.docker.com/r/supergiant/analyze/
 3. generate secret of docker-registry and apply it to k8s cluster where you are planning to deploy helm chart. 
 I you need deatils how to generate secret for private docker registry please check following link - https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/  
-4. ```helm install --debug analyze```
+4. ```helm install --debug analyze``` if you need to configure ingress use flag ```--set ingress.enabled=true```
 5. if there is no ingress controller nginx is installed on cluster install it using command ```helm install stable/nginx-ingress```
