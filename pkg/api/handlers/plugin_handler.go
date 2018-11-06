@@ -29,7 +29,7 @@ func (h *recommendationPluginsHandler) Handle(params operations.GetRecommendatio
 	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	pluginRaw, err := h.storage.GetAll(ctx, "/robot/plugins/")
+	pluginRaw, err := h.storage.GetAll(ctx, models.PluginPrefix)
 
 	if err != nil {
 		r := operations.NewGetRecommendationPluginsDefault(http.StatusInternalServerError)

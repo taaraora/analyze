@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/supergiant/robot"
-	"github.com/supergiant/robot/builtin/plugins/underutilized-nodes"
+	"github.com/supergiant/robot/builtin/plugins/underutilizednodes"
 	"github.com/supergiant/robot/pkg/api"
 	"github.com/supergiant/robot/pkg/api/handlers"
 	"github.com/supergiant/robot/pkg/api/operations"
@@ -98,16 +98,16 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	check := func(p plugin.PluginsSet, stor storage.Interface, logger logrus.FieldLogger) func() {
 		return func() {
 			for pluginID, pluginClient := range p {
-				ctx, checkCancel := context.WithTimeout(context.Background(), 1*time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), cfg.Plugin.CheckTimeout)
 				checkResponse, err := pluginClient.Check(ctx, &proto.CheckRequest{})
 				if err != nil {
 					logger.Errorf("unable to execute check for plugin: %s, error: %v", pluginID, err)
-					checkCancel()
+					cancel()
 					continue
 				}
 				if checkResponse.Error != "" {
 					logger.Errorf("plugin: %s, returned error: %s", pluginID, checkResponse.Error)
-					checkCancel()
+					cancel()
 					continue
 				}
 
@@ -134,25 +134,22 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 				bytes, err := checkResult.MarshalBinary()
 				if err != nil {
 					logger.Errorf("unable to marshal check result, plugin: %s, returned error: %s", pluginID, err)
-					checkCancel()
+					cancel()
 					continue
 				}
 
-				ctx, storeCancel := context.WithTimeout(context.Background(), time.Minute*1)
-				err = stor.Put(ctx, "/robot/check_results/", pluginID, bytes)
+				err = stor.Put(ctx, models.CheckResultPrefix, pluginID, bytes)
 				if err != nil {
 					logger.Errorf("unable to store check result, plugin: %s, returned error: %s", pluginID, err)
-					checkCancel()
-					storeCancel()
+					cancel()
 				}
 
-				checkCancel()
-				storeCancel()
+				cancel()
 			}
 		}
 	}(plugins, etcdStorage, log.WithField("component", "pluginsChecks"))
 
-	scheduler := scheduler.NewScheduler(cfg.CheckInterval, check)
+	scheduler := scheduler.NewScheduler(cfg.Plugin.CheckInterval, check)
 	defer scheduler.Stop()
 
 	swaggerSpec, err := loads.Analyzed(api.SwaggerJSON, "2.0")

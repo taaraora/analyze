@@ -27,9 +27,9 @@ message PluginInfo {
 
 message PluginConfig {
     string cloud_provider_type = 1;
-    string FinancialAPIURI = 2;
-    string ApiServerURI = 3;
-    string MetricsURI = 4;
+    string financial_api_uri = 2;
+    string api_server_uri = 3;
+    string metrics_uri = 4;
 }
 
 message Stop {
@@ -75,6 +75,4 @@ message ActionResponse {
     string error = 2;
 }
 
-message Empty {
-
-}
+message Empty {}

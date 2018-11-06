@@ -9,6 +9,11 @@ import (
 	"github.com/supergiant/robot/pkg/plugin/proto"
 )
 
+type Config struct {
+	CheckInterval time.Duration `mapstructure:"check_interval"`
+	CheckTimeout  time.Duration `mapstructure:"check_timeout"`
+}
+
 type PluginsSet map[string]proto.PluginClient
 
 // TODO: refactor and implement real pluggability
@@ -28,6 +33,18 @@ func (ps PluginsSet) Load(plugin proto.PluginClient) error {
 	}
 
 	ps[info.Id] = plugin
+
+	return nil
+}
+
+func (c Config) Validate() error {
+	if c.CheckInterval.Nanoseconds() <= 0 {
+		return errors.New("plugin check interval can't be less or equal to zero")
+	}
+
+	if c.CheckTimeout.Nanoseconds() <= 0 {
+		return errors.New("plugin check timeout can't be less or equal to zero")
+	}
 
 	return nil
 }
