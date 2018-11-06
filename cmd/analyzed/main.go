@@ -139,6 +139,12 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 					continue
 				}
 
+				if checkResponse.Result == nil {
+					logger.Errorf("plugin: %s, returned nil Result", pluginID)
+					cancel()
+					continue
+				}
+
 				r := checkResponse.Result
 
 				var actions = []*models.PluginAction{}

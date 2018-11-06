@@ -213,3 +213,9 @@ gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7/go.mod h1:dt/ZhP58zS4L8KSrWD
 gopkg.in/yaml.v2 v2.2.1 h1:mUhvW9EsL+naU5Q3cakzfE91YhliOondGd6ZrsDBHQE=
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 honnef.co/go/tools v0.0.0-20180728063816-88497007e858/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
+k8s.io/api v0.0.0-20181102122915-de5c567eef5c h1:zyOnDtUzVKOq6N8zrpdzocoytjSxznRy0TmfKDahC20=
+k8s.io/api v0.0.0-20181102122915-de5c567eef5c/go.mod h1:iuAfoD4hCxJ8Onx9kaTIt30j7jUFS00AXQi6QMi99vA=
+k8s.io/apimachinery v0.0.0-20181101131016-0aa9751e8aaf h1:Qsp/DuvFWmfTAfp4tcX402hdFfowyhIIBdRGWGCiWlY=
+k8s.io/apimachinery v0.0.0-20181101131016-0aa9751e8aaf/go.mod h1:ccL7Eh7zubPUSh9A3USN90/OzHNSVN6zxzde07TDCL0=
+k8s.io/client-go v9.0.0+incompatible h1:/PdJjifJTjMFe0G4ESclZDcwF1+bFePTJ2xf+MXjcvs=
+k8s.io/client-go v9.0.0+incompatible/go.mod h1:7vJpHMYJwNQCWgzmNV+VYUl1zCObLyodBc8nIyt8L5s=
