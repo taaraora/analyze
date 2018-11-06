@@ -7,6 +7,9 @@ data:
    logging:
      level: debug
      formatter: TXT
+   plugin:
+     check_interval: 10s
+     check_timeout: 2s
    api:
      server_host: "0.0.0.0"
      server_port: {{ .Values.service.internalPort }}

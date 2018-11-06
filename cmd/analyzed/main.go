@@ -1,15 +1,24 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/supergiant/robot"
+	"github.com/supergiant/robot/builtin/plugins/underutilizednodes"
 	"github.com/supergiant/robot/pkg/api"
 	"github.com/supergiant/robot/pkg/api/handlers"
 	"github.com/supergiant/robot/pkg/api/operations"
 	"github.com/supergiant/robot/pkg/config"
 	"github.com/supergiant/robot/pkg/logger"
+	"github.com/supergiant/robot/pkg/models"
+	"github.com/supergiant/robot/pkg/plugin"
+	"github.com/supergiant/robot/pkg/plugin/proto"
+	"github.com/supergiant/robot/pkg/scheduler"
+	"github.com/supergiant/robot/pkg/storage"
 	"github.com/supergiant/robot/pkg/storage/etcd"
 
 	"github.com/go-openapi/loads"
@@ -58,7 +67,9 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	if etcdEndpoint := discoverETCDEndpoint(); etcdEndpoint != "" {
 		cfg.ETCD.Endpoints = append(cfg.ETCD.Endpoints, discoverETCDEndpoint())
 	}
-	cfg.K8sAPIServerURI = discoverKubeAPIServerURI()
+	if strings.TrimSpace(discoverKubeAPIServerURI()) != "" {
+		cfg.K8sAPIServerURI = discoverKubeAPIServerURI()
+	}
 
 	log := logger.NewLogger(cfg.Logging).WithField("app", "robot")
 	mainLogger := log.WithField("component", "main")
@@ -74,12 +85,72 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return errors.Wrap(err, "config validation error")
 	}
 
-	storage, err := etcd.NewETCDStorage(cfg.ETCD)
+	etcdStorage, err := etcd.NewETCDStorage(cfg.ETCD)
 	if err != nil {
 		return errors.Wrap(err, "unable to create ETCD client")
 	}
 
-	defer storage.Close()
+	defer etcdStorage.Close()
+
+	plugins := make(plugin.PluginsSet)
+	plugins.Load(underutilizednodes.NewPlugin())
+
+	check := func(p plugin.PluginsSet, stor storage.Interface, logger logrus.FieldLogger) func() {
+		return func() {
+			for pluginID, pluginClient := range p {
+				ctx, cancel := context.WithTimeout(context.Background(), cfg.Plugin.CheckTimeout)
+				checkResponse, err := pluginClient.Check(ctx, &proto.CheckRequest{})
+				if err != nil {
+					logger.Errorf("unable to execute check for plugin: %s, error: %v", pluginID, err)
+					cancel()
+					continue
+				}
+				if checkResponse.Error != "" {
+					logger.Errorf("plugin: %s, returned error: %s", pluginID, checkResponse.Error)
+					cancel()
+					continue
+				}
+
+				r := checkResponse.Result
+
+				var actions = []*models.PluginAction{}
+				for _, action := range r.Actions {
+					actions = append(actions, &models.PluginAction{
+						Description: action.Description,
+						ID:          action.ActionId,
+					})
+				}
+				currentTime := time.Now()
+				checkResult := models.CheckResult{
+					CheckStatus:     r.GetStatus().String(),
+					CompletedAt:     currentTime.String(),
+					Description:     r.GetDescription(),
+					ExecutionStatus: r.GetExecutionStatus(),
+					ID:              r.GetName(),
+					Name:            r.GetName(),
+					PossibleActions: actions,
+				}
+
+				bytes, err := checkResult.MarshalBinary()
+				if err != nil {
+					logger.Errorf("unable to marshal check result, plugin: %s, returned error: %s", pluginID, err)
+					cancel()
+					continue
+				}
+
+				err = stor.Put(ctx, models.CheckResultPrefix, pluginID, bytes)
+				if err != nil {
+					logger.Errorf("unable to store check result, plugin: %s, returned error: %s", pluginID, err)
+					cancel()
+				}
+
+				cancel()
+			}
+		}
+	}(plugins, etcdStorage, log.WithField("component", "pluginsChecks"))
+
+	scheduler := scheduler.NewScheduler(cfg.Plugin.CheckInterval, check)
+	defer scheduler.Stop()
 
 	swaggerSpec, err := loads.Analyzed(api.SwaggerJSON, "2.0")
 	if err != nil {
@@ -90,11 +161,11 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	//TODO: add metrics middleware
 	analyzeAPI := operations.NewAnalyzeAPI(swaggerSpec)
 	analyzeAPI.GetRecommendationPluginsHandler = handlers.NewRecommendationPluginsHandler(
-		storage,
+		etcdStorage,
 		log.WithField("handler", "RecommendationPluginsHandler"),
 	)
 	analyzeAPI.GetCheckResultsHandler = handlers.NewCheckResultsHandler(
-		storage,
+		etcdStorage,
 		log.WithField("handler", "CheckResultsHandler"),
 	)
 

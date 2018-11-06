@@ -29,7 +29,7 @@ func (h *checkResultsHandler) Handle(params operations.GetCheckResultsParams) mi
 	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	resultsRaw, err := h.storage.GetAll(ctx, "/robot/check_results/")
+	resultsRaw, err := h.storage.GetAll(ctx, models.CheckResultPrefix)
 
 	if err != nil {
 		r := operations.NewGetCheckResultsDefault(http.StatusInternalServerError)

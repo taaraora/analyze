@@ -8,6 +8,10 @@ api:
 
 k8s_api_server_uri: localhost:4443
 
+plugin:
+  check_interval: 10s
+  check_timeout: 2s
+
 etcd:
   endpoints:
     - localhost:2379

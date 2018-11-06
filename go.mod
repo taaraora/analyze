@@ -17,6 +17,7 @@ require (
 	github.com/go-openapi/validate v0.17.2
 	github.com/go-swagger/go-swagger v0.17.2 // indirect
 	github.com/gogo/protobuf v1.1.1 // indirect
+	github.com/golang/protobuf v1.2.0
 	github.com/gorilla/handlers v1.4.0 // indirect
 	github.com/gorilla/mux v1.6.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -44,7 +45,7 @@ require (
 	golang.org/x/net v0.0.0-20181005035420-146acd28ed58
 	golang.org/x/sys v0.0.0-20181030142055-f7626d0b1519 // indirect
 	golang.org/x/tools v0.0.0-20181030151751-bb28844c46df // indirect
-	google.golang.org/grpc v1.16.0 // indirect
+	google.golang.org/grpc v1.16.0
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
