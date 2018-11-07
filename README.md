@@ -18,3 +18,4 @@ Also can be configured using environment variables:
 I you need deatils how to generate secret for private docker registry please check following link - https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/  
 4. ```helm install --debug analyze``` if you need to configure ingress use flag ```--set ingress.enabled=true```
 5. if there is no ingress controller nginx is installed on cluster install it using command ```helm install stable/nginx-ingress```
+6. if there is RBAC on cluster we need to enable view for service account ```kubectl create clusterrolebinding default-view --clusterrole=view --serviceaccount=default:default```

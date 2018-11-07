@@ -16,7 +16,7 @@ func NewPlugin() proto.PluginClient {
 }
 
 func (u *uuNodesPlugin) Check(ctx context.Context, in *proto.CheckRequest, opts ...grpc.CallOption) (*proto.CheckResponse, error) {
-	return nil, nil
+	return &proto.CheckResponse{}, nil
 }
 
 func (u *uuNodesPlugin) Action(ctx context.Context, in *proto.ActionRequest, opts ...grpc.CallOption) (*proto.ActionResponse, error) {
