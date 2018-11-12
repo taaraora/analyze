@@ -1,0 +1,11 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: black;
+
+  .content {
+    min-height: calc(100vh - 275px);
+    margin-top: 120px;
+  }
+}
