@@ -1,11 +1,44 @@
+$table-border: 1px solid black;
 .check-item {
   margin: 20px;
 }
 
+@mixin border-bottom {
+  border-bottom: $table-border;
+}
+
+@mixin border-right {
+  border-right: $table-border;
+}
+
 table {
   width: 100%;
+  height: 100%;
+  align: left;
+
   border-spacing: 0;
-  border: 1px solid black;
+  border: $table-border;
+  vertical-align: top;
+
+  .node-name {
+    @include border-bottom;
+    @include border-right;
+  }
+
+  .pod-name {
+    @include border-bottom;
+
+    width: 150px;
+  }
+
+  .container-name {
+
+    width: 100px;
+  }
+
+  .container-image {
+    width: 450px;
+  }
 
   tr, td {
     padding: 0;

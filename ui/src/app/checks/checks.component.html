@@ -10,31 +10,31 @@
 
   <div *ngIf="isObject(check.description)">
     <table *ngIf="check.description as data">
-      <tr>
+      <tr class="node-name">
         <th>name</th>
         <th>pods</th>
       </tr>
       <tr *ngFor="let node of data.Nodes">
-        <td> {{ node.NodeName }}</td>
+        <td class="node-name"> {{ node.NodeName }}</td>
         <td>
 
       <tr>
-        <th>pod name</th>
+        <th class="pod-name">pod name</th>
         <th>containers</th>
       </tr>
       <tr *ngFor="let pod of node.Pods">
-        <td>{{ pod.PodName }}</td>
+        <td class="pod-name">{{ pod.PodName }}</td>
         <td>
           <table>
             <tr>
-              <th>ContainerName</th>
-              <th>ContainerImage</th>
+              <th class="container-name">ContainerName</th>
+              <th class="container-image">ContainerImage</th>
               <th>Requests</th>
               <th>Limits</th>
             </tr>
             <tr *ngFor="let container of pod.Containers">
-              <td>{{ container.ContainerName }}</td>
-              <td>{{ container.ContainerImage }}</td>
+              <td class="container-name">{{ container.ContainerName }}</td>
+              <td class="container-image">{{ container.ContainerImage }}</td>
               <td>
                 <table>
                   <tr>
