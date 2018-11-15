@@ -1,0 +1,14 @@
+@import "./colors";
+
+body {
+  background: url('/assets/img/sg2-bg-grad.jpg') center top / cover no-repeat;
+}
+
+
+.transparent {
+  &.mat-card {
+    background: $black-transparent;
+    border: 1px solid rgba(white, .2);
+  }
+}
+

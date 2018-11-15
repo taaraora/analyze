@@ -1,5 +1,4 @@
-<mat-card class="check-item" *ngFor="let check of (checks$ | async)">
-  <!-- TODO date to timestamp-->
+<mat-card class="check-item transparent" *ngFor="let check of (checks$ | async)">
   <mat-card-title>
     {{ check.name }}
     {{ check.completedAt | date: 'medium' }}
