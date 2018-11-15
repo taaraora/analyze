@@ -18,7 +18,7 @@ export class ChecksComponent implements OnInit {
   }
 
   ngOnInit() {
-    const apiV1Check = 'http://ec2-54-241-150-199.us-west-1.compute.amazonaws.com:31146/api/v1/check';
+    const apiV1Check = 'http://ec2-54-241-150-199.us-west-1.compute.amazonaws.com:30759/api/v1/check';
     const mock = [
       {
         "checkStatus": "RED",

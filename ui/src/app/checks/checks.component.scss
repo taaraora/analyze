@@ -1,4 +1,17 @@
-$table-border: 1px solid black;
+@import "~src/assets/styles/colors";
+
+$table-border: 1px solid white;
+
+:host {
+
+  ::ng-deep .mat-tab-header {
+    .mat-ink-bar {
+      background-color: transparent;
+      border-bottom: 2px dotted $white;
+    }
+  }
+}
+
 .check-item {
   margin: 20px;
 }

@@ -1,10 +1,10 @@
-import { NgModule } from '@angular/core';
+import { NgModule }     from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { ChecksRoutingModule } from './checks-routing.module';
-import { ChecksComponent }     from './checks.component';
-import { HttpClientModule }    from "@angular/common/http";
-import { MatCardModule }       from "@angular/material";
+import { ChecksRoutingModule }                              from './checks-routing.module';
+import { ChecksComponent }                                  from './checks.component';
+import { HttpClientModule }                                 from "@angular/common/http";
+import { MatCardModule, MatTabsModule, MatExpansionModule } from "@angular/material";
 
 @NgModule({
   declarations: [ChecksComponent],
@@ -13,6 +13,9 @@ import { MatCardModule }       from "@angular/material";
     ChecksRoutingModule,
     HttpClientModule,
     MatCardModule,
+    MatTabsModule,
+    MatExpansionModule,
   ],
 })
-export class ChecksModule { }
+export class ChecksModule {
+}
