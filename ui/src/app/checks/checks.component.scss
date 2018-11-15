@@ -10,6 +10,28 @@ $table-border: 1px solid white;
       border-bottom: 2px dotted $white;
     }
   }
+
+  .mat-card-title {
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+.check-date {
+  font-size: 12px;
+  display: flex;
+
+  &.red {
+    color: red;
+  }
+
+  &.yellow {
+    color: yellow;
+  }
+
+  &.green {
+    color: green;
+  }
 }
 
 .check-item {

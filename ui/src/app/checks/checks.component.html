@@ -1,9 +1,23 @@
 <mat-card class="check-item transparent" *ngFor="let check of (checks$ | async)">
   <mat-card-title>
-    {{ check.name }}
-    {{ check.completedAt | date: 'medium' }}
+    <div> {{ check.name }}</div>
+    <section class="check-date" [ngClass]="{
+      'green': check.checkStatus == 'GREEN',
+      'yellow': check.checkStatus == 'YELLOW',
+      'red': check.checkStatus == 'RED'
+    }">
+      <div>
+        <div class="status-time"> {{ check.completedAt | date: 'hh:mm:ss' }}</div>
+        <div class="status-time"> {{ check.completedAt | date: 'MMM d, y'}}</div>
+      </div>
+      &nbsp;
+      <mat-icon [ngSwitch]="check.checkStatus">
+        <span *ngSwitchCase="'RED'">block</span>
+        <span *ngSwitchCase="'YELLOW'">warning</span>
+        <span *ngSwitchCase="'GREEN'">check_circle</span>
+      </mat-icon>
+    </section>
   </mat-card-title>
-  Status: {{ check.checkStatus }}
   <br>
   <!-- TODO: remove harcode -->
 
