@@ -34,16 +34,16 @@
             <th>name</th>
             <th>pods</th>
           </tr>
-          <tr *ngFor="let node of data.NodesResourceRequirements">
-            <td class="node-name"> {{ node.NodeName }}</td>
+          <tr *ngFor="let node of data.nodesResourceRequirements">
+            <td class="node-name"> {{ node.nodeName }}</td>
             <td>
 
           <tr>
             <th class="pod-name">pod name</th>
             <th>containers</th>
           </tr>
-          <tr *ngFor="let pod of node.PodResourceRequirements">
-            <td class="pod-name">{{ pod.PodName }}</td>
+          <tr *ngFor="let pod of node.podResourceRequirements">
+            <td class="pod-name">{{ pod.podName }}</td>
             <td>
               <table>
                 <tr>
@@ -52,9 +52,9 @@
                   <th>Requests</th>
                   <th>Limits</th>
                 </tr>
-                <tr *ngFor="let container of pod.ContainersResourceRequirements">
-                  <td class="container-name">{{ container.ContainerName }}</td>
-                  <td class="container-image">{{ container.ContainerImage }}</td>
+                <tr *ngFor="let container of pod.containersResourceRequirements">
+                  <td class="container-name">{{ container.containerName }}</td>
+                  <td class="container-image">{{ container.containerImage }}</td>
                   <td>
                     <table>
                       <tr>
@@ -67,10 +67,10 @@
                       </tr>
                       <tr>
                         <td>
-                          {{ container.Requests.RAM }}
+                          {{ container.requests.ram }}
                         </td>
                         <td>
-                          {{ container.Requests.CPU }}
+                          {{ container.requests.cpu }}
                         </td>
                       </tr>
                     </table>
@@ -87,10 +87,10 @@
                       </tr>
                       <tr>
                         <td>
-                          {{ container.Limits.RAM }}
+                          {{ container.limits.ram }}
                         </td>
                         <td>
-                          {{ container.Limits.CPU }}
+                          {{ container.limits.cpu }}
                         </td>
                       </tr>
                     </table>
@@ -108,15 +108,19 @@
 
 
   <mat-tab-group>
-    <mat-tab class="action-tab" *ngFor="let check of check.possibleActions as action">
+    <mat-tab *ngFor="let check of check.possibleActions as action">
       <ng-template mat-tab-label>
-        {{ check.description }}
+        {{ check.name }}
       </ng-template>
-      <button mat-button>{{check.id}}</button>
+      <div class="description">
+        {{ check.description }}
+      </div>
+      <mat-chip-list class="action">
+        <mat-chip class="red">RUN</mat-chip>
+      </mat-chip-list>
     </mat-tab>
 
   </mat-tab-group>
-
 
 </mat-card>
 

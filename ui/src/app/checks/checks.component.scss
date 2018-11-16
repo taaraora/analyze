@@ -2,18 +2,30 @@
 
 $table-border: 1px solid white;
 
-:host {
-
-  ::ng-deep .mat-tab-header {
-    .mat-ink-bar {
-      background-color: transparent;
-      border-bottom: 2px dotted $white;
-    }
+.mat-tab-header {
+  .mat-ink-bar {
+    background-color: transparent !important;
+    border-bottom: 2px dotted $white;
+    width: auto;
   }
+}
 
-  .mat-card-title {
-    display: flex;
-    justify-content: space-between;
+.mat-tab-body-content {
+  padding: 20px 0;
+}
+
+.mat-card-title {
+  display: flex !important;
+  justify-content: space-between;
+}
+
+.description {
+  padding-bottom: 24px;
+}
+
+.action {
+  .red {
+    background: red;
   }
 }
 
