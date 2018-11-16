@@ -1,90 +1,166 @@
-<mat-card class="check-item" *ngFor="let check of (checks$ | async)">
-  <!-- TODO date to timestamp-->
+<mat-card class="check-item transparent" *ngFor="let check of (checks$ | async)">
   <mat-card-title>
-    {{ check.name }}
-    {{ check.completedAt | date: 'medium' }}
+    <div> {{ check.name }}</div>
+    <section class="check-date" [ngClass]="{
+      'green': check.checkStatus == 'GREEN',
+      'yellow': check.checkStatus == 'YELLOW',
+      'red': check.checkStatus == 'RED'
+    }">
+      <div>
+        <div class="status-time"> {{ check.completedAt | date: 'hh:mm:ss' }}</div>
+        <div class="status-time"> {{ check.completedAt | date: 'MMM d, y'}}</div>
+      </div>
+      &nbsp;
+      <mat-icon [ngSwitch]="check.checkStatus">
+        <span *ngSwitchCase="'RED'">block</span>
+        <span *ngSwitchCase="'YELLOW'">warning</span>
+        <span *ngSwitchCase="'GREEN'">check_circle</span>
+      </mat-icon>
+    </section>
   </mat-card-title>
-  Status: {{ check.checkStatus }}
   <br>
   <!-- TODO: remove harcode -->
 
-  <div *ngIf="isObject(check.description)">
-    <table *ngIf="check.description as data">
-      <tr>
-        <th>name</th>
-        <th>pods</th>
-      </tr>
-      <tr *ngFor="let node of data.Nodes">
-        <td> {{ node.NodeName }}</td>
-        <td>
-
-      <tr>
-        <th>pod name</th>
-        <th>containers</th>
-      </tr>
-      <tr *ngFor="let pod of node.Pods">
-        <td>{{ pod.PodName }}</td>
-        <td>
+  <div *ngIf="check.description as data">
+    <mat-accordion>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Details
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <div class="scrollable-area">
           <table>
+            <tbody>
             <tr>
-              <th>ContainerName</th>
-              <th>ContainerImage</th>
-              <th>Requests</th>
-              <th>Limits</th>
+              <th>
+                <div>Node Name</div>
+              </th>
+              <th>
+                <div>Pod Resource Requirements</div>
+              </th>
             </tr>
-            <tr *ngFor="let container of pod.Containers">
-              <td>{{ container.ContainerName }}</td>
-              <td>{{ container.ContainerImage }}</td>
+            <tr *ngFor="let node of data.nodesResourceRequirements">
               <td>
-                <table>
-                  <tr>
-                    <th>
-                      ram
-                    </th>
-                    <th>
-                      cpu
-                    </th>
-                  </tr>
-                  <tr>
-                    <td>
-                      {{ container.Requests.RAM }}
-                    </td>
-                    <td>
-                      {{ container.Requests.CPU }}
-                    </td>
-                  </tr>
-                </table>
+                <div>{{ node.nodeName}}</div>
               </td>
               <td>
                 <table>
+                  <tbody>
                   <tr>
                     <th>
-                      ram
+                      <div>Pod Name</div>
                     </th>
                     <th>
-                      cpu
+                      <div>Containers Resource Requirements</div>
                     </th>
                   </tr>
-                  <tr>
+                  <tr *ngFor="let pod of node.podResourceRequirements">
                     <td>
-                      {{ container.Limits.RAM }}
+                      <div> {{pod.podName}}</div>
                     </td>
                     <td>
-                      {{ container.Limits.CPU }}
+                      <table>
+                        <tbody>
+                        <tr>
+                          <th>
+                            <div>Container Name</div>
+                          </th>
+                          <th>
+                            <div>Container Image</div>
+                          </th>
+                          <th>
+                            <div>Requests</div>
+                          </th>
+                          <th>
+                            <div>Limits</div>
+                          </th>
+                        </tr>
+                        <tr *ngFor="let container of pod.containersResourceRequirements">
+                          <td>
+                            <div>{{ container.containerName }}</div>
+                          </td>
+                          <td>
+                            <div>{{ container.containerImage }}</div>
+                          </td>
+                          <td>
+                            <table>
+                              <tbody>
+                              <tr>
+                                <th>
+                                  <div>Ram</div>
+                                </th>
+                                <td>
+                                  <div>{{ container.requests.ram }}</div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <th>
+                                  <div>Cpu</div>
+                                </th>
+                                <td>
+                                  <div>{{ container.requests.cpu }}</div>
+                                </td>
+                              </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                          <td>
+                            <table>
+                              <tbody>
+                              <tr>
+                                <th>
+                                  <div>Ram</div>
+                                </th>
+                                <td>
+                                  <div>{{ container.limits.ram }}</div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <th>
+                                  <div>Cpu</div>
+                                </th>
+                                <td>
+                                  <div>{{ container.limits.cpu }}</div>
+                                </td>
+                              </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                        </tbody>
+                      </table>
                     </td>
                   </tr>
+                  </tbody>
                 </table>
               </td>
             </tr>
+            </tbody>
           </table>
-        </td>
-      </tr>
+        </div>
+      </mat-expansion-panel>
 
-    </table>
+
+    </mat-accordion>
+
   </div>
-  <span *ngFor="let check of check.possibleActions as action">
-    {{ action.description }}
-    <button>run id {{ check.id}}</button>
-  </span>
+
+
+  <mat-tab-group>
+    <mat-tab *ngFor="let check of check.possibleActions as action">
+      <ng-template mat-tab-label>
+        {{ check.name }}
+      </ng-template>
+      <div class="description">
+        {{ check.description }}
+      </div>
+      <mat-chip-list class="action">
+        <mat-chip class="red">RUN</mat-chip>
+      </mat-chip-list>
+    </mat-tab>
+
+  </mat-tab-group>
+
 </mat-card>
 

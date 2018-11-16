@@ -1,13 +1,97 @@
+@import "~src/assets/styles/colors";
+
+$table-border: 1px solid white;
+
+.scrollable-area {
+  height: 500px;
+  overflow: scroll;
+  margin-top: 12px;
+}
+
+.mat-tab-header {
+  .mat-ink-bar {
+    background-color: transparent !important;
+    border-bottom: 2px dotted $white;
+    width: auto;
+  }
+}
+
+.mat-expansion-panel-header {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mat-tab-body-content {
+  padding: 20px 0;
+}
+
+.mat-card-title {
+  display: flex !important;
+  justify-content: space-between;
+}
+
+.description {
+  padding-bottom: 24px;
+}
+
+.action {
+  .red {
+    background: red;
+  }
+}
+
+.check-date {
+  font-size: 12px;
+  display: flex;
+
+  &.red {
+    color: red;
+  }
+
+  &.yellow {
+    color: yellow;
+  }
+
+  &.green {
+    color: green;
+  }
+}
+
 .check-item {
   margin: 20px;
 }
 
+@mixin border-bottom {
+  border-bottom: $table-border;
+}
+
+@mixin border-right {
+  border-right: $table-border;
+}
+
+.mat-expansion-panel {
+  background: transparent;
+}
+
 table {
   width: 100%;
-  border-spacing: 0;
-  border: 1px solid black;
+  height: 100%;
 
-  tr, td {
-    padding: 0;
+  th {
+    background-color: rgba(255, 0, 166, 0.25);
+    border: none;
+    min-height: 45px;
+  }
+
+  tr {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  td {
+    vertical-align: top;
+    padding: 5px;
+
+    &~table {
+      padding: 0;
+    }
   }
 }
