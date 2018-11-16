@@ -21,7 +21,7 @@
   <br>
   <!-- TODO: remove harcode -->
 
-  <div *ngIf="isObject(check.description)">
+  <div *ngIf="check.description as data">
     <mat-accordion>
       <mat-expansion-panel>
         <mat-expansion-panel-header>
@@ -29,79 +29,119 @@
             Details
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <table *ngIf="check.description as data">
-          <tr class="node-name">
-            <th>name</th>
-            <th>pods</th>
-          </tr>
-          <tr *ngFor="let node of data.nodesResourceRequirements">
-            <td class="node-name"> {{ node.nodeName }}</td>
-            <td>
-
-          <tr>
-            <th class="pod-name">pod name</th>
-            <th>containers</th>
-          </tr>
-          <tr *ngFor="let pod of node.podResourceRequirements">
-            <td class="pod-name">{{ pod.podName }}</td>
-            <td>
-              <table>
-                <tr>
-                  <th class="container-name">ContainerName</th>
-                  <th class="container-image">ContainerImage</th>
-                  <th>Requests</th>
-                  <th>Limits</th>
-                </tr>
-                <tr *ngFor="let container of pod.containersResourceRequirements">
-                  <td class="container-name">{{ container.containerName }}</td>
-                  <td class="container-image">{{ container.containerImage }}</td>
-                  <td>
-                    <table>
-                      <tr>
-                        <th>
-                          ram
-                        </th>
-                        <th>
-                          cpu
-                        </th>
-                      </tr>
-                      <tr>
-                        <td>
-                          {{ container.requests.ram }}
-                        </td>
-                        <td>
-                          {{ container.requests.cpu }}
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                  <td>
-                    <table>
-                      <tr>
-                        <th>
-                          ram
-                        </th>
-                        <th>
-                          cpu
-                        </th>
-                      </tr>
-                      <tr>
-                        <td>
-                          {{ container.limits.ram }}
-                        </td>
-                        <td>
-                          {{ container.limits.cpu }}
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-        </table>
+        <div class="scrollable-area">
+          <table>
+            <tbody>
+            <tr>
+              <th>
+                <div>Node Name</div>
+              </th>
+              <th>
+                <div>Pod Resource Requirements</div>
+              </th>
+            </tr>
+            <tr *ngFor="let node of data.nodesResourceRequirements">
+              <td>
+                <div>{{ node.nodeName}}</div>
+              </td>
+              <td>
+                <table>
+                  <tbody>
+                  <tr>
+                    <th>
+                      <div>Pod Name</div>
+                    </th>
+                    <th>
+                      <div>Containers Resource Requirements</div>
+                    </th>
+                  </tr>
+                  <tr *ngFor="let pod of node.podResourceRequirements">
+                    <td>
+                      <div> {{pod.podName}}</div>
+                    </td>
+                    <td>
+                      <table>
+                        <tbody>
+                        <tr>
+                          <th>
+                            <div>Container Name</div>
+                          </th>
+                          <th>
+                            <div>Container Image</div>
+                          </th>
+                          <th>
+                            <div>Requests</div>
+                          </th>
+                          <th>
+                            <div>Limits</div>
+                          </th>
+                        </tr>
+                        <tr *ngFor="let container of pod.containersResourceRequirements">
+                          <td>
+                            <div>{{ container.containerName }}</div>
+                          </td>
+                          <td>
+                            <div>{{ container.containerImage }}</div>
+                          </td>
+                          <td>
+                            <table>
+                              <tbody>
+                              <tr>
+                                <th>
+                                  <div>Ram</div>
+                                </th>
+                                <td>
+                                  <div>{{ container.requests.ram }}</div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <th>
+                                  <div>Cpu</div>
+                                </th>
+                                <td>
+                                  <div>{{ container.requests.cpu }}</div>
+                                </td>
+                              </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                          <td>
+                            <table>
+                              <tbody>
+                              <tr>
+                                <th>
+                                  <div>Ram</div>
+                                </th>
+                                <td>
+                                  <div>{{ container.limits.ram }}</div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <th>
+                                  <div>Cpu</div>
+                                </th>
+                                <td>
+                                  <div>{{ container.limits.cpu }}</div>
+                                </td>
+                              </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
       </mat-expansion-panel>
+
+
     </mat-accordion>
 
   </div>

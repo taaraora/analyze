@@ -2,12 +2,22 @@
 
 $table-border: 1px solid white;
 
+.scrollable-area {
+  height: 500px;
+  overflow: scroll;
+  margin-top: 12px;
+}
+
 .mat-tab-header {
   .mat-ink-bar {
     background-color: transparent !important;
     border-bottom: 2px dotted $white;
     width: auto;
   }
+}
+
+.mat-expansion-panel-header {
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .mat-tab-body-content {
@@ -58,36 +68,30 @@ $table-border: 1px solid white;
   border-right: $table-border;
 }
 
+.mat-expansion-panel {
+  background: transparent;
+}
+
 table {
   width: 100%;
   height: 100%;
-  align: left;
 
-  border-spacing: 0;
-  border: $table-border;
-  vertical-align: top;
-
-  .node-name {
-    @include border-bottom;
-    @include border-right;
+  th {
+    background-color: rgba(255, 0, 166, 0.25);
+    border: none;
+    min-height: 45px;
   }
 
-  .pod-name {
-    @include border-bottom;
-
-    width: 150px;
+  tr {
+    background-color: rgba(255, 255, 255, 0.1);
   }
 
-  .container-name {
+  td {
+    vertical-align: top;
+    padding: 5px;
 
-    width: 100px;
-  }
-
-  .container-image {
-    width: 450px;
-  }
-
-  tr, td {
-    padding: 0;
+    &~table {
+      padding: 0;
+    }
   }
 }
