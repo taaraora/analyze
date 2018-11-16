@@ -1,4 +1,22 @@
-<a href="https://supergiant.io" target="_blank" class="logo">
-  <img src="/assets/img/logo.svg">
-</a>
+<div class="logo">
+  <a href="https://supergiant.io" target="_blank">
+    <img src="/assets/img/logo.svg">
+  </a>
+  <span>analyze</span>
+</div>
+
+<mat-toolbar>
+  <span class="item"
+        routerLink="/checks"
+        routerLinkActive="active">
+    <span>HOME</span>
+  </span>
+
+  <span class="item"
+        routerLink="/plugins"
+        routerLinkActive="active">
+    <span>PLUGINS</span>
+  </span>
+</mat-toolbar>
+
 <app-user-menu></app-user-menu>
