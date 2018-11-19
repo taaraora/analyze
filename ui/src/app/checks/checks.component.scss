@@ -95,3 +95,16 @@ table {
     }
   }
 }
+
+
+.requests {
+  .warn {
+    color: red;
+  }
+}
+
+.limits {
+  .warn {
+    color: yellow;
+  }
+}
