@@ -4,6 +4,7 @@ import { HeaderComponent }                   from './header/header.component';
 import { UserMenuComponent }                 from "src/app/core/header/user-menu/user-menu.component";
 import { MatDialogModule, MatToolbarModule } from "@angular/material";
 import { FooterComponent }                   from './footer/footer.component';
+import { RouterModule }                      from "@angular/router";
 
 @NgModule({
   declarations: [
@@ -16,6 +17,7 @@ import { FooterComponent }                   from './footer/footer.component';
     CommonModule,
     MatDialogModule,
     MatToolbarModule,
+    RouterModule,
   ],
   exports: [
     HeaderComponent,
