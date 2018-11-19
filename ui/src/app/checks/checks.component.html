@@ -85,14 +85,14 @@
                               <div>{{ container.containerImage }}</div>
                             </td>
                             <td>
-                              <table>
+                              <table class="requests">
                                 <tbody>
                                 <tr>
                                   <th>
                                     <div>Ram</div>
                                   </th>
                                   <td>
-                                    <div>{{ container.requests.ram }}</div>
+                                    <div [ngClass]="{warn: !container.requests.ram }">{{ container.requests.ram }}</div>
                                   </td>
                                 </tr>
                                 <tr>
@@ -100,21 +100,21 @@
                                     <div>Cpu</div>
                                   </th>
                                   <td>
-                                    <div>{{ container.requests.cpu }}</div>
+                                    <div [ngClass]="{warn: !container.requests.cpu }">{{ container.requests.cpu }}</div>
                                   </td>
                                 </tr>
                                 </tbody>
                               </table>
                             </td>
                             <td>
-                              <table>
+                              <table class="limits">
                                 <tbody>
                                 <tr>
                                   <th>
                                     <div>Ram</div>
                                   </th>
                                   <td>
-                                    <div>{{ container.limits.ram }}</div>
+                                    <div [ngClass]="{warn: !container.limits.ram}">{{ container.limits.ram }}</div>
                                   </td>
                                 </tr>
                                 <tr>
@@ -122,7 +122,7 @@
                                     <div>Cpu</div>
                                   </th>
                                   <td>
-                                    <div>{{ container.limits.cpu }}</div>
+                                    <div [ngClass]="{warn: !container.limits.cpu}">{{ container.limits.cpu }}</div>
                                   </td>
                                 </tr>
                                 </tbody>

@@ -89,9 +89,24 @@ table {
   td {
     vertical-align: top;
     padding: 5px;
+    align: center;
+
 
     &~table {
       padding: 0;
     }
+  }
+}
+
+
+.requests {
+  .warn {
+    color: red;
+  }
+}
+
+.limits {
+  .warn {
+    color: yellow;
   }
 }
