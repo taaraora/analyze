@@ -1,9 +1,9 @@
-import { NgModule, Optional, SkipSelf } from '@angular/core';
-import { CommonModule }                 from '@angular/common';
-import { HeaderComponent }              from './header/header.component';
-import { UserMenuComponent }            from "src/app/core/header/user-menu/user-menu.component";
-import { MatDialogModule }              from "@angular/material";
-import { FooterComponent } from './footer/footer.component';
+import { NgModule, Optional, SkipSelf }      from '@angular/core';
+import { CommonModule }                      from '@angular/common';
+import { HeaderComponent }                   from './header/header.component';
+import { UserMenuComponent }                 from "src/app/core/header/user-menu/user-menu.component";
+import { MatDialogModule, MatToolbarModule } from "@angular/material";
+import { FooterComponent }                   from './footer/footer.component';
 
 @NgModule({
   declarations: [
@@ -15,6 +15,7 @@ import { FooterComponent } from './footer/footer.component';
   imports: [
     CommonModule,
     MatDialogModule,
+    MatToolbarModule,
   ],
   exports: [
     HeaderComponent,

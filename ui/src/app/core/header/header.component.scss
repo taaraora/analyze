@@ -1,11 +1,51 @@
+@import "~src/assets/styles/colors";
+
 :host {
   display: flex;
   justify-content: space-between;
 
   .logo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 230px;
+    color: $sg-pink;
 
     img {
       height: 40px;
     }
   }
 }
+
+// TODO: make global theme used variables
+
+a:hover {
+  text-decoration: none;
+}
+
+.mat-toolbar {
+  position: relative;
+  background: transparent;
+  width: auto;
+}
+
+.item {
+  letter-spacing: 2px;
+  font-size: 14px;
+  margin-right: 48px;
+  cursor: pointer;
+
+  &:last-child {
+    margin-right: 0;
+  }
+
+  &.active, &:active {
+    color: $sg-pink;
+    outline: none;
+    border-bottom: 2px solid $sg-pink;
+  }
+}
+
+
+
+
