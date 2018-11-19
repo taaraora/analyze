@@ -13,6 +13,8 @@ export class ChecksComponent implements OnInit {
 
   checks$: Observable<any[]>;
 
+  readonly IS_NOT_SET_MSG: string = 'Is not set';
+
   constructor(
     private http: HttpClient,
   ) {

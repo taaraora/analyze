@@ -92,7 +92,9 @@
                                     <div>Ram</div>
                                   </th>
                                   <td>
-                                    <div [ngClass]="{warn: !container.requests.ram }">{{ container.requests.ram }}</div>
+                                    <div [ngClass]="{warn: !container.requests.ram }">
+                                      {{ container.requests.ram || IS_NOT_SET_MSG }}
+                                    </div>
                                   </td>
                                 </tr>
                                 <tr>
@@ -100,7 +102,9 @@
                                     <div>Cpu</div>
                                   </th>
                                   <td>
-                                    <div [ngClass]="{warn: !container.requests.cpu }">{{ container.requests.cpu }}</div>
+                                    <div [ngClass]="{warn: !container.requests.cpu }">
+                                      {{ container.requests.cpu || IS_NOT_SET_MSG }}
+                                    </div>
                                   </td>
                                 </tr>
                                 </tbody>
@@ -114,7 +118,9 @@
                                     <div>Ram</div>
                                   </th>
                                   <td>
-                                    <div [ngClass]="{warn: !container.limits.ram}">{{ container.limits.ram }}</div>
+                                    <div [ngClass]="{warn: !container.limits.ram}">
+                                      {{ container.limits.ram || IS_NOT_SET_MSG }}
+                                    </div>
                                   </td>
                                 </tr>
                                 <tr>
@@ -122,7 +128,9 @@
                                     <div>Cpu</div>
                                   </th>
                                   <td>
-                                    <div [ngClass]="{warn: !container.limits.cpu}">{{ container.limits.cpu }}</div>
+                                    <div [ngClass]="{warn: !container.limits.cpu}">
+                                      {{ container.limits.cpu || IS_NOT_SET_MSG }}
+                                    </div>
                                   </td>
                                 </tr>
                                 </tbody>
