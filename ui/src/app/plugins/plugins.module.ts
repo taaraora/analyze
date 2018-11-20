@@ -5,6 +5,7 @@ import { PluginsRoutingModule } from './plugins-routing.module';
 import { PluginsComponent }     from './plugins.component';
 import { HttpClientModule }     from "@angular/common/http";
 import { PluginsService }       from "src/app/plugins/plugins.service";
+import { MatCardModule }        from "@angular/material";
 
 @NgModule({
   declarations: [PluginsComponent],
@@ -12,6 +13,7 @@ import { PluginsService }       from "src/app/plugins/plugins.service";
     CommonModule,
     PluginsRoutingModule,
     HttpClientModule,
+    MatCardModule,
   ],
   providers: [
     PluginsService,
