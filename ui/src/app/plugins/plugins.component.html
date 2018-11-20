@@ -1,3 +1,5 @@
-<p>
-  plugins works!
-</p>
+<div *ngFor="let plugin of (plugins | async)?.installedPlugins">
+  <div>
+    {{ plugin.name }}
+  </div>
+</div>

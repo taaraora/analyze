@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PluginsService }    from "src/app/plugins/plugins.service";
 
 @Component({
   selector: 'app-plugins',
@@ -6,10 +7,14 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./plugins.component.scss']
 })
 export class PluginsComponent implements OnInit {
+  plugins: any;
 
-  constructor() { }
+  constructor(
+    private pluginsService: PluginsService
+  ) { }
 
   ngOnInit() {
+    this.plugins = this.pluginsService.all();
   }
 
 }
