@@ -1,7 +1,7 @@
 #Nodes Sunsetting plugin
 
 #Design 
-![Sunsetting plugin diagram](builtin/plugins/sunsetting/docs/sunsetting_plugin_arch.png)
+![Sunsetting plugin diagram](../docs/sunsetting_plugin_arch.png)
 
 
 
