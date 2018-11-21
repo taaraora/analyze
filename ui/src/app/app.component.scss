@@ -1,12 +1,13 @@
 :host {
+  background: url('/assets/img/sg2-bg-grad.jpg') center top / cover no-repeat;
   display: flex;
   flex-direction: column;
-  width: 100% -49px;
-
-  padding: 49px;
+  width: 100% -50px;
+  padding: 50px;
+  min-height: 100%;
 
   .content {
-    min-height: calc(100vh - 275px);
-    margin-top: 120px;
+    max-height: 600px;
+    overflow-y: scroll;
   }
 }
