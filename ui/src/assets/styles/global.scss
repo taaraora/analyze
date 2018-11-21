@@ -7,6 +7,11 @@ body {
   font-family: 'Montserrat', sans-serif;
   background: url('/assets/img/sg2-bg-grad.jpg') center top / cover no-repeat;
   background-attachment: fixed;
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
 }
 
 h1 {
