@@ -11,11 +11,14 @@
         <div class="status-time"> {{ check.completedAt | date: 'MMM d, y'}}</div>
       </div>
       &nbsp;
-      <mat-icon [ngSwitch]="check.checkStatus">
-        <span *ngSwitchCase="'RED'">block</span>
-        <span *ngSwitchCase="'YELLOW'">warning</span>
-        <span *ngSwitchCase="'GREEN'">check_circle</span>
-      </mat-icon>
+      &nbsp;
+      <div class="icon">
+        <mat-icon [ngSwitch]="check.checkStatus">
+          <span *ngSwitchCase="'RED'">error</span>
+          <span *ngSwitchCase="'YELLOW'">warning</span>
+          <span *ngSwitchCase="'GREEN'">check_circle</span>
+        </mat-icon>
+      </div>
     </section>
   </mat-card-title>
   <br>
