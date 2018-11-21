@@ -1,3 +1,6 @@
+env:
+  - GO111MODULE=on
+  
 language: go
 
 go:
@@ -8,6 +11,7 @@ install:
 
 script:
 - make lint
+- go mod download
 - make test
 - make gen-assets
 - make build-image
