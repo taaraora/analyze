@@ -10,9 +10,7 @@ $table-border: 1px solid white;
 
 .mat-tab-header {
   .mat-ink-bar {
-    background-color: transparent !important;
-    border-bottom: 2px dotted $white;
-    width: auto;
+    background-color: $sg-pink !important;
   }
 }
 
@@ -22,6 +20,10 @@ $table-border: 1px solid white;
 
 .mat-tab-body-content {
   padding: 20px 0;
+}
+
+.mat-standard-chip {
+  padding: 12px 32px !important;
 }
 
 .mat-card-title {
@@ -57,7 +59,7 @@ $table-border: 1px solid white;
 }
 
 .check-item {
-  margin: 20px;
+  margin: 32px;
 }
 
 @mixin border-bottom {
@@ -90,12 +92,11 @@ table {
     vertical-align: top;
     padding: 5px;
 
-    &~table {
+    & ~ table {
       padding: 0;
     }
   }
 }
-
 
 .requests {
   .warn {
@@ -106,5 +107,22 @@ table {
 .limits {
   .warn {
     color: yellow;
+  }
+}
+
+.mat-tab-body-content {
+  height: unset !important;
+}
+
+@mixin md-icon-size($size: 24px) {
+  font-size: $size;
+  height: $size;
+  width: $size;
+  line-height: $size;
+}
+
+.icon {
+  mat-icon {
+    @include md-icon-size(32px);
   }
 }
