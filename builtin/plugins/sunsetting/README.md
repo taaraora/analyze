@@ -1,7 +1,6 @@
 #Nodes Sunsetting plugin
 
 #Design 
-![Analyze HLD diagram](analyze_hld_diagram.png)
 
 
 
