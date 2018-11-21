@@ -101,7 +101,7 @@ var AppRoutingModule = /** @class */ (function () {
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = "<app-header></app-header>\n<section class=\"content\">\n  <router-outlet></router-outlet>\n</section>\n<app-footer></app-footer>\n"
+module.exports = "<app-header></app-header>\n<section class=\"content\">\n  <router-outlet></router-outlet>\n  <app-footer></app-footer>\n</section>\n"
 
 /***/ }),
 
@@ -112,7 +112,7 @@ module.exports = "<app-header></app-header>\n<section class=\"content\">\n  <rou
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = ":host {\n  display: flex;\n  flex-direction: column;\n  width: 100% -49px;\n  padding: 49px; }\n  :host .content {\n    min-height: calc(100vh - 275px);\n    margin-top: 120px; }\n\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi91c3Ivc3JjL2FwcC9zcmMvYXBwL2FwcC5jb21wb25lbnQuc2NzcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQTtFQUNFLGNBQWE7RUFDYix1QkFBc0I7RUFDdEIsa0JBQWlCO0VBRWpCLGNBQWEsRUFNZDtFQVhEO0lBUUksZ0NBQStCO0lBQy9CLGtCQUFpQixFQUNsQiIsImZpbGUiOiJzcmMvYXBwL2FwcC5jb21wb25lbnQuc2NzcyIsInNvdXJjZXNDb250ZW50IjpbIjpob3N0IHtcbiAgZGlzcGxheTogZmxleDtcbiAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcbiAgd2lkdGg6IDEwMCUgLTQ5cHg7XG5cbiAgcGFkZGluZzogNDlweDtcblxuICAuY29udGVudCB7XG4gICAgbWluLWhlaWdodDogY2FsYygxMDB2aCAtIDI3NXB4KTtcbiAgICBtYXJnaW4tdG9wOiAxMjBweDtcbiAgfVxufVxuIl19 */"
+module.exports = ":host {\n  display: flex;\n  flex-direction: column;\n  width: 100% -50px;\n  padding: 50px;\n  height: 100%; }\n  :host .content {\n    max-height: 100vh -300px;\n    overflow-y: scroll; }\n\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi91c3Ivc3JjL2FwcC9zcmMvYXBwL2FwcC5jb21wb25lbnQuc2NzcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQTtFQUNFLGNBQWE7RUFDYix1QkFBc0I7RUFDdEIsa0JBQWlCO0VBQ2pCLGNBQWE7RUFDYixhQUFZLEVBTWI7RUFYRDtJQVFJLHlCQUF3QjtJQUN4QixtQkFBa0IsRUFDbkIiLCJmaWxlIjoic3JjL2FwcC9hcHAuY29tcG9uZW50LnNjc3MiLCJzb3VyY2VzQ29udGVudCI6WyI6aG9zdCB7XG4gIGRpc3BsYXk6IGZsZXg7XG4gIGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47XG4gIHdpZHRoOiAxMDAlIC01MHB4O1xuICBwYWRkaW5nOiA1MHB4O1xuICBoZWlnaHQ6IDEwMCU7XG5cbiAgLmNvbnRlbnQge1xuICAgIG1heC1oZWlnaHQ6IDEwMHZoIC0zMDBweDtcbiAgICBvdmVyZmxvdy15OiBzY3JvbGw7XG4gIH1cbn1cbiJdfQ== */"
 
 /***/ }),
 
@@ -398,7 +398,7 @@ var FooterComponent = /** @class */ (function () {
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"logo\">\n  <a href=\"https://supergiant.io\" target=\"_blank\">\n    <img src=\"assets/img/logo.svg\">\n  </a>\n  <span>analyze</span>\n</div>\n\n<mat-toolbar>\n  <span class=\"item\"\n        routerLink=\"/checks\"\n        routerLinkActive=\"active\">\n    <span>HOME</span>\n  </span>\n\n  <span class=\"item\"\n        routerLink=\"/plugins\"\n        routerLinkActive=\"active\">\n    <span>PLUGINS</span>\n  </span>\n</mat-toolbar>\n\n<app-user-menu></app-user-menu>\n"
+module.exports = "<div class=\"logo\">\n  <a href=\"https://supergiant.io\" target=\"_blank\">\n    <img src=\"assets/img/sg_analyze_dark.svg\">\n  </a>\n</div>\n\n<mat-toolbar>\n  <span class=\"item\"\n        routerLink=\"/checks\"\n        routerLinkActive=\"active\">\n    <span>HOME</span>\n  </span>\n\n  <span class=\"item\"\n        routerLink=\"/plugins\"\n        routerLinkActive=\"active\">\n    <span>PLUGINS</span>\n  </span>\n</mat-toolbar>\n<div>\n  <!-- todo -->\n  <!--<app-user-menu></app-user-menu>-->\n</div>\n"
 
 /***/ }),
 
