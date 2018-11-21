@@ -10,9 +10,7 @@ $table-border: 1px solid white;
 
 .mat-tab-header {
   .mat-ink-bar {
-    background-color: transparent !important;
-    border-bottom: 2px dotted $white;
-    width: auto;
+    background-color: $sg-pink!important;
   }
 }
 
