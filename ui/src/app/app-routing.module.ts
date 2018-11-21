@@ -12,6 +12,10 @@ const routes: Routes = [
     loadChildren: './checks/checks.module#ChecksModule'
   },
   {
+    path: 'plugins',
+    loadChildren: './plugins/plugins.module#PluginsModule'
+  },
+  {
     path: '**',
     redirectTo: 'checks'
   }
