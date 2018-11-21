@@ -1,8 +1,12 @@
 @import "./colors";
 body {
   width: 100%;
+  height: 100%;
   margin: 0;
   padding: 0;
+  font-family: 'Montserrat', sans-serif;
+  background: url('/assets/img/sg2-bg-grad.jpg') center top / cover no-repeat;
+  background-attachment: fixed;
 }
 
 h1 {
