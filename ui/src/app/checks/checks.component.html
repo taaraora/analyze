@@ -11,11 +11,14 @@
         <div class="status-time"> {{ check.completedAt | date: 'MMM d, y'}}</div>
       </div>
       &nbsp;
-      <mat-icon [ngSwitch]="check.checkStatus">
-        <span *ngSwitchCase="'RED'">block</span>
-        <span *ngSwitchCase="'YELLOW'">warning</span>
-        <span *ngSwitchCase="'GREEN'">check_circle</span>
-      </mat-icon>
+      &nbsp;
+      <div class="icon">
+        <mat-icon [ngSwitch]="check.checkStatus">
+          <span *ngSwitchCase="'RED'">error</span>
+          <span *ngSwitchCase="'YELLOW'">warning</span>
+          <span *ngSwitchCase="'GREEN'">check_circle</span>
+        </mat-icon>
+      </div>
     </section>
   </mat-card-title>
   <br>
@@ -156,24 +159,28 @@
                 <th>RAM requested (GIB)</th>
                 <th>RAM not requested (GIB)</th>
                 <th>Total RAM (GIB)</th>
+                <th>Price per day (USD) </th>
                 <th>Recommended to sunset</th>
               </tr>
 
               <tr *ngFor="let node of data">
                 <td>
-                  {{ node.kube.region}}
+                  {{ node.kube.region }}
                 </td>
                 <td>
-                  {{ node.cloudProvider.instanceId}}
+                  {{ node.cloudProvider.instanceId }}
                 </td>
                 <td>
-                  {{ node.kube.memoryRequests / 1000000000}}
+                  {{ node.kube.memoryRequests / 1000000000 | number }}
                 </td>
                 <td>
-                  {{ (node.kube.allocatableMemory - node.kube.memoryRequests) / 1000000000 }}
+                  {{ (node.kube.allocatableMemory - node.kube.memoryRequests) / 1000000000 | number }}
                 </td>
                 <td>
-                  {{ node.kube.allocatableMemory / 1000000000}}
+                  {{ node.kube.allocatableMemory / 1000000000 | number }}
+                </td>
+                <td>
+                  {{ node.price.valuePerUnit * 24 | number }}
                 </td>
                 <td>
                   {{node.kube.isRecommendedToSunset ? 'Yes' : 'No'}}
