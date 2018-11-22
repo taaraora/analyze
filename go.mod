@@ -93,5 +93,5 @@ require (
 	//builtin plugins dependencies
 	k8s.io/api v0.0.0-20181102122915-de5c567eef5c
 	k8s.io/apimachinery v0.0.0-20181101131016-0aa9751e8aaf
-	k8s.io/client-go v9.0.0+incompatible
+	k8s.io/client-go v9.0.0+incompatible // indirect
 )
