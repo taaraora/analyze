@@ -1,11 +1,35 @@
+os:
+  - linux
+
+services:
+  - docker
+
+cache:
+  directories:
+    - /tmp/cache
+
+env:
+  global:
+    - secure: ""
+    - secure: ""
+
 language: go
 
 go:
 - "1.11.1"
 
+go_import_path: github.com/"$TRAVIS_REPO_SLUG"
+
 install:
 - make tools
 
 script:
-- make lint
-- make test
+- source travis_build.sh
+
+before_cache:
+  - 'sudo rm -Rf /tmp/cache ||:'
+  - mkdir -p /tmp/cache
+  - "docker save -o /tmp/cache/docker.tar $(docker history -q build | tr '\n' ' ' | tr -d '<missing>')"
+
+after_success:
+  - echo "Process Done."
