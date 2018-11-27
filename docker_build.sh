@@ -1,10 +1,10 @@
 #!/bin/bash
-set -ex
+set -e
 
 echo "$TRAVIS_REPO_SLUG":"$TAG"
 # build the docker container
 echo "Building Docker container"
-make build
+make build-image
 
 if [ $? -eq 0 ]; then
 	echo "Complete"
