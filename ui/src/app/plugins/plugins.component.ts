@@ -7,14 +7,19 @@ import { PluginsService }    from "src/app/plugins/plugins.service";
   styleUrls: ['./plugins.component.scss']
 })
 export class PluginsComponent implements OnInit {
-  plugins: any;
+  pluginsStatuses: any;
+
 
   constructor(
     private pluginsService: PluginsService
   ) { }
 
   ngOnInit() {
-    this.plugins = this.pluginsService.all();
+    this.pluginsStatuses = this.pluginsService.all();
+  }
+
+  ngAfterViewInit(){
+    this.pluginsService.loadExternal();
   }
 
 }
