@@ -2,7 +2,6 @@ package sunsetting
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/any"
@@ -51,24 +50,41 @@ var checkResult = &proto.CheckResult{
 }
 
 func NewPlugin() proto.PluginClient {
-	return &plugin{
-		logger: logrus.New(),
-	}
+	return &plugin{}
 }
 
 func (u *plugin) Check(ctx context.Context, in *proto.CheckRequest, opts ...grpc.CallOption) (*proto.CheckResponse, error) {
 	var nodeResourceRequirements, err = u.kubeClient.GetNodeResourceRequirements()
 	if err != nil {
-		fmt.Printf("unable to get nodeResourceRequirements, %v", err)
+		u.logger.Errorf("unable to get nodeResourceRequirements, %v", err)
 		return nil, errors.Wrap(err, "unable to get nodeResourceRequirements")
 	}
 
+	nodeAgentsDaemonSet, err := u.kubeClient.GetDaemonset(kube.NodeAgentLabelsSet)
+	if err != nil {
+		u.logger.Errorf("unable to get nodeAgentsDaemonSet, %v", err)
+		return nil, errors.Wrap(err, "unable to get nodeAgentsDaemonSet")
+	}
+
+	nodeagentPods, err := u.kubeClient.GetDaemonsetPods(nodeAgentsDaemonSet)
+
+	u.logger.Infof("nodeagentPods, %+v", nodeagentPods)
+
+
 	var computeInstances = make(map[string]cloudprovider.ComputeInstance)
 	for instanceID, resourceRequirements := range nodeResourceRequirements {
-		var nodeAgentInstance = nodeagent.Instance{URI: resourceRequirements.IPAddress()}
-		fetchedInstanceID, err := u.nodeAgentClient.Get(nodeAgentInstance, "/aws/meta-data/instance-id")
+		nodeagentPod, exists := nodeagentPods[resourceRequirements.IPAddress()]
+		if !exists {
+			u.logger.Errorf("There is no analyze nodeAgent is running for nodeIP, %s", resourceRequirements.IPAddress())
+			continue
+		}
+		var nodeAgentInstance = nodeagent.Instance{
+			HostIP:nodeagentPod.Status.HostIP,
+			PodIP: nodeagentPod.Status.PodIP,
+		}
+		fetchedInstanceID, err := u.nodeAgentClient.Get(nodeAgentInstance.PodURI() + "/aws/meta-data/instance-id")
 		if err != nil {
-			u.logger.Errorf("cant fetch ID for node %s", instanceID)
+			u.logger.Errorf("cant fetch ID for node %s, error %v", instanceID, err)
 			continue
 		}
 		if fetchedInstanceID != instanceID {
@@ -80,7 +96,7 @@ func (u *plugin) Check(ctx context.Context, in *proto.CheckRequest, opts ...grpc
 			continue
 		}
 
-		instanceType, err := u.nodeAgentClient.Get(nodeAgentInstance, "/aws/meta-data/instance-type")
+		instanceType, err := u.nodeAgentClient.Get(nodeAgentInstance.PodURI() + "/aws/meta-data/instance-type")
 		computeInstances[instanceID] = cloudprovider.ComputeInstance{
 			InstanceID:   instanceID,
 			InstanceType: instanceType,
@@ -163,6 +179,10 @@ func (u *plugin) Check(ctx context.Context, in *proto.CheckRequest, opts ...grpc
 
 func (u *plugin) Configure(ctx context.Context, pluginConfig *proto.PluginConfig, opts ...grpc.CallOption) (*empty.Empty, error) {
 	//TODO: add here config validation in future
+	var logger =  logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+	u.logger = logger
+
 	u.config = pluginConfig
 
 	nodeAgentClient, err := nodeagent.NewClient(logrus.New())
@@ -172,7 +192,7 @@ func (u *plugin) Configure(ctx context.Context, pluginConfig *proto.PluginConfig
 	u.nodeAgentClient = nodeAgentClient
 
 	var awsClientConfig = pluginConfig.GetAwsConfig()
-	awsClient, err := aws.NewClient(awsClientConfig)
+	awsClient, err := aws.NewClient(awsClientConfig, logger.WithField("component", "awsClient"))
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +204,7 @@ func (u *plugin) Configure(ctx context.Context, pluginConfig *proto.PluginConfig
 		return nil, err
 	}
 
-	u.kubeClient, err = kube.NewKubeClient()
+	u.kubeClient, err = kube.NewKubeClient(logger.WithField("component", "kubeClient"))
 	if err != nil {
 		return nil, err
 	}

@@ -8,13 +8,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+//metadataAPIProtocolScheme
+const scheme = "http://"
+const agentPort = ":9292"
 type Client struct {
 	logger     logrus.FieldLogger
 	httpClient *http.Client
 }
 
 type Instance struct {
-	URI string
+	HostIP string `json:"hostIp"`
+	PodIP string `json:"podIp"`
 }
 
 func NewClient(logger logrus.FieldLogger) (*Client, error) {
@@ -31,8 +35,8 @@ func NewClient(logger logrus.FieldLogger) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Get(nodeAgent Instance, path string) (string, error) {
-	req, err := http.NewRequest(http.MethodGet, nodeAgent.URI+path, nil)
+func (c *Client) Get(uri string) (string, error) {
+	req, err := http.NewRequest(http.MethodGet, uri, nil)
 	if err != nil {
 		return "", err
 	}
@@ -48,4 +52,8 @@ func (c *Client) Get(nodeAgent Instance, path string) (string, error) {
 	}
 
 	return string(rb), nil
+}
+
+func (i Instance) PodURI() string {
+	return scheme + i.PodIP + agentPort
 }

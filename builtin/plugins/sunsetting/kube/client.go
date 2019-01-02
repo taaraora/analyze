@@ -1,41 +1,95 @@
 package kube
 
 import (
+	"github.com/sirupsen/logrus"
+	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/kubernetes"
 	"strings"
 
 	"github.com/pkg/errors"
 	corev1api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 )
 
 type Client struct {
-	сoreV1Client *corev1.CoreV1Client
+	clientSet *kubernetes.Clientset
+	logger logrus.FieldLogger
 }
 
-func NewKubeClient() (*Client, error) {
+func NewKubeClient(logger logrus.FieldLogger) (*Client, error) {
 	// creates the in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
 	}
 	// creates the client
-	сoreV1Client, err := corev1.NewForConfig(config)
+	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Client{
-		сoreV1Client: сoreV1Client,
+		clientSet: clientSet,
+		logger:logger,
 	}, nil
 }
+
+func (c *Client) GetDaemonset(labelsSet labels.Set) (v1beta1.DaemonSet, error) {
+	var labelsSelector = labels.SelectorFromSet(labelsSet)
+	var options = metav1.ListOptions{
+		LabelSelector:   labelsSelector.String(),
+	}
+
+	dss, err := c.clientSet.ExtensionsV1beta1().DaemonSets("").List(options)
+	if err != nil {
+		return v1beta1.DaemonSet{}, errors.Wrap(err, "can't list daemonSets")
+	}
+
+	if len(dss.Items) != 1 {
+		return v1beta1.DaemonSet{}, errors.Wrap(err, "can't multiple instances of nodeagent are deployed")
+	}
+
+	return dss.Items[0], nil
+}
+
+// GetDaemonsetPods returns map kubernetes node ip to daemnoset pod on that node
+func (c *Client) GetDaemonsetPods(daemonSet v1beta1.DaemonSet) (map[string]corev1api.Pod, error) {
+	var result = map[string]corev1api.Pod{}
+	fieldSelector, err := fields.ParseSelector("status.phase!=" + string(corev1api.PodSucceeded) + ",status.phase!=" + string(corev1api.PodFailed))
+	if err != nil {
+		return nil, err
+	}
+
+	nonTerminatedPodsList, err := c.clientSet.CoreV1().Pods("").List(metav1.ListOptions{FieldSelector: fieldSelector.String()})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(nonTerminatedPodsList.Items) == 0 {
+		return nil, errors.New("There are no running pods at cluster")
+	}
+
+	for _, pod := range nonTerminatedPodsList.Items {
+		if len(pod.OwnerReferences) == 1 && pod.OwnerReferences[0].Name == daemonSet.Name {
+			result[pod.Status.HostIP] = pod
+		}
+	}
+
+	if len(result) == 0 {
+		return nil, errors.Errorf("There are no running pods for daemonSet %v", daemonSet.Name)
+	}
+
+	return result, nil
+}
+
 
 func (c *Client) GetNodeResourceRequirements() (map[string]*NodeResourceRequirements, error) {
 	var instanceEntries = map[string]*NodeResourceRequirements{}
 
-	nodes, err := c.сoreV1Client.Nodes().List(metav1.ListOptions{})
+	nodes, err := c.clientSet.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -46,12 +100,12 @@ func (c *Client) GetNodeResourceRequirements() (map[string]*NodeResourceRequirem
 			return nil, err
 		}
 
-		nonTerminatedPodsList, err := c.сoreV1Client.Pods("").List(metav1.ListOptions{FieldSelector: fieldSelector.String()})
+		nonTerminatedPodsForNode, err := c.clientSet.CoreV1().Pods("").List(metav1.ListOptions{FieldSelector: fieldSelector.String()})
 		if err != nil {
 			return nil, err
 		}
 
-		nodeResourceRequirements, err := getNodeResourceRequirements(node, nonTerminatedPodsList.Items)
+		nodeResourceRequirements, err := getNodeResourceRequirements(node, nonTerminatedPodsForNode.Items)
 		if err != nil {
 			return nil, err
 		}

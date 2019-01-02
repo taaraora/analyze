@@ -42,6 +42,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
 
 	cfg, err := external.LoadDefaultAWSConfig()
 	if err != nil {
@@ -63,7 +64,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		logger.Error(err)
 	}
 
-	logger.Errorf("metadata is available, instance-id: %s", result)
+	logger.Infof("metadata is available, at instance-id: %s", result)
 
 	var httpServer = &http.Server{}
 	var router = mux.NewRouter()
@@ -116,6 +117,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	if len(addrParts) == 0 {
 		return errors.Errorf("can't get non occupied port, addr %v", addr)
 	}
+	logger.Infof("listener has started, address: %s", addr)
 
 	if err := httpServer.Serve(listener); err != nil {
 		if err != nil {

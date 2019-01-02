@@ -73,7 +73,6 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	log := logger.NewLogger(cfg.Logging).WithField("app", "robot")
 	mainLogger := log.WithField("component", "main")
 
-	logEnvs(mainLogger)
 	mainLogger.Infof("config: %+v", cfg)
 	mainLogger.Infof("config file name: %s", config.UsedFileName())
 	if configFileReadError != nil {
@@ -92,8 +91,14 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	defer etcdStorage.Close()
 
 	plugins := make(plugin.PluginsSet)
-	plugins.Load(sunsetting.NewPlugin(), cfg.Plugin.ToProtoConfig())
-	plugins.Load(requestslimitscheck.NewPlugin(), cfg.Plugin.ToProtoConfig())
+	err = plugins.Load(sunsetting.NewPlugin(), cfg.Plugin.ToProtoConfig())
+	if err != nil {
+		mainLogger.Errorf("sunsetting plugin loading failed %s", err)
+	}
+	err = plugins.Load(requestslimitscheck.NewPlugin(), cfg.Plugin.ToProtoConfig())
+	if err != nil {
+		mainLogger.Errorf("requests/limits-check plugin loading failed %s", err)
+	}
 
 	//TODO: refactor and move this logic from to the plugin loading subsystem
 	for pluginName, plugin := range plugins {

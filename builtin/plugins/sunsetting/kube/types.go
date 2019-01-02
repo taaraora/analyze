@@ -1,6 +1,16 @@
 package kube
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"k8s.io/apimachinery/pkg/labels"
+)
+
+
+var NodeAgentLabelsSet = labels.Set{
+	"app.kubernetes.io/part-of": "analyze",
+	"app.kubernetes.io/name": "analyze-nodeagent",
+	"app.kubernetes.io/component": "nodeagent",
+}
 
 type NodeResourceRequirements struct {
 	Name                  string
