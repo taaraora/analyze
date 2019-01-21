@@ -14,8 +14,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/supergiant/analyze"
-	"github.com/supergiant/analyze/builtin/plugins/requestslimitscheck"
-	"github.com/supergiant/analyze/builtin/plugins/sunsetting"
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/api/handlers"
 	"github.com/supergiant/analyze/pkg/api/operations"
@@ -90,22 +88,37 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 	defer etcdStorage.Close()
 
-	plugins := make(plugin.PluginsSet)
-	err = plugins.Load(sunsetting.NewPlugin(), cfg.Plugin.ToProtoConfig())
+	//load registered plugins
+	rawPluginsEntries, err := etcdStorage.GetAll(context.Background(), models.PluginPrefix)
 	if err != nil {
-		mainLogger.Errorf("sunsetting plugin loading failed %s", err)
-	}
-	err = plugins.Load(requestslimitscheck.NewPlugin(), cfg.Plugin.ToProtoConfig())
-	if err != nil {
-		mainLogger.Errorf("requests/limits-check plugin loading failed %s", err)
+		return errors.Wrap(err, "unable to read plugins registry from ETCD")
 	}
 
-	//TODO: refactor and move this logic from to the plugin loading subsystem
-	for pluginName, plugin := range plugins {
-		ctx, _ := context.WithTimeout(context.Background(), cfg.Plugin.CheckTimeout)
-		pluginInfo, err := plugin.Info(ctx, &empty.Empty{})
+	plugins := make(plugin.PluginsSet)
+
+	for _, rawPluginEntry := range rawPluginsEntries {
+		pluginEntry := &models.Plugin{}
+		err := pluginEntry.UnmarshalBinary(rawPluginEntry)
 		if err != nil {
-			mainLogger.Errorf("unable to load plugin, name: %v, error %v", pluginName, err)
+			mainLogger.Warnf("unable to unmarshal pluginEntry entity, %s", string(rawPluginEntry))
+			continue
+		}
+
+		// pluginEntry.ServiceLabels
+
+		pluginClient, err := plugin.NewClient("xyz", cfg.Plugin.ToProtoConfig())
+		if err != nil {
+			mainLogger.Warnf("unable to instantiate pluginClient client for entity, %+v", pluginEntry)
+			continue
+		}
+		plugins[pluginEntry.ID] = pluginClient
+	}
+
+	for pluginName, pluginClient := range plugins {
+		ctx, _ := context.WithTimeout(context.Background(), cfg.Plugin.CheckTimeout)
+		pluginInfo, err := pluginClient.Info(ctx, &empty.Empty{})
+		if err != nil {
+			mainLogger.Errorf("unable to load pluginClient, name: %v, error %v", pluginName, err)
 		}
 
 		b, err := (&models.Plugin{
@@ -117,12 +130,12 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 			Version:     pluginInfo.Version,
 		}).MarshalBinary()
 		if err != nil {
-			mainLogger.Errorf("unable to load plugin, name: %v, error %v", pluginName, err)
+			mainLogger.Errorf("unable to load pluginClient, name: %v, error %v", pluginName, err)
 		}
 
 		err = etcdStorage.Put(ctx, models.PluginPrefix, pluginName, b)
 		if err != nil {
-			mainLogger.Errorf("unable to load plugin, name: %v, error %v", pluginName, err)
+			mainLogger.Errorf("unable to load pluginClient, name: %v, error %v", pluginName, err)
 		}
 	}
 
@@ -132,18 +145,18 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 				ctx, cancel := context.WithTimeout(context.Background(), cfg.Plugin.CheckTimeout)
 				checkResponse, err := pluginClient.Check(ctx, &proto.CheckRequest{})
 				if err != nil {
-					logger.Errorf("unable to execute check for plugin: %s, error: %v", pluginID, err)
+					logger.Errorf("unable to execute check for pluginClient: %s, error: %v", pluginID, err)
 					cancel()
 					continue
 				}
 				if checkResponse.Error != "" {
-					logger.Errorf("plugin: %s, returned error: %s", pluginID, checkResponse.Error)
+					logger.Errorf("pluginClient: %s, returned error: %s", pluginID, checkResponse.Error)
 					cancel()
 					continue
 				}
 
 				if checkResponse.Result == nil {
-					logger.Errorf("plugin: %s, returned nil Result", pluginID)
+					logger.Errorf("pluginClient: %s, returned nil Result", pluginID)
 					cancel()
 					continue
 				}
@@ -171,14 +184,14 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 				bytes, err := checkResult.MarshalBinary()
 				if err != nil {
-					logger.Errorf("unable to marshal check result, plugin: %s, returned error: %s", pluginID, err)
+					logger.Errorf("unable to marshal check result, pluginClient: %s, returned error: %s", pluginID, err)
 					cancel()
 					continue
 				}
 
 				err = stor.Put(ctx, models.CheckResultPrefix, pluginID, bytes)
 				if err != nil {
-					logger.Errorf("unable to store check result, plugin: %s, returned error: %s", pluginID, err)
+					logger.Errorf("unable to store check result, pluginClient: %s, returned error: %s", pluginID, err)
 					cancel()
 				}
 

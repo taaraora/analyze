@@ -43,6 +43,13 @@ definitions:
         type: "string"
         format: "date-time"
         description: "date/Time the plugin was installed"
+      serviceName:
+        description: "name of k8s service which is front of plugin deployment"
+        type: "string"
+      serviceLabels:
+        type: "object"
+        additionalProperties:
+          type: "object"
   checkResult:
     type: "object"
     description: "CheckResult represents the single result of Check function invocation of specific plugin."

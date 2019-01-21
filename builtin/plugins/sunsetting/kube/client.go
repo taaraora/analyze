@@ -1,11 +1,12 @@
 package kube
 
 import (
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
-	"strings"
 
 	"github.com/pkg/errors"
 	corev1api "k8s.io/api/core/v1"
@@ -16,7 +17,7 @@ import (
 
 type Client struct {
 	clientSet *kubernetes.Clientset
-	logger logrus.FieldLogger
+	logger    logrus.FieldLogger
 }
 
 func NewKubeClient(logger logrus.FieldLogger) (*Client, error) {
@@ -33,14 +34,14 @@ func NewKubeClient(logger logrus.FieldLogger) (*Client, error) {
 
 	return &Client{
 		clientSet: clientSet,
-		logger:logger,
+		logger:    logger,
 	}, nil
 }
 
 func (c *Client) GetDaemonset(labelsSet labels.Set) (v1beta1.DaemonSet, error) {
 	var labelsSelector = labels.SelectorFromSet(labelsSet)
 	var options = metav1.ListOptions{
-		LabelSelector:   labelsSelector.String(),
+		LabelSelector: labelsSelector.String(),
 	}
 
 	dss, err := c.clientSet.ExtensionsV1beta1().DaemonSets("").List(options)
@@ -84,7 +85,6 @@ func (c *Client) GetDaemonsetPods(daemonSet v1beta1.DaemonSet) (map[string]corev
 
 	return result, nil
 }
-
 
 func (c *Client) GetNodeResourceRequirements() (map[string]*NodeResourceRequirements, error) {
 	var instanceEntries = map[string]*NodeResourceRequirements{}

@@ -68,9 +68,6 @@ func (u *plugin) Check(ctx context.Context, in *proto.CheckRequest, opts ...grpc
 
 	nodeagentPods, err := u.kubeClient.GetDaemonsetPods(nodeAgentsDaemonSet)
 
-	u.logger.Infof("nodeagentPods, %+v", nodeagentPods)
-
-
 	var computeInstances = make(map[string]cloudprovider.ComputeInstance)
 	for instanceID, resourceRequirements := range nodeResourceRequirements {
 		nodeagentPod, exists := nodeagentPods[resourceRequirements.IPAddress()]
@@ -79,8 +76,8 @@ func (u *plugin) Check(ctx context.Context, in *proto.CheckRequest, opts ...grpc
 			continue
 		}
 		var nodeAgentInstance = nodeagent.Instance{
-			HostIP:nodeagentPod.Status.HostIP,
-			PodIP: nodeagentPod.Status.PodIP,
+			HostIP: nodeagentPod.Status.HostIP,
+			PodIP:  nodeagentPod.Status.PodIP,
 		}
 		fetchedInstanceID, err := u.nodeAgentClient.Get(nodeAgentInstance.PodURI() + "/aws/meta-data/instance-id")
 		if err != nil {
@@ -102,12 +99,6 @@ func (u *plugin) Check(ctx context.Context, in *proto.CheckRequest, opts ...grpc
 			InstanceType: instanceType,
 		}
 	}
-
-	//computeInstances, err := u.awsClient.GetComputeInstances()
-	//if err != nil {
-	//	fmt.Printf("failed to describe ec2 instances, %v", err)
-	//	return nil, errors.Wrap(err, "failed to describe ec2 instances")
-	//}
 
 	var unsortedEntries []*InstanceEntry
 	var result []InstanceEntry
@@ -179,7 +170,7 @@ func (u *plugin) Check(ctx context.Context, in *proto.CheckRequest, opts ...grpc
 
 func (u *plugin) Configure(ctx context.Context, pluginConfig *proto.PluginConfig, opts ...grpc.CallOption) (*empty.Empty, error) {
 	//TODO: add here config validation in future
-	var logger =  logrus.New()
+	var logger = logrus.New()
 	logger.SetLevel(logrus.DebugLevel)
 	u.logger = logger
 

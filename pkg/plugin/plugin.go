@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
-
 	"github.com/pkg/errors"
 
 	"github.com/supergiant/analyze/pkg/plugin/proto"
@@ -21,7 +21,7 @@ type Config struct {
 	CheckTimeout       time.Duration `mapstructure:"check_timeout"`
 }
 
-type PluginsSet map[string]proto.PluginClient
+type PluginsSet map[string]*Client
 
 type CloudProviderType string
 
@@ -30,17 +30,41 @@ const (
 	DOCloudProviderType  CloudProviderType = "do"
 )
 
-// TODO: refactor and implement real pluggability
-func (ps PluginsSet) Load(plugin proto.PluginClient, cfg *proto.PluginConfig) error {
-	ctx, configureCancel := context.WithTimeout(context.Background(), time.Second*1)
-	defer configureCancel()
-	_, err := plugin.Configure(ctx, cfg)
+type Client struct {
+	cfg  *proto.PluginConfig
+	conn *grpc.ClientConn
+	proto.PluginClient
+}
+
+func NewClient(pluginServerAddress string, cfg *proto.PluginConfig) (*Client, error) {
+	conn, err := grpc.Dial(pluginServerAddress, grpc.WithInsecure())
 	if err != nil {
-		return errors.Wrap(err, "unable to configure plugin")
+		return nil, errors.Wrapf(err, "unable to dial plugin server side: %s ", pluginServerAddress)
+	}
+	c := proto.NewPluginClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+	defer cancel()
+	_, err = c.Configure(ctx, cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to configure plugin")
 	}
 
-	ctx, infoCancel := context.WithTimeout(context.Background(), time.Second*1)
-	defer infoCancel()
+	return &Client{
+		cfg:          cfg,
+		conn:         conn,
+		PluginClient: c,
+	}, nil
+}
+
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+
+func (ps PluginsSet) Load(plugin proto.PluginClient, cfg *proto.PluginConfig) error {
+
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+	defer cancel()
 	info, err := plugin.Info(ctx, &empty.Empty{})
 	if err != nil {
 		return errors.Wrap(err, "unable to get plugin info")

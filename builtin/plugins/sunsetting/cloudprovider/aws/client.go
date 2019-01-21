@@ -2,9 +2,10 @@ package aws
 
 import (
 	"encoding/json"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -16,6 +17,7 @@ import (
 
 const region = "us-east-1"
 const serviceCode = "AmazonEC2"
+
 // filters
 const neededProductFamily = "Compute Instance"
 const neededOperatingSystem = "Linux"
@@ -41,7 +43,7 @@ const neededPreInstalledSw = "NA"
 
 type Client struct {
 	//regionDescription string
-	ec2Service        *ec2.EC2
+	ec2Service *ec2.EC2
 	//pricingService    *pricing.Pricing
 	logger logrus.FieldLogger
 }
@@ -51,7 +53,7 @@ func NewClient(clientConfig *proto.AwsConfig, logger logrus.FieldLogger) (*Clien
 	var region = clientConfig.GetRegion()
 	var c = &Client{
 		//regionDescription: awsPartitions[region],
-		logger:logger,
+		logger: logger,
 	}
 	cfg, err := external.LoadDefaultAWSConfig()
 	if err != nil {
@@ -73,7 +75,7 @@ func (c *Client) GetPrices() (map[string][]cloudprovider.ProductPrice, error) {
 	var computeInstancesPrices = make(map[string][]cloudprovider.ProductPrice, 0)
 
 	var offeringsURI = "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/" + serviceCode + "/current/" + region + "/index.json"
-	offeringsRaw, err :=  http.Get(offeringsURI)
+	offeringsRaw, err := http.Get(offeringsURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't download prices")
 	}
@@ -90,13 +92,13 @@ func (c *Client) GetPrices() (map[string][]cloudprovider.ProductPrice, error) {
 			Sku           string `json:"sku"`
 			ProductFamily string `json:"productFamily"`
 			Attributes    struct {
-				InstanceType string `json:"instanceType"`
-				Memory       string `json:"memory"`
-				Vcpu         string `json:"vcpu"`
-				Usagetype    string `json:"usagetype"`
-				Tenancy      string `json:"tenancy"`
-				OperatingSystem      string `json:"operatingSystem"`
-				PreInstalledSw      string `json:"preInstalledSw"`
+				InstanceType    string `json:"instanceType"`
+				Memory          string `json:"memory"`
+				Vcpu            string `json:"vcpu"`
+				Usagetype       string `json:"usagetype"`
+				Tenancy         string `json:"tenancy"`
+				OperatingSystem string `json:"operatingSystem"`
+				PreInstalledSw  string `json:"preInstalledSw"`
 			} `json:"attributes"`
 		} `json:"products"`
 		Terms struct {
@@ -138,9 +140,9 @@ func (c *Client) GetPrices() (map[string][]cloudprovider.ProductPrice, error) {
 		}
 
 		for _, price := range offerings.Terms.OnDemand[productSku] {
-			for _, priceDimension := range  price.PriceDimensions {
+			for _, priceDimension := range price.PriceDimensions {
 				newPriceItem.Unit = priceDimension.Unit
-				newPriceItem.ValuePerUnit=  priceDimension.PricePerUnit.USDRate
+				newPriceItem.ValuePerUnit = priceDimension.PricePerUnit.USDRate
 				break
 			}
 		}

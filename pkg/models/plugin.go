@@ -32,6 +32,12 @@ type Plugin struct {
 	// name is the name of the plugin.
 	Name string `json:"name,omitempty"`
 
+	// service labels
+	ServiceLabels map[string]string `json:"serviceLabels,omitempty"`
+
+	// name of k8s service which is front of plugin deployment
+	ServiceName string `json:"serviceName,omitempty"`
+
 	// plugin status
 	Status string `json:"status,omitempty"`
 

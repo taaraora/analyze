@@ -166,6 +166,16 @@ func init() {
           "description": "name is the name of the plugin.",
           "type": "string"
         },
+        "serviceLabels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "serviceName": {
+          "description": "name of k8s service which is front of plugin deployment",
+          "type": "string"
+        },
         "status": {
           "description": "plugin status",
           "type": "string"
@@ -343,6 +353,16 @@ func init() {
         },
         "name": {
           "description": "name is the name of the plugin.",
+          "type": "string"
+        },
+        "serviceLabels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "serviceName": {
+          "description": "name of k8s service which is front of plugin deployment",
           "type": "string"
         },
         "status": {
