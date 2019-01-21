@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/supergiant/analyze/pkg/kube"
+
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/strfmt"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -68,17 +70,22 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		cfg.ETCD.Endpoints = append(cfg.ETCD.Endpoints, discoverETCDEndpoint())
 	}
 
-	log := logger.NewLogger(cfg.Logging).WithField("app", "robot")
+	log := logger.NewLogger(cfg.Logging).WithField("app", "analyze-core")
 	mainLogger := log.WithField("component", "main")
 
 	mainLogger.Infof("config: %+v", cfg)
 	mainLogger.Infof("config file name: %s", config.UsedFileName())
 	if configFileReadError != nil {
-		mainLogger.Warnf("unable to read config file, %v", configFileReadError)
+		log.Warnf("unable to read config file, %v", configFileReadError)
 	}
 
 	if err := cfg.Validate(); err != nil {
 		return errors.Wrap(err, "config validation error")
+	}
+
+	kubeClient, err := kube.NewKubeClient(log.WithField("component", "kubeClient"))
+	if err != nil {
+		return errors.Wrap(err, "unable to create kube client")
 	}
 
 	etcdStorage, err := etcd.NewETCDStorage(cfg.ETCD)
@@ -87,7 +94,6 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	defer etcdStorage.Close()
-
 	//load registered plugins
 	rawPluginsEntries, err := etcdStorage.GetAll(context.Background(), models.PluginPrefix)
 	if err != nil {
@@ -100,15 +106,20 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		pluginEntry := &models.Plugin{}
 		err := pluginEntry.UnmarshalBinary(rawPluginEntry)
 		if err != nil {
-			mainLogger.Warnf("unable to unmarshal pluginEntry entity, %s", string(rawPluginEntry))
+			log.Warnf("unable to unmarshal pluginEntry entity, %s", string(rawPluginEntry))
 			continue
 		}
 
 		// pluginEntry.ServiceLabels
-
-		pluginClient, err := plugin.NewClient("xyz", cfg.Plugin.ToProtoConfig())
+		service, err := kubeClient.GetService(pluginEntry.ServiceName, pluginEntry.ServiceLabels)
 		if err != nil {
-			mainLogger.Warnf("unable to instantiate pluginClient client for entity, %+v", pluginEntry)
+			log.Warnf("unable to find service for registered plugin, %s", string(rawPluginEntry))
+			continue
+		}
+
+		pluginClient, err := plugin.NewClient(service.Spec.ClusterIP, cfg.Plugin.ToProtoConfig())
+		if err != nil {
+			log.Warnf("unable to instantiate pluginClient client for entity, %+v", pluginEntry)
 			continue
 		}
 		plugins[pluginEntry.ID] = pluginClient

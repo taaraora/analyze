@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"google.golang.org/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 
 	"github.com/supergiant/analyze/pkg/plugin/proto"
 )
