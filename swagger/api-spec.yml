@@ -150,6 +150,10 @@ paths:
           description: no error
           schema:
             $ref: "#/definitions/plugin"
+        404:
+          description: Not Found
+          schema:
+            $ref: "#/definitions/error"
         default:
           description: error
           schema:
@@ -168,6 +172,10 @@ paths:
       responses:
         204:
           description: plugin is removed from registry
+        404:
+          description: Not Found
+          schema:
+            $ref: "#/definitions/error"
         default:
           description: error
           schema:

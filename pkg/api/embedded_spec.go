@@ -142,6 +142,12 @@ func init() {
               "$ref": "#/definitions/plugin"
             }
           },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
           "default": {
             "description": "error",
             "schema": {
@@ -168,6 +174,12 @@ func init() {
         "responses": {
           "204": {
             "description": "plugin is removed from registry"
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           },
           "default": {
             "description": "error",
@@ -424,6 +436,12 @@ func init() {
               "$ref": "#/definitions/plugin"
             }
           },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
           "default": {
             "description": "error",
             "schema": {
@@ -450,6 +468,12 @@ func init() {
         "responses": {
           "204": {
             "description": "plugin is removed from registry"
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           },
           "default": {
             "description": "error",

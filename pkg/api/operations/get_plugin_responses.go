@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"./pkg/models"
+	models "github.com/supergiant/analyze/pkg/models"
 )
 
 // GetPluginOKCode is the HTTP code returned for type GetPluginOK
@@ -49,6 +49,50 @@ func (o *GetPluginOK) SetPayload(payload *models.Plugin) {
 func (o *GetPluginOK) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
 	rw.WriteHeader(200)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}
+
+// GetPluginNotFoundCode is the HTTP code returned for type GetPluginNotFound
+const GetPluginNotFoundCode int = 404
+
+/*GetPluginNotFound Not Found
+
+swagger:response getPluginNotFound
+*/
+type GetPluginNotFound struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Error `json:"body,omitempty"`
+}
+
+// NewGetPluginNotFound creates GetPluginNotFound with default headers values
+func NewGetPluginNotFound() *GetPluginNotFound {
+
+	return &GetPluginNotFound{}
+}
+
+// WithPayload adds the payload to the get plugin not found response
+func (o *GetPluginNotFound) WithPayload(payload *models.Error) *GetPluginNotFound {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the get plugin not found response
+func (o *GetPluginNotFound) SetPayload(payload *models.Error) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *GetPluginNotFound) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(404)
 	if o.Payload != nil {
 		payload := o.Payload
 		if err := producer.Produce(rw, payload); err != nil {

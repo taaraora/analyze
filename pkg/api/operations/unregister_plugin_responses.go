@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"./pkg/models"
+	models "github.com/supergiant/analyze/pkg/models"
 )
 
 // UnregisterPluginNoContentCode is the HTTP code returned for type UnregisterPluginNoContent
@@ -35,6 +35,50 @@ func (o *UnregisterPluginNoContent) WriteResponse(rw http.ResponseWriter, produc
 	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
 
 	rw.WriteHeader(204)
+}
+
+// UnregisterPluginNotFoundCode is the HTTP code returned for type UnregisterPluginNotFound
+const UnregisterPluginNotFoundCode int = 404
+
+/*UnregisterPluginNotFound Not Found
+
+swagger:response unregisterPluginNotFound
+*/
+type UnregisterPluginNotFound struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Error `json:"body,omitempty"`
+}
+
+// NewUnregisterPluginNotFound creates UnregisterPluginNotFound with default headers values
+func NewUnregisterPluginNotFound() *UnregisterPluginNotFound {
+
+	return &UnregisterPluginNotFound{}
+}
+
+// WithPayload adds the payload to the unregister plugin not found response
+func (o *UnregisterPluginNotFound) WithPayload(payload *models.Error) *UnregisterPluginNotFound {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the unregister plugin not found response
+func (o *UnregisterPluginNotFound) SetPayload(payload *models.Error) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *UnregisterPluginNotFound) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(404)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
 }
 
 /*UnregisterPluginDefault error
