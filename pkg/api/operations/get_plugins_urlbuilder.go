@@ -35,7 +35,7 @@ func (o *GetPluginsURL) SetBasePath(bp string) {
 func (o *GetPluginsURL) Build() (*url.URL, error) {
 	var result url.URL
 
-	var _path = "/plugin"
+	var _path = "/plugins"
 
 	_basePath := o._basePath
 	if _basePath == "" {

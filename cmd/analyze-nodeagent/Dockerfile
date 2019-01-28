@@ -1,4 +1,4 @@
-FROM golang:1.11.1 as nodeagent_builder
+FROM golang:1.11.4 as nodeagent_builder
 
 ARG ARCH=amd64
 ARG GO111MODULE=on

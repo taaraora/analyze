@@ -40,8 +40,17 @@ func NewAnalyzeAPI(spec *loads.Document) *AnalyzeAPI {
 		GetCheckResultsHandler: GetCheckResultsHandlerFunc(func(params GetCheckResultsParams) middleware.Responder {
 			return middleware.NotImplemented("operation GetCheckResults has not yet been implemented")
 		}),
+		GetPluginHandler: GetPluginHandlerFunc(func(params GetPluginParams) middleware.Responder {
+			return middleware.NotImplemented("operation GetPlugin has not yet been implemented")
+		}),
 		GetPluginsHandler: GetPluginsHandlerFunc(func(params GetPluginsParams) middleware.Responder {
 			return middleware.NotImplemented("operation GetPlugins has not yet been implemented")
+		}),
+		RegisterPluginHandler: RegisterPluginHandlerFunc(func(params RegisterPluginParams) middleware.Responder {
+			return middleware.NotImplemented("operation RegisterPlugin has not yet been implemented")
+		}),
+		UnregisterPluginHandler: UnregisterPluginHandlerFunc(func(params UnregisterPluginParams) middleware.Responder {
+			return middleware.NotImplemented("operation UnregisterPlugin has not yet been implemented")
 		}),
 	}
 }
@@ -76,8 +85,14 @@ type AnalyzeAPI struct {
 
 	// GetCheckResultsHandler sets the operation handler for the get check results operation
 	GetCheckResultsHandler GetCheckResultsHandler
+	// GetPluginHandler sets the operation handler for the get plugin operation
+	GetPluginHandler GetPluginHandler
 	// GetPluginsHandler sets the operation handler for the get plugins operation
 	GetPluginsHandler GetPluginsHandler
+	// RegisterPluginHandler sets the operation handler for the register plugin operation
+	RegisterPluginHandler RegisterPluginHandler
+	// UnregisterPluginHandler sets the operation handler for the unregister plugin operation
+	UnregisterPluginHandler UnregisterPluginHandler
 
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
@@ -145,8 +160,20 @@ func (o *AnalyzeAPI) Validate() error {
 		unregistered = append(unregistered, "GetCheckResultsHandler")
 	}
 
+	if o.GetPluginHandler == nil {
+		unregistered = append(unregistered, "GetPluginHandler")
+	}
+
 	if o.GetPluginsHandler == nil {
 		unregistered = append(unregistered, "GetPluginsHandler")
+	}
+
+	if o.RegisterPluginHandler == nil {
+		unregistered = append(unregistered, "RegisterPluginHandler")
+	}
+
+	if o.UnregisterPluginHandler == nil {
+		unregistered = append(unregistered, "UnregisterPluginHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -250,12 +277,27 @@ func (o *AnalyzeAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/check"] = NewGetCheckResults(o.context, o.GetCheckResultsHandler)
+	o.handlers["GET"]["/checks"] = NewGetCheckResults(o.context, o.GetCheckResultsHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/plugin"] = NewGetPlugins(o.context, o.GetPluginsHandler)
+	o.handlers["GET"]["/plugins/{pluginId}"] = NewGetPlugin(o.context, o.GetPluginHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/plugins"] = NewGetPlugins(o.context, o.GetPluginsHandler)
+
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/plugins"] = NewRegisterPlugin(o.context, o.RegisterPluginHandler)
+
+	if o.handlers["DELETE"] == nil {
+		o.handlers["DELETE"] = make(map[string]http.Handler)
+	}
+	o.handlers["DELETE"]["/plugins/{pluginId}"] = NewUnregisterPlugin(o.context, o.UnregisterPluginHandler)
 
 }
 

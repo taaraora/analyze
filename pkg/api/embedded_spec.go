@@ -31,7 +31,7 @@ func init() {
   },
   "basePath": "/api/v1",
   "paths": {
-    "/check": {
+    "/checks": {
       "get": {
         "produces": [
           "application/json"
@@ -58,12 +58,12 @@ func init() {
         }
       }
     },
-    "/plugin": {
+    "/plugins": {
       "get": {
         "produces": [
           "application/json"
         ],
-        "summary": "Returns list of the installed recommendation plugins",
+        "summary": "returns list of the registered plugins",
         "operationId": "getPlugins",
         "responses": {
           "200": {
@@ -75,6 +75,99 @@ func init() {
                 "$ref": "#/definitions/plugin"
               }
             }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "registers plugin",
+        "operationId": "registerPlugin",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/plugins/{pluginId}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns registered plugin",
+        "operationId": "getPlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "unregisters plugin",
+        "operationId": "unregisterPlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "plugin is removed from registry"
           },
           "default": {
             "description": "error",
@@ -220,7 +313,7 @@ func init() {
   },
   "basePath": "/api/v1",
   "paths": {
-    "/check": {
+    "/checks": {
       "get": {
         "produces": [
           "application/json"
@@ -247,12 +340,12 @@ func init() {
         }
       }
     },
-    "/plugin": {
+    "/plugins": {
       "get": {
         "produces": [
           "application/json"
         ],
-        "summary": "Returns list of the installed recommendation plugins",
+        "summary": "returns list of the registered plugins",
         "operationId": "getPlugins",
         "responses": {
           "200": {
@@ -264,6 +357,99 @@ func init() {
                 "$ref": "#/definitions/plugin"
               }
             }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "registers plugin",
+        "operationId": "registerPlugin",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/plugins/{pluginId}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns registered plugin",
+        "operationId": "getPlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "unregisters plugin",
+        "operationId": "unregisterPlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "plugin is removed from registry"
           },
           "default": {
             "description": "error",

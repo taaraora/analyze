@@ -29,9 +29,9 @@ func NewGetPlugins(ctx *middleware.Context, handler GetPluginsHandler) *GetPlugi
 	return &GetPlugins{Context: ctx, Handler: handler}
 }
 
-/*GetPlugins swagger:route GET /plugin getPlugins
+/*GetPlugins swagger:route GET /plugins getPlugins
 
-Returns list of the installed recommendation plugins
+returns list of the registered plugins
 
 */
 type GetPlugins struct {

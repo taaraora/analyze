@@ -4,14 +4,14 @@ info:
   version: v0.0.1
   title: Analyze service API
 consumes:
-- application/json
+  - application/json
 produces:
-- application/json
+  - application/json
 definitions:
   error:
     type: object
     required:
-    - message
+      - message
     properties:
       code:
         type: integer
@@ -93,11 +93,11 @@ definitions:
         description: "detailed action description"
         type: "string"
 paths:
-  /plugin:
+  /plugins:
     get:
-      summary: "Returns list of the installed recommendation plugins"
+      summary: "returns list of the registered plugins"
       produces:
-      - application/json
+        - application/json
       operationId: getPlugins
       responses:
         200:
@@ -111,11 +111,73 @@ paths:
           description: error
           schema:
             $ref: "#/definitions/error"
-  /check:
+    post:
+      summary: "registers plugin"
+      produces:
+        - application/json
+      operationId: registerPlugin
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/plugin"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/plugin"
+        201:
+          description: Created
+          schema:
+            $ref: "#/definitions/plugin"
+        401:
+          description: Unauthorized
+  /plugins/{pluginId}:
+    get:
+      summary: "returns registered plugin"
+      produces:
+        - application/json
+      operationId: getPlugin
+      parameters:
+        - name: pluginId
+          in: path
+          required: true
+          description: The id of the plugin to retrieve
+          type: string
+      responses:
+        200:
+          description: no error
+          schema:
+            $ref: "#/definitions/plugin"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    delete:
+      summary: "unregisters plugin"
+      produces:
+        - application/json
+      operationId: unregisterPlugin
+      parameters:
+        - name: pluginId
+          in: path
+          required: true
+          description: The id of the plugin to retrieve
+          type: string
+      responses:
+        204:
+          description: plugin is removed from registry
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+
+  /checks:
     get:
       summary: "Returns list of check results produced by installed plugins"
       produces:
-      - application/json
+        - application/json
       operationId: getCheckResults
       responses:
         200:
