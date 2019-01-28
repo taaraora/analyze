@@ -224,9 +224,9 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	analyzeAPI := operations.NewAnalyzeAPI(swaggerSpec)
 	analyzeAPI.GetPluginsHandler = handlers.NewPluginsHandler(
 		etcdStorage,
-		log.WithField("handler", "RecommendationPluginsHandler"),
+		log.WithField("handler", "PluginsHandler"),
 	)
-	analyzeAPI.GetCheckResultsHandler = handlers.NewCheckResultsHandler(
+	analyzeAPI.GetCheckResultsHandler = handlers.NewChecksResultsHandler(
 		etcdStorage,
 		log.WithField("handler", "CheckResultsHandler"),
 	)

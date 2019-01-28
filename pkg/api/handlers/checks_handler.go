@@ -13,19 +13,19 @@ import (
 	"github.com/supergiant/analyze/pkg/storage"
 )
 
-type checkResultsHandler struct {
+type checksResultsHandler struct {
 	storage storage.Interface
 	log     logrus.FieldLogger
 }
 
-func NewCheckResultsHandler(storage storage.Interface, logger logrus.FieldLogger) operations.GetCheckResultsHandler {
-	return &checkResultsHandler{
+func NewChecksResultsHandler(storage storage.Interface, logger logrus.FieldLogger) operations.GetCheckResultsHandler {
+	return &checksResultsHandler{
 		storage: storage,
 		log:     logger,
 	}
 }
 
-func (h *checkResultsHandler) Handle(params operations.GetCheckResultsParams) middleware.Responder {
+func (h *checksResultsHandler) Handle(params operations.GetCheckResultsParams) middleware.Responder {
 	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
