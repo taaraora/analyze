@@ -222,14 +222,28 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	//TODO: add request logging middleware
 	//TODO: add metrics middleware
 	analyzeAPI := operations.NewAnalyzeAPI(swaggerSpec)
-	analyzeAPI.GetPluginsHandler = handlers.NewPluginsHandler(
-		etcdStorage,
-		log.WithField("handler", "PluginsHandler"),
-	)
+
 	analyzeAPI.GetCheckResultsHandler = handlers.NewChecksResultsHandler(
 		etcdStorage,
 		log.WithField("handler", "CheckResultsHandler"),
 	)
+	analyzeAPI.GetPluginHandler = handlers.NewPluginHandler(
+		etcdStorage,
+		log.WithField("handler", "PluginHandler"),
+	)
+	analyzeAPI.GetPluginsHandler = handlers.NewPluginsHandler(
+		etcdStorage,
+		log.WithField("handler", "PluginsHandler"),
+	)
+	analyzeAPI.RegisterPluginHandler = handlers.NewRegisterPluginHandler(
+		etcdStorage,
+		log.WithField("handler", "RegisterPluginHandler"),
+	)
+
+	err = analyzeAPI.Validate()
+	if err != nil {
+		return errors.Wrap(err, "API configuration error")
+	}
 
 	server := api.NewServer(analyzeAPI)
 	server.Port = cfg.API.ServerPort
