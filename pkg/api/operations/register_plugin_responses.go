@@ -124,3 +124,61 @@ func (o *RegisterPluginUnauthorized) WriteResponse(rw http.ResponseWriter, produ
 
 	rw.WriteHeader(401)
 }
+
+/*RegisterPluginDefault error
+
+swagger:response registerPluginDefault
+*/
+type RegisterPluginDefault struct {
+	_statusCode int
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Error `json:"body,omitempty"`
+}
+
+// NewRegisterPluginDefault creates RegisterPluginDefault with default headers values
+func NewRegisterPluginDefault(code int) *RegisterPluginDefault {
+	if code <= 0 {
+		code = 500
+	}
+
+	return &RegisterPluginDefault{
+		_statusCode: code,
+	}
+}
+
+// WithStatusCode adds the status to the register plugin default response
+func (o *RegisterPluginDefault) WithStatusCode(code int) *RegisterPluginDefault {
+	o._statusCode = code
+	return o
+}
+
+// SetStatusCode sets the status to the register plugin default response
+func (o *RegisterPluginDefault) SetStatusCode(code int) {
+	o._statusCode = code
+}
+
+// WithPayload adds the payload to the register plugin default response
+func (o *RegisterPluginDefault) WithPayload(payload *models.Error) *RegisterPluginDefault {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the register plugin default response
+func (o *RegisterPluginDefault) SetPayload(payload *models.Error) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *RegisterPluginDefault) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(o._statusCode)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}

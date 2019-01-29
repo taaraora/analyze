@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
@@ -59,20 +58,6 @@ func NewClient(pluginServerAddress string, cfg *proto.PluginConfig) (*Client, er
 
 func (c *Client) Close() error {
 	return c.conn.Close()
-}
-
-func (ps PluginsSet) Load(plugin proto.PluginClient, cfg *proto.PluginConfig) error {
-
-	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
-	defer cancel()
-	info, err := plugin.Info(ctx, &empty.Empty{})
-	if err != nil {
-		return errors.Wrap(err, "unable to get plugin info")
-	}
-
-	ps[info.Id] = plugin
-
-	return nil
 }
 
 func (c Config) Validate() error {

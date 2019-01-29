@@ -129,7 +129,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		ctx, _ := context.WithTimeout(context.Background(), cfg.Plugin.CheckTimeout)
 		pluginInfo, err := pluginClient.Info(ctx, &empty.Empty{})
 		if err != nil {
-			mainLogger.Errorf("unable to load pluginClient, name: %v, error %v", pluginName, err)
+			mainLogger.Errorf("unable to load pluginInfo, name: %v, error %v", pluginName, err)
 		}
 
 		b, err := (&models.Plugin{
@@ -238,6 +238,10 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	analyzeAPI.RegisterPluginHandler = handlers.NewRegisterPluginHandler(
 		etcdStorage,
 		log.WithField("handler", "RegisterPluginHandler"),
+	)
+	analyzeAPI.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(
+		etcdStorage,
+		log.WithField("handler", "UnregisterPluginHandler"),
 	)
 
 	err = analyzeAPI.Validate()

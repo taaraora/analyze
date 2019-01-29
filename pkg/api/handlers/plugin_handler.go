@@ -27,12 +27,14 @@ func NewPluginHandler(storage storage.Interface, logger logrus.FieldLogger) oper
 
 func (h *pluginHandler) Handle(params operations.GetPluginParams) middleware.Responder {
 	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
+	defer h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	pluginRaw, err := h.storage.Get(ctx, models.PluginPrefix, params.PluginID)
 
 	if err == storage.ErrNotFound {
-		r := operations.NewGetPluginsDefault(http.StatusNotFound)
+		r := operations.NewGetPluginDefault(http.StatusNotFound)
 		msg := err.Error()
 		r.Payload = &models.Error{
 			Code:    http.StatusNotFound,
@@ -42,7 +44,7 @@ func (h *pluginHandler) Handle(params operations.GetPluginParams) middleware.Res
 	}
 
 	if err != nil {
-		r := operations.NewGetPluginsDefault(http.StatusInternalServerError)
+		r := operations.NewGetPluginDefault(http.StatusInternalServerError)
 		msg := err.Error()
 		r.Payload = &models.Error{
 			Code:    http.StatusInternalServerError,
@@ -54,7 +56,7 @@ func (h *pluginHandler) Handle(params operations.GetPluginParams) middleware.Res
 	p := &models.Plugin{}
 	err = p.UnmarshalBinary(pluginRaw)
 	if err != nil {
-		r := operations.NewGetPluginsDefault(http.StatusInternalServerError)
+		r := operations.NewGetPluginDefault(http.StatusInternalServerError)
 		msg := err.Error()
 		r.Payload = &models.Error{
 			Code:    http.StatusInternalServerError,
@@ -62,7 +64,6 @@ func (h *pluginHandler) Handle(params operations.GetPluginParams) middleware.Res
 		}
 		return r
 	}
-	h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
 
 	return operations.NewGetPluginOK().WithPayload(p)
 }

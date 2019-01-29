@@ -115,6 +115,12 @@ func init() {
           },
           "401": {
             "description": "Unauthorized"
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           }
         }
       }
@@ -409,6 +415,12 @@ func init() {
           },
           "401": {
             "description": "Unauthorized"
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           }
         }
       }

@@ -133,6 +133,10 @@ paths:
             $ref: "#/definitions/plugin"
         401:
           description: Unauthorized
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
   /plugins/{pluginId}:
     get:
       summary: "returns registered plugin"

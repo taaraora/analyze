@@ -15,9 +15,7 @@ type ETCDStorage struct {
 }
 
 func (e *ETCDStorage) Get(ctx context.Context, prefix string, key string) ([]byte, error) {
-	kv := clientv3.NewKV(e.client)
-
-	res, err := kv.Get(ctx, prefix+key)
+	res, err := e.client.Get(ctx, prefix+key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read from the etcd")
 	}
@@ -28,21 +26,19 @@ func (e *ETCDStorage) Get(ctx context.Context, prefix string, key string) ([]byt
 }
 
 func (e *ETCDStorage) Put(ctx context.Context, prefix string, key string, value []byte) error {
-	kv := clientv3.NewKV(e.client)
-	_, err := kv.Put(ctx, prefix+key, string(value))
+	_, err := e.client.Put(ctx, prefix+key, string(value))
 	return errors.Wrap(err, "failed to write to the etcd")
 }
 
 func (e *ETCDStorage) Delete(ctx context.Context, prefix string, key string) error {
 	_, err := e.client.Delete(ctx, prefix+key, clientv3.WithPrefix())
-	return errors.Wrap(err, "failed to read from the etcd")
+	return errors.Wrap(err, "failed to delete kv from the etcd")
 }
 
 func (e *ETCDStorage) GetAll(ctx context.Context, prefix string) ([][]byte, error) {
 	result := make([][]byte, 0)
-	kv := clientv3.NewKV(e.client)
 
-	r, err := kv.Get(ctx, prefix, clientv3.WithPrefix())
+	r, err := e.client.Get(ctx, prefix, clientv3.WithPrefix())
 	if err != nil {
 		return result, errors.Wrap(err, "failed to read from the etcd")
 	}

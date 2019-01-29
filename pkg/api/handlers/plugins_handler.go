@@ -27,6 +27,8 @@ func NewPluginsHandler(storage storage.Interface, logger logrus.FieldLogger) ope
 
 func (h *pluginsHandler) Handle(params operations.GetPluginsParams) middleware.Responder {
 	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
+	defer h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	pluginRaw, err := h.storage.GetAll(ctx, models.PluginPrefix)
@@ -57,7 +59,6 @@ func (h *pluginsHandler) Handle(params operations.GetPluginsParams) middleware.R
 		}
 		result = append(result, p)
 	}
-	h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
 
 	return operations.NewGetPluginsOK().WithPayload(result)
 }

@@ -28,10 +28,12 @@ func NewRegisterPluginHandler(storage storage.Interface, logger logrus.FieldLogg
 
 func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) middleware.Responder {
 	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
+	defer h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	if params.Body == nil || "" == strings.TrimSpace(params.Body.ID){
-		r := operations.NewGetPluginsDefault(http.StatusBadRequest)
+		r := operations.NewRegisterPluginDefault(http.StatusBadRequest)
 		message := "plugin id can't be empty"
 		r.Payload = &models.Error{
 			Code:    http.StatusBadRequest,
@@ -51,7 +53,7 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 
 	rawPlugin, err := p.MarshalBinary()
 	if err != nil {
-		r := operations.NewGetPluginsDefault(http.StatusInternalServerError)
+		r := operations.NewRegisterPluginDefault(http.StatusInternalServerError)
 		msg := err.Error()
 		r.Payload = &models.Error{
 			Code:    http.StatusInternalServerError,
@@ -66,7 +68,7 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 	if err == storage.ErrNotFound {
 		err = h.storage.Put(ctx, models.PluginPrefix, p.ID, rawPlugin)
 		if err != nil {
-			r := operations.NewGetPluginsDefault(http.StatusInternalServerError)
+			r := operations.NewRegisterPluginDefault(http.StatusInternalServerError)
 			msg := err.Error()
 			r.Payload = &models.Error{
 				Code:    http.StatusInternalServerError,
@@ -79,7 +81,7 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 	}
 
 	if err != nil {
-		r := operations.NewGetPluginsDefault(http.StatusInternalServerError)
+		r := operations.NewRegisterPluginDefault(http.StatusInternalServerError)
 		msg := err.Error()
 		r.Payload = &models.Error{
 			Code:    http.StatusInternalServerError,
@@ -90,7 +92,7 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 
 	err = h.storage.Put(ctx, models.PluginPrefix, p.ID, rawPlugin)
 	if err != nil {
-		r := operations.NewGetPluginsDefault(http.StatusInternalServerError)
+		r := operations.NewRegisterPluginDefault(http.StatusInternalServerError)
 		msg := err.Error()
 		r.Payload = &models.Error{
 			Code:    http.StatusInternalServerError,
