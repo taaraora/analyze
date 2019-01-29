@@ -40,7 +40,7 @@ func TestPluginsHandler_ReturnResultsSuccessfully(t *testing.T) {
 
 	//TODO: investigate why it has extra spaces in the end
 	if strings.TrimSpace(rr.Body.String()) != "[" + fixturePlugins1 + "," + fixturePlugins2 + "]" {
-		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), fixturePlugin)
+		t.Fatalf("handler returned unexpected body: got %v want %v", rr.Body.String(), fixturePlugin)
 	}
 }
 
@@ -61,6 +61,6 @@ func TestPluginsHandler_ReturnInternalError(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusOK, rr.Body.String())
+		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusInternalServerError, rr.Body.String())
 	}
 }

@@ -39,6 +39,7 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 			Code:    http.StatusBadRequest,
 			Message: &message,
 		}
+		return r
 	}
 	p := &models.Plugin{
 		Description:   params.Body.Description,

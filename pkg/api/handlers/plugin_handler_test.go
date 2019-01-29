@@ -38,7 +38,7 @@ func TestPluginHandler_ReturnResultsSuccessfully(t *testing.T) {
 
 	//TODO: investigate why it has extra spaces in the end
 	if strings.TrimSpace(rr.Body.String()) != fixturePlugin {
-		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), fixturePlugin)
+		t.Fatalf("handler returned unexpected body: got %v want %v", rr.Body.String(), fixturePlugin)
 	}
 }
 
