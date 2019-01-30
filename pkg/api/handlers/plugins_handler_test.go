@@ -38,9 +38,9 @@ func TestPluginsHandler_ReturnResultsSuccessfully(t *testing.T) {
 		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusOK, rr.Body.String())
 	}
 
-	//TODO: investigate why it has extra spaces in the end
-	if strings.TrimSpace(rr.Body.String()) != "[" + fixturePlugins1 + "," + fixturePlugins2 + "]" {
-		t.Fatalf("handler returned unexpected body: got %v want %v", rr.Body.String(), fixturePlugin)
+	body := rr.Body.String()
+	if  !strings.Contains(body, fixturePlugins1) || !strings.Contains(body, fixturePlugins2){
+		t.Fatalf("handler returned unexpected body: got %v", body)
 	}
 }
 
