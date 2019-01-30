@@ -39,9 +39,9 @@ func (h *unregisterPluginHandler) Handle(params operations.UnregisterPluginParam
 			Code:    http.StatusBadRequest,
 			Message: &message,
 		}
+		return r
 	}
 
-	//just replace all entity content
 	_, err := h.storage.Get(ctx, models.PluginPrefix, params.PluginID)
 
 	if err == storage.ErrNotFound {
