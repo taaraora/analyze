@@ -9,7 +9,7 @@ export class PluginsService {
   ) { }
 
   all() {
-    return this.http.get('/api/v1/plugin');
+    return this.http.get('/api/v1/plugins');
   }
 
   loadExternal(): void {
