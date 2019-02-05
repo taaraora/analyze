@@ -5,7 +5,6 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
-	"github.com/prometheus/common/log"
 	"github.com/sirupsen/logrus"
 	"github.com/supergiant/analyze/pkg/kube"
 	"github.com/supergiant/analyze/pkg/models"
@@ -20,6 +19,7 @@ type PluginController struct {
 	stor storage.Interface
 	kubeClient kube.Interface
 	logger logrus.FieldLogger
+	pluginClients map[string]*plugin.Client
 }
 
 func NewPluginController(
@@ -43,120 +43,133 @@ func (pc *PluginController) Loop(){
 			pc.logger.Errorf("unable to parse watch event")
 		}
 
-
-
-
-		b, err := (&models.Plugin{
-			Description: pluginInfo.Description,
-			ID:          pluginInfo.Id,
-			InstalledAt: strfmt.DateTime(time.Now()),
-			Name:        pluginInfo.Name,
-			Status:      "OK", // TODO: add status to proto, than implement plugins state which will reflect it's status
-			Version:     pluginInfo.Version,
-		}).MarshalBinary()
-		if err != nil {
-			mainLogger.Errorf("unable to load pluginClient, name: %v, error %v", pluginEntry.Name, err)
-		}
-
-		err = etcdStorage.Put(ctx, models.PluginPrefix, pluginEntry.Name, b)
-		if err != nil {
-			mainLogger.Errorf("unable to load pluginClient, name: %v, error %v", pluginEntry.Name, err)
-		}
-
-		check := func(pluginID string, pluginClient *plugin.Client, stor storage.Interface, logger logrus.FieldLogger) func() error {
-			return func() error {
-				ctx, cancel := context.WithTimeout(context.Background(), cfg.Plugin.CheckTimeout)
-				checkResponse, err := pluginClient.Check(ctx, &proto.CheckRequest{})
-				if err != nil {
-					cancel()
-					return errors.Errorf("unable to execute check for pluginClient: %s, error: %v", pluginID, err)
-				}
-				if checkResponse.Error != "" {
-					cancel()
-					return errors.Errorf("pluginClient: %s, returned error: %s", pluginID, checkResponse.Error)
-				}
-
-				if checkResponse.Result == nil {
-					cancel()
-					return errors.Errorf("pluginClient: %s, returned nil Result", pluginID)
-				}
-
-				r := checkResponse.Result
-
-				var actions = []*models.PluginAction{}
-				for _, action := range r.Actions {
-					actions = append(actions, &models.PluginAction{
-						Description: action.Description,
-						Name:        action.Name,
-						ID:          action.ActionId,
-					})
-				}
-				var currentTime = time.Now()
-				checkResult := models.CheckResult{
-					CheckStatus:     r.GetStatus().String(),
-					CompletedAt:     strfmt.DateTime(currentTime),
-					Description:     string(r.GetDescription().Value),
-					ExecutionStatus: r.GetExecutionStatus(),
-					ID:              r.GetName(),
-					Name:            r.GetName(),
-					PossibleActions: actions,
-				}
-
-				bytes, err := checkResult.MarshalBinary()
-				if err != nil {
-					cancel()
-					return errors.Errorf("unable to marshal check result, pluginClient: %s, returned error: %s", pluginID, err)
-				}
-
-				err = stor.Put(ctx, models.CheckResultPrefix, pluginID, bytes)
-				if err != nil {
-					cancel()
-					return errors.Errorf("unable to store check result, pluginClient: %s, returned error: %s", pluginID, err)
-				}
-				cancel()
-				return nil
-			}
-		}(pluginID, pluginClient, etcdStorage, log.WithField("component", "pluginsChecks"))
-
-
-
-		if we.Type() == storage.Added {
-
-		}
-
 	}
 }
 
+// TODO: maybe split config and plugin updates?
 func (pc *PluginController) parseEvent(we storage.WatchEvent) error {
 	if we.Type() == storage.Error {
 		return errors.Wrap(we.Err(), "plugin watchEvent returned error")
+	}
+	var err error
+	var pluginClient *plugin.Client
+	var pluginConfig *proto.PluginConfig
 
+	pluginEntry := &models.Plugin{}
+	err = pluginEntry.UnmarshalBinary(we.Payload())
+	if err != nil {
+		return errors.Errorf("unable to unmarshal pluginEntry entity, %s", string(we.Payload()))
+	}
+
+	if we.Type() == storage.Deleted {
+		var exists bool
+		pluginClient, exists = pc.pluginClients[pluginEntry.ID]
+		if !exists {
+			return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.Name)
+		}
+		err = pluginClient.Close()
+		if err != nil {
+			return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.Name)
+		}
+		delete(pc.pluginClients, pluginEntry.ID)
+		return nil
+	}
+
+	if we.Type() == storage.Added {
+ 		pluginClient, err = pc.newPluginClient(pluginEntry)
+ 		if err != nil {
+			return errors.Wrap(we.Err(), "can't create plugin client for watchEvent")
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+		pluginInfo, err := pluginClient.Info(ctx, &empty.Empty{})
+		defer cancel()
+		if err != nil {
+			return errors.Errorf("unable to load pluginInfo, name: %v, error %v", pluginEntry.Name, err)
+		}
+
+		pluginConfig = pluginInfo.DefaultConfig
+		pc.pluginClients[pluginInfo.Id] = pluginClient
+	}
+
+	if we.Type() == storage.Modified {
+		var exists bool
+		pluginClient, exists = pc.pluginClients[pluginEntry.ID]
+		if !exists {
+			return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.Name)
+		}
+	}
+
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+	defer cancel()
+	_, err = pluginClient.Configure(ctx, pluginConfig)
+	if err != nil {
+		return errors.Wrap(err, "unable to configure plugin")
 	}
 
 	return nil
 }
 
-func (pc *PluginController) newPluginClient(we storage.WatchEvent) error {
-	pluginEntry := &models.Plugin{}
-	err := pluginEntry.UnmarshalBinary(we.Payload())
-	if err != nil {
-		return errors.Errorf("unable to unmarshal pluginEntry entity, %s", string(we.Payload()))
-	}
+// newPluginClient returns plugin client instance which is configured and ready for work
+func (pc *PluginController) newPluginClient(pluginEntry *models.Plugin) (*plugin.Client, error) {
 
 	// pluginEntry.ServiceLabels
 	service, err := pc.kubeClient.GetService(pluginEntry.ServiceName, pluginEntry.ServiceLabels)
 	if err != nil {
-		return errors.Errorf("unable to find service for registered plugin, %s", string(we.Payload()))
+		return nil, errors.Errorf("unable to find service for registered plugin, %+v", pluginEntry)
 	}
 
-	pluginClient, err := plugin.NewClient(service.Spec.ClusterIP, cfg.Plugin.ToProtoConfig())
+	pluginClient, err := plugin.NewClient(service.Spec.ClusterIP)
 	if err != nil {
-		return errors.Errorf("unable to instantiate pluginClient client for entity, %+v", pluginEntry)
+		return nil, errors.Errorf("unable to instantiate pluginClient client for entity, %+v", pluginEntry)
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), cfg.Plugin.CheckTimeout)
-	pluginInfo, err := pluginClient.Info(ctx, &empty.Empty{})
-	if err != nil {
-		return errors.Errorf("unable to load pluginInfo, name: %v, error %v", pluginEntry.Name, err)
+	return pluginClient, nil
+}
+
+func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) func()error {
+	return func() error {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		checkResponse, err := pluginClient.Check(ctx, &proto.CheckRequest{})
+		if err != nil {
+			cancel()
+			return errors.Errorf("unable to execute check for pluginClient: %s, error: %v", pluginID, err)
+		}
+		if checkResponse.Error != "" {
+			cancel()
+			return errors.Errorf("pluginClient: %s, returned error: %s", pluginID, checkResponse.Error)
+		}
+
+		if checkResponse.Result == nil {
+			cancel()
+			return errors.Errorf("pluginClient: %s, returned nil Result", pluginID)
+		}
+
+		r := checkResponse.Result
+
+		var currentTime = time.Now()
+		checkResult := models.CheckResult{
+			CheckStatus:     r.GetStatus().String(),
+			CompletedAt:     strfmt.DateTime(currentTime),
+			Description:     string(r.GetDescription().Value),
+			ExecutionStatus: r.GetExecutionStatus(),
+			ID:              r.GetName(),
+			Name:            r.GetName(),
+		}
+
+		bytes, err := checkResult.MarshalBinary()
+		if err != nil {
+			cancel()
+			return errors.Errorf("unable to marshal check result, pluginClient: %s, returned error: %s", pluginID, err)
+		}
+
+		err = pc.stor.Put(ctx, models.CheckResultPrefix, pluginID, bytes)
+		if err != nil {
+			cancel()
+			return errors.Errorf("unable to store check result, pluginClient: %s, returned error: %s", pluginID, err)
+		}
+		cancel()
+		return nil
 	}
 }

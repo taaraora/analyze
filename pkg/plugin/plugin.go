@@ -1,7 +1,6 @@
 package plugin
 
 import (
-	"context"
 	"time"
 
 	"github.com/pkg/errors"
@@ -30,27 +29,18 @@ const (
 )
 
 type Client struct {
-	cfg  *proto.PluginConfig
 	conn *grpc.ClientConn
 	proto.PluginClient
 }
 
-func NewClient(pluginServerAddress string, cfg *proto.PluginConfig) (*Client, error) {
+func NewClient(pluginServerAddress string) (*Client, error) {
 	conn, err := grpc.Dial(pluginServerAddress, grpc.WithInsecure())
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to dial plugin server side: %s ", pluginServerAddress)
 	}
 	c := proto.NewPluginClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
-	defer cancel()
-	_, err = c.Configure(ctx, cfg)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to configure plugin")
-	}
-
 	return &Client{
-		cfg:          cfg,
 		conn:         conn,
 		PluginClient: c,
 	}, nil
