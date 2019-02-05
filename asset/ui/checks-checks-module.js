@@ -108,7 +108,7 @@ var ChecksComponent = /** @class */ (function () {
         this.IS_NOT_SET_MSG = 'Is not set';
     }
     ChecksComponent.prototype.ngOnInit = function () {
-        var apiV1Check = '/api/v1/check';
+        var apiV1Check = '/api/v1/checks';
         var mapJson = Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function (checks) { return checks.map(function (check) {
             try {
                 var description = JSON.parse(check.description);
