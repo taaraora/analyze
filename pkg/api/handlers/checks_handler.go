@@ -45,7 +45,7 @@ func (h *checksResultsHandler) Handle(params operations.GetCheckResultsParams) m
 
 	for _, rawResult := range resultsRaw {
 		checkResult := &models.CheckResult{}
-		err := checkResult.UnmarshalBinary(rawResult)
+		err := checkResult.UnmarshalBinary(rawResult.Payload())
 		if err != nil {
 			r := operations.NewGetCheckResultsDefault(http.StatusInternalServerError)
 			msg := err.Error()

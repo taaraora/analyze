@@ -47,7 +47,7 @@ func (h *pluginsHandler) Handle(params operations.GetPluginsParams) middleware.R
 
 	for _, rawPlugin := range pluginRaw {
 		p := &models.Plugin{}
-		err := p.UnmarshalBinary(rawPlugin)
+		err := p.UnmarshalBinary(rawPlugin.Payload())
 		if err != nil {
 			r := operations.NewGetPluginsDefault(http.StatusInternalServerError)
 			msg := err.Error()

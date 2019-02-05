@@ -19,6 +19,12 @@ type registerPluginHandler struct {
 	log     logrus.FieldLogger
 }
 
+type storageMessage []byte
+
+func (m storageMessage)Payload() []byte {
+	return m
+}
+
 func NewRegisterPluginHandler(storage storage.Interface, logger logrus.FieldLogger) operations.RegisterPluginHandler{
 	return &registerPluginHandler{
 		storage: storage,
@@ -67,7 +73,7 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 	_, err = h.storage.Get(ctx, models.PluginPrefix, p.ID)
 
 	if err == storage.ErrNotFound {
-		err = h.storage.Put(ctx, models.PluginPrefix, p.ID, rawPlugin)
+		err = h.storage.Put(ctx, models.PluginPrefix, p.ID, storageMessage(rawPlugin))
 		if err != nil {
 			r := operations.NewRegisterPluginDefault(http.StatusInternalServerError)
 			msg := err.Error()
@@ -91,7 +97,7 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 		return r
 	}
 
-	err = h.storage.Put(ctx, models.PluginPrefix, p.ID, rawPlugin)
+	err = h.storage.Put(ctx, models.PluginPrefix, p.ID, storageMessage(rawPlugin))
 	if err != nil {
 		r := operations.NewRegisterPluginDefault(http.StatusInternalServerError)
 		msg := err.Error()
