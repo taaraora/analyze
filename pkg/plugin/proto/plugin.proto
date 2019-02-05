@@ -4,12 +4,12 @@ package proto;
 
 import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
 
 
 service Plugin {
     rpc Info(google.protobuf.Empty) returns (PluginInfo);
     rpc Check (CheckRequest) returns (CheckResponse);
-    rpc Action (ActionRequest) returns (ActionResponse);
     rpc Configure (PluginConfig) returns (google.protobuf.Empty);
 
     //Graceful Shutdown Plugin
@@ -26,18 +26,23 @@ message PluginInfo {
     string name = 3;
     // detailed plugin description
     string description = 4;
+    // plugin default config
+    PluginConfig default_config = 5;
 }
 
 // plugin instance is running inside k8s cluster, consequently:
 // k8s api server doesn't need to be configured and is accessible through k8s service discovery
 // AWS credentials need to be configured
 message PluginConfig {
-    CloudProviderType provider_type = 1;
+    google.protobuf.Duration execution_interval = 1;
+    google.protobuf.Any plugin_specific_config = 2;
+
+    CloudProviderType provider_type = 3;
     oneof cloud_provider_config {
-        DoConfig do_config = 2;
-        AwsConfig aws_config = 3;
+        DoConfig do_config = 4;
+        AwsConfig aws_config = 5;
     }
-    string metrics_server_uri = 5;
+    string metrics_server_uri = 6;
 }
 
 message Stop {
@@ -61,7 +66,6 @@ message CheckResult {
     string name = 3;
     // TODO: temporary solution need to be redesigned.
     google.protobuf.Any description = 4;
-    repeated Action actions = 5;
 }
 
 enum CheckStatus {
@@ -69,20 +73,6 @@ enum CheckStatus {
     GREEN = 1;
     YELLOW = 2;
     RED = 3;
-}
-
-message Action {
-    string action_id = 1; // it is impossible ty make actions typed
-    string name = 2;
-    string description = 3;
-}
-
-message ActionRequest {
-    string action_id = 1;
-}
-
-message ActionResponse {
-    string error = 2;
 }
 
 enum CloudProviderType {
