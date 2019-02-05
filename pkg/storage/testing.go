@@ -12,6 +12,12 @@ type mockStorage struct {
 	isBroken bool
 }
 
+type mockMsg []byte
+
+func (m mockMsg)Payload() []byte {
+	return m
+}
+
 var errBroken = errors.New("internal storage error")
 
 func GetMockStorage(t *testing.T, data map[string]string)Interface {
@@ -37,21 +43,21 @@ func NewMockStorage(data map[string]string, isBroken bool) Interface {
 	}
 }
 
-func (s *mockStorage)GetAll(ctx context.Context, prefix string) ([][]byte, error) {
+func (s *mockStorage)GetAll(ctx context.Context, prefix string) ([]Message, error) {
 	if s.isBroken {
 		return nil, errBroken
 	}
-	result := [][]byte{}
+	result := []Message{}
 	for key, _ := range s.data {
 		if strings.Contains(key, prefix){
-			result = append(result, s.data[key])
+			result = append(result, mockMsg(s.data[key]))
 		}
 	}
 
 	return result, nil
 }
 
-func (s *mockStorage)Get(ctx context.Context, prefix string, key string) ([]byte, error) {
+func (s *mockStorage)Get(ctx context.Context, prefix string, key string) (Message, error) {
 	if s.isBroken {
 		return nil, errBroken
 	}
@@ -60,14 +66,14 @@ func (s *mockStorage)Get(ctx context.Context, prefix string, key string) ([]byte
 		return nil, ErrNotFound
 	}
 
-	return v, nil
+	return mockMsg(v), nil
 }
 
-func (s *mockStorage)Put(ctx context.Context, prefix string, key string, value []byte) error {
+func (s *mockStorage)Put(ctx context.Context, prefix string, key string, value Message) error {
 	if s.isBroken {
 		return errBroken
 	}
-	s.data[prefix+key] = value
+	s.data[prefix+key] = value.Payload()
 
 	return nil
 }
@@ -85,4 +91,8 @@ func (s *mockStorage)Close() error {
 		return errBroken
 	}
 	return nil
+}
+
+func (s *mockStorage) WatchRange(ctx context.Context, key string) <-chan WatchEvent {
+	panic("not implemented")
 }
