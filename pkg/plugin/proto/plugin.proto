@@ -28,6 +28,8 @@ message PluginInfo {
     string description = 4;
     // plugin default config
     PluginConfig default_config = 5;
+    // path to bundle which is entry for web component
+    string ui_entry_point = 6;
 }
 
 // plugin instance is running inside k8s cluster, consequently:
