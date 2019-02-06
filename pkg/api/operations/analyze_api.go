@@ -46,8 +46,20 @@ func NewAnalyzeAPI(spec *loads.Document) *AnalyzeAPI {
 		GetPluginsHandler: GetPluginsHandlerFunc(func(params GetPluginsParams) middleware.Responder {
 			return middleware.NotImplemented("operation GetPlugins has not yet been implemented")
 		}),
+		GetPromethiusIntegrationInfoHandler: GetPromethiusIntegrationInfoHandlerFunc(func(params GetPromethiusIntegrationInfoParams) middleware.Responder {
+			return middleware.NotImplemented("operation GetPromethiusIntegrationInfo has not yet been implemented")
+		}),
+		GetPromethiusIntegrationValidationsHandler: GetPromethiusIntegrationValidationsHandlerFunc(func(params GetPromethiusIntegrationValidationsParams) middleware.Responder {
+			return middleware.NotImplemented("operation GetPromethiusIntegrationValidations has not yet been implemented")
+		}),
+		PatchPromethiusIntegrationInfoHandler: PatchPromethiusIntegrationInfoHandlerFunc(func(params PatchPromethiusIntegrationInfoParams) middleware.Responder {
+			return middleware.NotImplemented("operation PatchPromethiusIntegrationInfo has not yet been implemented")
+		}),
 		RegisterPluginHandler: RegisterPluginHandlerFunc(func(params RegisterPluginParams) middleware.Responder {
 			return middleware.NotImplemented("operation RegisterPlugin has not yet been implemented")
+		}),
+		TriggerValidationsHandler: TriggerValidationsHandlerFunc(func(params TriggerValidationsParams) middleware.Responder {
+			return middleware.NotImplemented("operation TriggerValidations has not yet been implemented")
 		}),
 		UnregisterPluginHandler: UnregisterPluginHandlerFunc(func(params UnregisterPluginParams) middleware.Responder {
 			return middleware.NotImplemented("operation UnregisterPlugin has not yet been implemented")
@@ -89,8 +101,16 @@ type AnalyzeAPI struct {
 	GetPluginHandler GetPluginHandler
 	// GetPluginsHandler sets the operation handler for the get plugins operation
 	GetPluginsHandler GetPluginsHandler
+	// GetPromethiusIntegrationInfoHandler sets the operation handler for the get promethius integration info operation
+	GetPromethiusIntegrationInfoHandler GetPromethiusIntegrationInfoHandler
+	// GetPromethiusIntegrationValidationsHandler sets the operation handler for the get promethius integration validations operation
+	GetPromethiusIntegrationValidationsHandler GetPromethiusIntegrationValidationsHandler
+	// PatchPromethiusIntegrationInfoHandler sets the operation handler for the patch promethius integration info operation
+	PatchPromethiusIntegrationInfoHandler PatchPromethiusIntegrationInfoHandler
 	// RegisterPluginHandler sets the operation handler for the register plugin operation
 	RegisterPluginHandler RegisterPluginHandler
+	// TriggerValidationsHandler sets the operation handler for the trigger validations operation
+	TriggerValidationsHandler TriggerValidationsHandler
 	// UnregisterPluginHandler sets the operation handler for the unregister plugin operation
 	UnregisterPluginHandler UnregisterPluginHandler
 
@@ -168,8 +188,24 @@ func (o *AnalyzeAPI) Validate() error {
 		unregistered = append(unregistered, "GetPluginsHandler")
 	}
 
+	if o.GetPromethiusIntegrationInfoHandler == nil {
+		unregistered = append(unregistered, "GetPromethiusIntegrationInfoHandler")
+	}
+
+	if o.GetPromethiusIntegrationValidationsHandler == nil {
+		unregistered = append(unregistered, "GetPromethiusIntegrationValidationsHandler")
+	}
+
+	if o.PatchPromethiusIntegrationInfoHandler == nil {
+		unregistered = append(unregistered, "PatchPromethiusIntegrationInfoHandler")
+	}
+
 	if o.RegisterPluginHandler == nil {
 		unregistered = append(unregistered, "RegisterPluginHandler")
+	}
+
+	if o.TriggerValidationsHandler == nil {
+		unregistered = append(unregistered, "TriggerValidationsHandler")
 	}
 
 	if o.UnregisterPluginHandler == nil {
@@ -289,10 +325,30 @@ func (o *AnalyzeAPI) initHandlerCache() {
 	}
 	o.handlers["GET"]["/plugins"] = NewGetPlugins(o.context, o.GetPluginsHandler)
 
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/integration/prometheus"] = NewGetPromethiusIntegrationInfo(o.context, o.GetPromethiusIntegrationInfoHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/integration/prometheus/validations"] = NewGetPromethiusIntegrationValidations(o.context, o.GetPromethiusIntegrationValidationsHandler)
+
+	if o.handlers["PATCH"] == nil {
+		o.handlers["PATCH"] = make(map[string]http.Handler)
+	}
+	o.handlers["PATCH"]["/integration/prometheus"] = NewPatchPromethiusIntegrationInfo(o.context, o.PatchPromethiusIntegrationInfoHandler)
+
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
 	o.handlers["POST"]["/plugins"] = NewRegisterPlugin(o.context, o.RegisterPluginHandler)
+
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/integration/prometheus/validations"] = NewTriggerValidations(o.context, o.TriggerValidationsHandler)
 
 	if o.handlers["DELETE"] == nil {
 		o.handlers["DELETE"] = make(map[string]http.Handler)

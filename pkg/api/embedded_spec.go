@@ -27,7 +27,7 @@ func init() {
   "swagger": "2.0",
   "info": {
     "title": "Analyze service API",
-    "version": "v0.0.1"
+    "version": "v2.0.0"
   },
   "basePath": "/api/v1",
   "paths": {
@@ -48,6 +48,91 @@ func init() {
                 "$ref": "#/definitions/checkResult"
               }
             }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/integration/prometheus": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns prometheus instance info and name of cluster",
+        "operationId": "getPromethiusIntegrationInfo",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/integrationInfo"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "updates prometheus instance info and name of cluster",
+        "operationId": "patchPromethiusIntegrationInfo",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/integrationInfo"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/integration/prometheus/validations": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns list of integration validations",
+        "operationId": "getPromethiusIntegrationValidations",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/integrationComponent"
+              }
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "This will trigger integration validations of all prometheus components",
+        "operationId": "triggerValidations",
+        "responses": {
+          "204": {
+            "description": "validation has been triggered"
           },
           "default": {
             "description": "error",
@@ -231,13 +316,6 @@ func init() {
         "name": {
           "description": "check name",
           "type": "string"
-        },
-        "possibleActions": {
-          "description": "list of possible actions to fix caveats check was found",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/pluginAction"
-          }
         }
       }
     },
@@ -252,6 +330,69 @@ func init() {
           "format": "int64"
         },
         "message": {
+          "type": "string"
+        }
+      }
+    },
+    "integrationComponent": {
+      "description": "contains all info related that integration works or not for some component",
+      "type": "object",
+      "properties": {
+        "componentName": {
+          "description": "component integration name",
+          "type": "string"
+        },
+        "status": {
+          "description": "shows overall validation status for component",
+          "type": "string",
+          "enum": [
+            "OK",
+            "IN_PROGRESS",
+            "FAILED"
+          ]
+        },
+        "validationTargets": {
+          "description": "contains performed validations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/validationTarget"
+          }
+        },
+        "validations": {
+          "description": "contains performed validations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/validation"
+          }
+        }
+      }
+    },
+    "integrationInfo": {
+      "description": "IntegrationInfo contains all info needed to reach prometheus instance inside k8s cluster",
+      "type": "object",
+      "properties": {
+        "integrationName": {
+          "description": "name of service which is integrated, e. g. Prometheus",
+          "type": "string"
+        },
+        "reachabilityStatus": {
+          "description": "shows whether service is reachable",
+          "type": "string",
+          "enum": [
+            "REACHABLE",
+            "UNREACHABLE"
+          ]
+        },
+        "serviceName": {
+          "description": "name of k8s service which resides in front of app which is integrated",
+          "type": "string"
+        },
+        "serviceNamespace": {
+          "description": "name of k8s namespace where app and its service is deployed",
+          "type": "string"
+        },
+        "servicePort": {
+          "description": "port of k8s service which resides in front of app which is integrated",
           "type": "string"
         }
       }
@@ -297,21 +438,39 @@ func init() {
         }
       }
     },
-    "pluginAction": {
-      "description": "CheckResult represents the single result of Check function invocation of specific plugin.",
+    "validation": {
+      "description": "single integration validation for component",
       "type": "object",
       "properties": {
-        "description": {
-          "description": "detailed action description",
-          "type": "string"
-        },
-        "id": {
-          "description": "unique UUID of plugin action",
-          "type": "string"
-        },
         "name": {
-          "description": "name of plugin action",
+          "description": "name of validation, e. g. node_exporter deamonSet is OK",
           "type": "string"
+        },
+        "status": {
+          "description": "shows validation status",
+          "type": "string",
+          "enum": [
+            "OK",
+            "FAILED"
+          ]
+        }
+      }
+    },
+    "validationTarget": {
+      "description": "validation target is specific node pr service or something else where we check that some integration is configured",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "name of validation target, it can be hostname or service name, or container name",
+          "type": "string"
+        },
+        "status": {
+          "description": "shows validation status",
+          "type": "string",
+          "enum": [
+            "OK",
+            "FAILED"
+          ]
         }
       }
     }
@@ -327,7 +486,7 @@ func init() {
   "swagger": "2.0",
   "info": {
     "title": "Analyze service API",
-    "version": "v0.0.1"
+    "version": "v2.0.0"
   },
   "basePath": "/api/v1",
   "paths": {
@@ -348,6 +507,91 @@ func init() {
                 "$ref": "#/definitions/checkResult"
               }
             }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/integration/prometheus": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns prometheus instance info and name of cluster",
+        "operationId": "getPromethiusIntegrationInfo",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/integrationInfo"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "updates prometheus instance info and name of cluster",
+        "operationId": "patchPromethiusIntegrationInfo",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/integrationInfo"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/integration/prometheus/validations": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns list of integration validations",
+        "operationId": "getPromethiusIntegrationValidations",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/integrationComponent"
+              }
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "This will trigger integration validations of all prometheus components",
+        "operationId": "triggerValidations",
+        "responses": {
+          "204": {
+            "description": "validation has been triggered"
           },
           "default": {
             "description": "error",
@@ -531,13 +775,6 @@ func init() {
         "name": {
           "description": "check name",
           "type": "string"
-        },
-        "possibleActions": {
-          "description": "list of possible actions to fix caveats check was found",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/pluginAction"
-          }
         }
       }
     },
@@ -552,6 +789,69 @@ func init() {
           "format": "int64"
         },
         "message": {
+          "type": "string"
+        }
+      }
+    },
+    "integrationComponent": {
+      "description": "contains all info related that integration works or not for some component",
+      "type": "object",
+      "properties": {
+        "componentName": {
+          "description": "component integration name",
+          "type": "string"
+        },
+        "status": {
+          "description": "shows overall validation status for component",
+          "type": "string",
+          "enum": [
+            "OK",
+            "IN_PROGRESS",
+            "FAILED"
+          ]
+        },
+        "validationTargets": {
+          "description": "contains performed validations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/validationTarget"
+          }
+        },
+        "validations": {
+          "description": "contains performed validations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/validation"
+          }
+        }
+      }
+    },
+    "integrationInfo": {
+      "description": "IntegrationInfo contains all info needed to reach prometheus instance inside k8s cluster",
+      "type": "object",
+      "properties": {
+        "integrationName": {
+          "description": "name of service which is integrated, e. g. Prometheus",
+          "type": "string"
+        },
+        "reachabilityStatus": {
+          "description": "shows whether service is reachable",
+          "type": "string",
+          "enum": [
+            "REACHABLE",
+            "UNREACHABLE"
+          ]
+        },
+        "serviceName": {
+          "description": "name of k8s service which resides in front of app which is integrated",
+          "type": "string"
+        },
+        "serviceNamespace": {
+          "description": "name of k8s namespace where app and its service is deployed",
+          "type": "string"
+        },
+        "servicePort": {
+          "description": "port of k8s service which resides in front of app which is integrated",
           "type": "string"
         }
       }
@@ -597,21 +897,39 @@ func init() {
         }
       }
     },
-    "pluginAction": {
-      "description": "CheckResult represents the single result of Check function invocation of specific plugin.",
+    "validation": {
+      "description": "single integration validation for component",
       "type": "object",
       "properties": {
-        "description": {
-          "description": "detailed action description",
-          "type": "string"
-        },
-        "id": {
-          "description": "unique UUID of plugin action",
-          "type": "string"
-        },
         "name": {
-          "description": "name of plugin action",
+          "description": "name of validation, e. g. node_exporter deamonSet is OK",
           "type": "string"
+        },
+        "status": {
+          "description": "shows validation status",
+          "type": "string",
+          "enum": [
+            "OK",
+            "FAILED"
+          ]
+        }
+      }
+    },
+    "validationTarget": {
+      "description": "validation target is specific node pr service or something else where we check that some integration is configured",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "name of validation target, it can be hostname or service name, or container name",
+          "type": "string"
+        },
+        "status": {
+          "description": "shows validation status",
+          "type": "string",
+          "enum": [
+            "OK",
+            "FAILED"
+          ]
         }
       }
     }

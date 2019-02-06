@@ -58,7 +58,7 @@ gen-swagger: validate
 		--server-package=api \
 		--spec=./swagger/api-spec.yml \
 		--exclude-main \
-		--name=analyze
+		--name=analyze \
 		--existing-models=./pkg/models
 	cp ./swagger/api-spec.yml ./asset/swagger/api-spec.yml
 

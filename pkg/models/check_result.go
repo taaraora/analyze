@@ -7,7 +7,6 @@ package models
 
 import (
 	"encoding/json"
-	"strconv"
 
 	strfmt "github.com/go-openapi/strfmt"
 
@@ -39,9 +38,6 @@ type CheckResult struct {
 
 	// check name
 	Name string `json:"name,omitempty"`
-
-	// list of possible actions to fix caveats check was found
-	PossibleActions []*PluginAction `json:"possibleActions"`
 }
 
 // Validate validates this check result
@@ -53,10 +49,6 @@ func (m *CheckResult) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateCompletedAt(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validatePossibleActions(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -120,31 +112,6 @@ func (m *CheckResult) validateCompletedAt(formats strfmt.Registry) error {
 
 	if err := validate.FormatOf("completedAt", "body", "date-time", m.CompletedAt.String(), formats); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (m *CheckResult) validatePossibleActions(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.PossibleActions) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.PossibleActions); i++ {
-		if swag.IsZero(m.PossibleActions[i]) { // not required
-			continue
-		}
-
-		if m.PossibleActions[i] != nil {
-			if err := m.PossibleActions[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("possibleActions" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
 	}
 
 	return nil

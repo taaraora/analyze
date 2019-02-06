@@ -1,7 +1,7 @@
 swagger: "2.0"
 basePath: "/api/v1"
 info:
-  version: v0.0.1
+  version: v2.0.0
   title: Analyze service API
 consumes:
   - application/json
@@ -74,24 +74,70 @@ definitions:
       description:
         description: "detailed check result description"
         type: "string"
-      possibleActions:
-        description: "list of possible actions to fix caveats check was found"
+  integrationInfo:
+    type: "object"
+    description: "IntegrationInfo contains all info needed to reach prometheus instance inside k8s cluster"
+    properties:
+      integrationName:
+        description: "name of service which is integrated, e. g. Prometheus"
+        type: "string"
+      serviceName:
+        description: "name of k8s service which resides in front of app which is integrated"
+        type: "string"
+      serviceNamespace:
+        description: "name of k8s namespace where app and its service is deployed"
+        type: "string"
+      servicePort:
+        description: "port of k8s service which resides in front of app which is integrated"
+        type: "string"
+      reachabilityStatus:
+        description: "shows whether service is reachable"
+        type: "string"
+        enum: [REACHABLE, UNREACHABLE]
+  integrationComponent:
+    type: "object"
+    description: "contains all info related that integration works or not for some component"
+    properties:
+      componentName:
+        description: "component integration name"
+        type: "string"
+      validations:
+        description: "contains performed validations"
         type: "array"
         items:
-          $ref: "#/definitions/pluginAction"
-  pluginAction:
+          $ref: "#/definitions/validation"
+      validationTargets:
+        description: "contains performed validations"
+        type: "array"
+        items:
+          $ref: "#/definitions/validationTarget"
+      status:
+        description: "shows overall validation status for component"
+        type: "string"
+        enum: [OK, IN_PROGRESS, FAILED]
+  validation:
     type: "object"
-    description: "CheckResult represents the single result of Check function invocation of specific plugin."
+    description: "single integration validation for component"
     properties:
-      id:
-        description: "unique UUID of plugin action"
-        type: "string"
       name:
-        description: "name of plugin action"
+        description: "name of validation, e. g. node_exporter deamonSet is OK"
         type: "string"
-      description:
-        description: "detailed action description"
+      status:
+        description: "shows validation status"
         type: "string"
+        enum: [OK, FAILED]
+  validationTarget:
+    type: "object"
+    description: "validation target is specific node pr service or something else where we check that some integration is configured"
+    properties:
+      name:
+        description: "name of validation target, it can be hostname or service name, or container name"
+        type: "string"
+      status:
+        description: "shows validation status"
+        type: "string"
+        enum: [OK, FAILED]
+
 paths:
   /plugins:
     get:
@@ -133,6 +179,10 @@ paths:
             $ref: "#/definitions/plugin"
         401:
           description: Unauthorized
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
   /plugins/{pluginId}:
     get:
       summary: "returns registered plugin"
@@ -150,6 +200,10 @@ paths:
           description: no error
           schema:
             $ref: "#/definitions/plugin"
+        404:
+          description: Not Found
+          schema:
+            $ref: "#/definitions/error"
         default:
           description: error
           schema:
@@ -168,11 +222,14 @@ paths:
       responses:
         204:
           description: plugin is removed from registry
+        404:
+          description: Not Found
+          schema:
+            $ref: "#/definitions/error"
         default:
           description: error
           schema:
             $ref: "#/definitions/error"
-
   /checks:
     get:
       summary: "Returns list of check results produced by installed plugins"
@@ -187,6 +244,62 @@ paths:
             description: "existing checks"
             items:
               $ref: "#/definitions/checkResult"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+  /integration/prometheus:
+    get:
+      summary: "returns prometheus instance info and name of cluster"
+      produces:
+        - application/json
+      operationId: getPromethiusIntegrationInfo
+      responses:
+        200:
+          description: no error
+          schema:
+            $ref: "#/definitions/integrationInfo"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    patch:
+      summary: "updates prometheus instance info and name of cluster"
+      produces:
+        - application/json
+      operationId: patchPromethiusIntegrationInfo
+      responses:
+        200:
+          description: no error
+          schema:
+            $ref: "#/definitions/integrationInfo"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+  /integration/prometheus/validations:
+    post:
+      summary: "This will trigger integration validations of all prometheus components"
+      operationId: triggerValidations
+      responses:
+        204:
+          description: validation has been triggered
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    get:
+      summary: "returns list of integration validations"
+      produces:
+        - application/json
+      operationId: getPromethiusIntegrationValidations
+      responses:
+        200:
+          description: no error
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/integrationComponent"
         default:
           description: error
           schema:
