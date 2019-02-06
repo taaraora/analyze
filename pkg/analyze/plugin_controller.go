@@ -38,11 +38,9 @@ func NewPluginController(
 
 func (pc *PluginController) Loop(){
 	for we := range pc.events {
-
 		if err := pc.parseEvent(we); err != nil {
 			pc.logger.Errorf("unable to parse watch event")
 		}
-
 	}
 }
 

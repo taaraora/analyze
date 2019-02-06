@@ -1,7 +1,7 @@
 swagger: "2.0"
 basePath: "/api/v1"
 info:
-  version: v0.0.1
+  version: v2.0.0
   title: Analyze service API
 consumes:
   - application/json
@@ -73,24 +73,6 @@ definitions:
         enum: [RED, YELLOW, GREEN]
       description:
         description: "detailed check result description"
-        type: "string"
-      possibleActions:
-        description: "list of possible actions to fix caveats check was found"
-        type: "array"
-        items:
-          $ref: "#/definitions/pluginAction"
-  pluginAction:
-    type: "object"
-    description: "CheckResult represents the single result of Check function invocation of specific plugin."
-    properties:
-      id:
-        description: "unique UUID of plugin action"
-        type: "string"
-      name:
-        description: "name of plugin action"
-        type: "string"
-      description:
-        description: "detailed action description"
         type: "string"
 paths:
   /plugins:
