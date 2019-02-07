@@ -103,7 +103,7 @@ fmt: gofmt goimports
 # To compile all protobuf files in this repository, run "make protobuf"
 .PHONY: gen-protobuf
 gen-protobuf:
-	docker run --rm -v ${CURRENT_DIR}/pkg/plugin:/defs namely/protoc-all:1.16_0 -i proto -l go -d /defs -o .
+	docker run --rm -v ${CURRENT_DIR}/pkg/plugin:/defs namely/protoc-all:latest -i proto -l go -d /defs -o .
 
 .PHONY: gen-assets
 gen-assets:

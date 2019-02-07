@@ -36,7 +36,7 @@ type Plugin struct {
 	Name string `json:"name,omitempty"`
 
 	// service labels
-	ServiceLabels map[string]interface{} `json:"serviceLabels,omitempty"`
+	ServiceLabels map[string]string `json:"serviceLabels,omitempty"`
 
 	// name of k8s service which is front of plugin deployment
 	ServiceName string `json:"serviceName,omitempty"`

@@ -2,7 +2,10 @@ package analyze
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/go-openapi/strfmt"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/any"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -119,11 +122,13 @@ func (pc *PluginController) unregisterPlugin(pluginEntry *models.Plugin)error{
 }
 
 func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin)error{
+	var pluginConfig *proto.PluginConfig
 	pluginClient, err := pc.newPluginClient(pluginEntry)
 	if err != nil {
 		return errors.Wrap(err, "can't create plugin client for watchEvent")
 	}
 
+	// TODO: make it configurable
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
 	pluginInfo, err := pluginClient.Info(ctx, &empty.Empty{})
 	defer cancel()
@@ -131,9 +136,40 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin)error{
 		return errors.Errorf("unable to load pluginInfo, name: %v, error %v", pluginEntry.Name, err)
 	}
 
-	pc.stor.Get(ctx, models.PluginPrefix, )
+	rawConfig, err := pc.stor.Get(ctx, models.PluginConfigPrefix, pluginInfo.Id)
+	if err == storage.ErrNotFound {
+		pluginConfig = pluginInfo.DefaultConfig
+	}
 
-	pluginConfig := pluginInfo.DefaultConfig
+	if err != nil && err != storage.ErrNotFound {
+		return errors.Errorf("unable to load plugin config, id: %v, error %v", pluginEntry.ID, err)
+	}
+
+
+	if pluginConfig == nil {
+		pluginConfigEntry := models.PluginConfig{}
+		err = pluginConfigEntry.UnmarshalBinary(rawConfig.Payload())
+		if err != nil {
+			return errors.Errorf("unable to unmarshal plugin config, id: %v, error %v", pluginEntry.ID, err)
+		}
+
+		bytes, err := json.Marshal(pluginConfigEntry.PluginSpecificConfig)
+		if err != nil {
+			return errors.Errorf("unable to marshal plugin config, id: %v, error %v", pluginEntry.ID, err)
+		}
+
+		// TODO: populate other properties
+		pluginConfig = &proto.PluginConfig{
+			ExecutionInterval: ptypes.DurationProto(time.Second * time.Duration(pluginConfigEntry.ExecutionInterval)),
+			PluginSpecificConfig: &any.Any{
+				TypeUrl:              "io.supergiant.analyze-plugin-sunsetting.plugin-config",
+				Value:                bytes,
+			},
+		}
+	}
+
+
+
 	pc.pluginClients[pluginInfo.Id] = pluginClient
 
 	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
@@ -143,7 +179,15 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin)error{
 		return errors.Wrap(err, "unable to configure plugin")
 	}
 
-	pc.scheduler.ScheduleJob(pluginInfo.Id, pluginConfig)
+	interval, err := ptypes.Duration(pluginConfig.ExecutionInterval)
+	if err != nil {
+		return errors.Wrap(err, "unable to parse execution interval for plugin")
+	}
+
+	err = pc.scheduler.ScheduleJob(pluginInfo.Id, interval, pc.check(pluginInfo.Id, pluginClient))
+	if err != nil {
+		return errors.Wrap(err, "unable to schedule job for plugin")
+	}
 
 	return nil
 }
@@ -184,7 +228,7 @@ func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) 
 			return errors.Errorf("unable to marshal check result, pluginClient: %s, returned error: %s", pluginID, err)
 		}
 
-		err = pc.stor.Put(ctx, models.CheckResultPrefix, pluginID, bytes)
+		err = pc.stor.Put(ctx, models.CheckResultPrefix, pluginID, msg(bytes))
 		if err != nil {
 			cancel()
 			return errors.Errorf("unable to store check result, pluginClient: %s, returned error: %s", pluginID, err)
@@ -192,4 +236,10 @@ func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) 
 		cancel()
 		return nil
 	}
+}
+
+type msg []byte
+
+func (d msg) Payload() []byte{
+	return d
 }

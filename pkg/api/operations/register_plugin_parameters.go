@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
-	"./pkg/models"
+	"github.com/supergiant/analyze/pkg/models"
 )
 
 // NewRegisterPluginParams creates a new RegisterPluginParams object

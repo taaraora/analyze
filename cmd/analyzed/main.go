@@ -1,11 +1,9 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/supergiant/analyze/cmd/analyzed/app"
 	"log"
-	"os"
 )
 
 func main() {
@@ -28,8 +26,8 @@ func main() {
 	}
 }
 
-func logEnvs(logger logrus.FieldLogger) {
-	for _, pair := range os.Environ() {
-		logger.Warnf("%s", pair)
-	}
-}
+//func logEnvs(logger logrus.FieldLogger) {
+//	for _, pair := range os.Environ() {
+//		logger.Warnf("%s", pair)
+//	}
+//}

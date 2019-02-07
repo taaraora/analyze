@@ -3,10 +3,7 @@ package app
 import (
 	"context"
 	"github.com/go-openapi/loads"
-	"github.com/go-openapi/strfmt"
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/supergiant/analyze/pkg/analyze"
 	"github.com/supergiant/analyze/pkg/api"
@@ -16,13 +13,9 @@ import (
 	"github.com/supergiant/analyze/pkg/kube"
 	"github.com/supergiant/analyze/pkg/logger"
 	"github.com/supergiant/analyze/pkg/models"
-	"github.com/supergiant/analyze/pkg/plugin"
-	"github.com/supergiant/analyze/pkg/plugin/proto"
 	"github.com/supergiant/analyze/pkg/scheduler"
-	"github.com/supergiant/analyze/pkg/storage"
 	"github.com/supergiant/analyze/pkg/storage/etcd"
 	"os"
-	"time"
 )
 
 func RunCommand(cmd *cobra.Command, _ []string) error {
@@ -43,7 +36,7 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 	//TODO: try to unify APIs discovery which are hosted in k8s
 	//TODO: and rewrite config population logic
 	if etcdEndpoint := discoverETCDEndpoint(); etcdEndpoint != "" {
-		cfg.ETCD.Endpoints = append(cfg.ETCD.Endpoints, main2.discoverETCDEndpoint())
+		cfg.ETCD.Endpoints = append(cfg.ETCD.Endpoints, discoverETCDEndpoint())
 	}
 
 	log := logger.NewLogger(cfg.Logging).WithField("app", "analyze-core")

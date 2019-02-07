@@ -199,6 +199,7 @@ paths:
           description: error
           schema:
             $ref: "#/definitions/error"
+
   /plugins/{pluginId}:
     get:
       summary: "returns registered plugin"
@@ -246,6 +247,7 @@ paths:
           description: error
           schema:
             $ref: "#/definitions/error"
+
   /plugins/{pluginId}/config:
     get:
       summary: "returns plugins specific settings object"
@@ -293,6 +295,7 @@ paths:
           description: error
           schema:
             $ref: "#/definitions/error"
+
   /checks:
     get:
       summary: "Returns list of check results produced by installed plugins"
@@ -311,6 +314,7 @@ paths:
           description: error
           schema:
             $ref: "#/definitions/error"
+
   /integration/prometheus:
     get:
       summary: "returns prometheus instance info and name of cluster"
@@ -340,6 +344,7 @@ paths:
           description: error
           schema:
             $ref: "#/definitions/error"
+
   /integration/prometheus/validations:
     post:
       summary: "This will trigger integration validations of all prometheus components"

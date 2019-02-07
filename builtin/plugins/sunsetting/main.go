@@ -155,7 +155,7 @@ func (u *plugin) Check(ctx context.Context, in *proto.CheckRequest, opts ...grpc
 	b, _ := json.Marshal(result)
 
 	checkResult.Description = &any.Any{
-		TypeUrl: "io.supergiant.analyze.plugin.sunsetting",
+		TypeUrl: "io.supergiant.analyze-plugin-sunsetting.check-result",
 		Value:   b,
 	}
 

@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"./pkg/models"
+	"github.com/supergiant/analyze/pkg/models"
 )
 
 // GetPluginOKCode is the HTTP code returned for type GetPluginOK
