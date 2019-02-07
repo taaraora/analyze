@@ -71,22 +71,20 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 
 	defer etcdStorage.Close()
 
+	scheduler := scheduler.NewScheduler(log.WithField("component", "scheduler"))
+	defer scheduler.Stop()
+
 	watchChan := etcdStorage.WatchRange(context.Background(), models.PluginPrefix)
 	log.Debug("watch stated")
 	pluginController := analyze.NewPluginController(
 		watchChan,
 		etcdStorage,
 		kubeClient,
+		scheduler,
 		log.WithField("component", "pluginController"),
-
 		)
 
 	go pluginController.Loop()
-
-
-
-	scheduler := scheduler.NewScheduler(cfg.Plugin.CheckInterval, check)
-	defer scheduler.Stop()
 
 	swaggerSpec, err := loads.Analyzed(api.SwaggerJSON, "2.0")
 	if err != nil {

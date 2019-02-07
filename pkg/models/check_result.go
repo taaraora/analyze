@@ -27,8 +27,8 @@ type CheckResult struct {
 	// Format: date-time
 	CompletedAt strfmt.DateTime `json:"completedAt,omitempty"`
 
-	// detailed check result description
-	Description string `json:"description,omitempty"`
+	// detailed check result description, it basically contains plugin specific check result info
+	Description interface{} `json:"description,omitempty"`
 
 	// shows check execution errors
 	ExecutionStatus string `json:"executionStatus,omitempty"`

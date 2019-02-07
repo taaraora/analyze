@@ -10,6 +10,7 @@ import (
 	"github.com/supergiant/analyze/pkg/models"
 	"github.com/supergiant/analyze/pkg/plugin"
 	"github.com/supergiant/analyze/pkg/plugin/proto"
+	"github.com/supergiant/analyze/pkg/scheduler"
 	"github.com/supergiant/analyze/pkg/storage"
 	"time"
 )
@@ -19,6 +20,7 @@ type PluginController struct {
 	stor storage.Interface
 	kubeClient kube.Interface
 	logger logrus.FieldLogger
+	scheduler scheduler.Interface
 	pluginClients map[string]*plugin.Client
 }
 
@@ -26,12 +28,14 @@ func NewPluginController(
 	events <-chan storage.WatchEvent,
 	stor storage.Interface,
 	kubeClient kube.Interface,
+	scheduler scheduler.Interface,
 	logger logrus.FieldLogger,
 	) *PluginController {
 	return &PluginController{
 		events: events,
 		stor:stor,
 		kubeClient:kubeClient,
+		scheduler: scheduler,
 		logger:logger,
 	}
 }
@@ -50,8 +54,6 @@ func (pc *PluginController) parseEvent(we storage.WatchEvent) error {
 		return errors.Wrap(we.Err(), "plugin watchEvent returned error")
 	}
 	var err error
-	var pluginClient *plugin.Client
-	var pluginConfig *proto.PluginConfig
 
 	pluginEntry := &models.Plugin{}
 	err = pluginEntry.UnmarshalBinary(we.Payload())
@@ -60,50 +62,19 @@ func (pc *PluginController) parseEvent(we storage.WatchEvent) error {
 	}
 
 	if we.Type() == storage.Deleted {
-		var exists bool
-		pluginClient, exists = pc.pluginClients[pluginEntry.ID]
-		if !exists {
-			return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.Name)
-		}
-		err = pluginClient.Close()
-		if err != nil {
-			return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.Name)
-		}
-		delete(pc.pluginClients, pluginEntry.ID)
-		return nil
+		return pc.unregisterPlugin(pluginEntry)
 	}
 
 	if we.Type() == storage.Added {
- 		pluginClient, err = pc.newPluginClient(pluginEntry)
- 		if err != nil {
-			return errors.Wrap(we.Err(), "can't create plugin client for watchEvent")
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
-		pluginInfo, err := pluginClient.Info(ctx, &empty.Empty{})
-		defer cancel()
-		if err != nil {
-			return errors.Errorf("unable to load pluginInfo, name: %v, error %v", pluginEntry.Name, err)
-		}
-
-		pluginConfig = pluginInfo.DefaultConfig
-		pc.pluginClients[pluginInfo.Id] = pluginClient
+		return pc.registerPlugin(pluginEntry)
 	}
 
 	if we.Type() == storage.Modified {
-		var exists bool
-		pluginClient, exists = pc.pluginClients[pluginEntry.ID]
-		if !exists {
-			return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.Name)
+		err = pc.unregisterPlugin(pluginEntry)
+		if err != nil {
+			pc.logger.Errorf("unable to unregister modified plugin, error: %v", err)
 		}
-	}
-
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
-	defer cancel()
-	_, err = pluginClient.Configure(ctx, pluginConfig)
-	if err != nil {
-		return errors.Wrap(err, "unable to configure plugin")
+		return pc.registerPlugin(pluginEntry)
 	}
 
 	return nil
@@ -124,6 +95,57 @@ func (pc *PluginController) newPluginClient(pluginEntry *models.Plugin) (*plugin
 	}
 
 	return pluginClient, nil
+}
+
+func (pc *PluginController) unregisterPlugin(pluginEntry *models.Plugin)error{
+	pluginClient, exists := pc.pluginClients[pluginEntry.ID]
+	if !exists {
+		return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.Name)
+	}
+
+	delete(pc.pluginClients, pluginEntry.ID)
+
+	err := pc.scheduler.RemoveJob(pluginEntry.ID)
+	if err != nil {
+		return errors.Errorf("unable to find plugin job in scheduler, id: %v ", pluginEntry.ID)
+	}
+
+	err = pluginClient.Close()
+	if err != nil {
+		return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.Name)
+	}
+
+	return nil
+}
+
+func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin)error{
+	pluginClient, err := pc.newPluginClient(pluginEntry)
+	if err != nil {
+		return errors.Wrap(err, "can't create plugin client for watchEvent")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+	pluginInfo, err := pluginClient.Info(ctx, &empty.Empty{})
+	defer cancel()
+	if err != nil {
+		return errors.Errorf("unable to load pluginInfo, name: %v, error %v", pluginEntry.Name, err)
+	}
+
+	pc.stor.Get(ctx, models.PluginPrefix, )
+
+	pluginConfig := pluginInfo.DefaultConfig
+	pc.pluginClients[pluginInfo.Id] = pluginClient
+
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+	defer cancel()
+	_, err = pluginClient.Configure(ctx, pluginConfig)
+	if err != nil {
+		return errors.Wrap(err, "unable to configure plugin")
+	}
+
+	pc.scheduler.ScheduleJob(pluginInfo.Id, pluginConfig)
+
+	return nil
 }
 
 func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) func()error {

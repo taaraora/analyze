@@ -280,6 +280,77 @@ func init() {
           }
         }
       }
+    },
+    "/plugins/{pluginId}/config": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns plugins specific settings object",
+        "operationId": "getPluginConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/pluginConfig"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "substitutes whole plugin config",
+        "operationId": "replacePluginConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "plugin is removed from registry"
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -302,8 +373,8 @@ func init() {
           "format": "date-time"
         },
         "description": {
-          "description": "detailed check result description",
-          "type": "string"
+          "description": "detailed check result description, it basically contains plugin specific check result info",
+          "type": "object"
         },
         "executionStatus": {
           "description": "shows check execution errors",
@@ -401,6 +472,10 @@ func init() {
       "description": "plugin represents the installed recommendation plugin",
       "type": "object",
       "properties": {
+        "checkComponentEntryPoint": {
+          "description": "path to the bundle to load check plugin ui component",
+          "type": "string"
+        },
         "description": {
           "description": "detailed plugin description",
           "type": "string"
@@ -428,6 +503,10 @@ func init() {
           "description": "name of k8s service which is front of plugin deployment",
           "type": "string"
         },
+        "settingsComponentEntryPoint": {
+          "description": "path to the bundle to load settings plugin ui component",
+          "type": "string"
+        },
         "status": {
           "description": "plugin status",
           "type": "string"
@@ -435,6 +514,20 @@ func init() {
         "version": {
           "description": "plugin version, major version shall be equal to robots version",
           "type": "string"
+        }
+      }
+    },
+    "pluginConfig": {
+      "description": "pluginConfig represents plugin configuration",
+      "type": "object",
+      "properties": {
+        "executionInterval": {
+          "description": "plugin check function invocation interval in seconds",
+          "type": "integer"
+        },
+        "pluginSpecificConfig": {
+          "description": "object with plugin specific settings properties",
+          "type": "object"
         }
       }
     },
@@ -739,6 +832,77 @@ func init() {
           }
         }
       }
+    },
+    "/plugins/{pluginId}/config": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns plugins specific settings object",
+        "operationId": "getPluginConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/pluginConfig"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "substitutes whole plugin config",
+        "operationId": "replacePluginConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "plugin is removed from registry"
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -761,8 +925,8 @@ func init() {
           "format": "date-time"
         },
         "description": {
-          "description": "detailed check result description",
-          "type": "string"
+          "description": "detailed check result description, it basically contains plugin specific check result info",
+          "type": "object"
         },
         "executionStatus": {
           "description": "shows check execution errors",
@@ -860,6 +1024,10 @@ func init() {
       "description": "plugin represents the installed recommendation plugin",
       "type": "object",
       "properties": {
+        "checkComponentEntryPoint": {
+          "description": "path to the bundle to load check plugin ui component",
+          "type": "string"
+        },
         "description": {
           "description": "detailed plugin description",
           "type": "string"
@@ -887,6 +1055,10 @@ func init() {
           "description": "name of k8s service which is front of plugin deployment",
           "type": "string"
         },
+        "settingsComponentEntryPoint": {
+          "description": "path to the bundle to load settings plugin ui component",
+          "type": "string"
+        },
         "status": {
           "description": "plugin status",
           "type": "string"
@@ -894,6 +1066,20 @@ func init() {
         "version": {
           "description": "plugin version, major version shall be equal to robots version",
           "type": "string"
+        }
+      }
+    },
+    "pluginConfig": {
+      "description": "pluginConfig represents plugin configuration",
+      "type": "object",
+      "properties": {
+        "executionInterval": {
+          "description": "plugin check function invocation interval in seconds",
+          "type": "integer"
+        },
+        "pluginSpecificConfig": {
+          "description": "object with plugin specific settings properties",
+          "type": "object"
         }
       }
     },

@@ -50,6 +50,22 @@ definitions:
         type: "object"
         additionalProperties:
           type: "object"
+      settingsComponentEntryPoint:
+        description: "path to the bundle to load settings plugin ui component"
+        type: "string"
+      checkComponentEntryPoint:
+        description: "path to the bundle to load check plugin ui component"
+        type: "string"
+  pluginConfig:
+    type: "object"
+    description: "pluginConfig represents plugin configuration"
+    properties:
+      executionInterval:
+        description: "plugin check function invocation interval in seconds"
+        type: "integer"
+      pluginSpecificConfig:
+        description: "object with plugin specific settings properties"
+        type: "object"
   checkResult:
     type: "object"
     description: "CheckResult represents the single result of Check function invocation of specific plugin."
@@ -72,8 +88,8 @@ definitions:
         type: "string"
         enum: [RED, YELLOW, GREEN]
       description:
-        description: "detailed check result description"
-        type: "string"
+        description: "detailed check result description, it basically contains plugin specific check result info"
+        type: "object"
   integrationInfo:
     type: "object"
     description: "IntegrationInfo contains all info needed to reach prometheus instance inside k8s cluster"
@@ -221,6 +237,53 @@ paths:
           type: string
       responses:
         204:
+          description: plugin is removed from registry
+        404:
+          description: Not Found
+          schema:
+            $ref: "#/definitions/error"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+  /plugins/{pluginId}/config:
+    get:
+      summary: "returns plugins specific settings object"
+      produces:
+        - application/json
+      operationId: getPluginConfig
+      parameters:
+        - name: pluginId
+          in: path
+          required: true
+          description: The id of the plugin to retrieve
+          type: string
+      responses:
+        200:
+          description: no error
+          schema:
+            $ref: "#/definitions/pluginConfig"
+        404:
+          description: Not Found
+          schema:
+            $ref: "#/definitions/error"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    patch:
+      summary: "substitutes whole plugin config"
+      produces:
+        - application/json
+      operationId: replacePluginConfig
+      parameters:
+        - name: pluginId
+          in: path
+          required: true
+          description: The id of the plugin to retrieve
+          type: string
+      responses:
+        200:
           description: plugin is removed from registry
         404:
           description: Not Found

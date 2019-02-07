@@ -88,6 +88,7 @@ func (e *ETCDStorage) Close() error {
 	return e.client.Close()
 }
 
+// TODO: etcd does not ensure linearizability for watch operations. revisit this logic in future
 func (e *ETCDStorage) WatchRange(ctx context.Context, key string) <-chan storage.WatchEvent {
 	w := clientv3.NewWatcher(e.client)
 	watchChan := w.Watch(ctx, key, clientv3.WithPrefix(), /*clientv3.WithProgressNotify()*/)
@@ -121,7 +122,7 @@ func (e *ETCDStorage) WatchRange(ctx context.Context, key string) <-chan storage
 			we := &watchEvent{
 				eventType: storage.Unknown,
 			}
-			//TODO: revisit this logic
+
 			if err := v.Err(); err != nil {
 				e.logger.Errorf("got watch error: %v", err)
 				we.eventType = storage.Error

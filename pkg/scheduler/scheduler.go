@@ -7,13 +7,19 @@ import (
 	"time"
 )
 
+type Interface interface {
+	ScheduleJob(jobID string, interval time.Duration, job func() error) error
+	RemoveJob(jobID string) error
+	Stop()
+}
+
 type workItem struct {
 	ID string
 	ticker    *time.Ticker
 	done chan struct{}
 }
 
-type Scheduler struct {
+type scheduler struct {
 	logger    logrus.FieldLogger
 	close     chan struct{}
 	m         sync.Mutex
@@ -21,8 +27,8 @@ type Scheduler struct {
 	isClosed bool
 }
 
-func NewScheduler(logger logrus.FieldLogger) *Scheduler {
-	s := &Scheduler{
+func NewScheduler(logger logrus.FieldLogger) Interface {
+	s := &scheduler{
 		logger: logger,
 		close:  make(chan struct{}),
 	}
@@ -41,11 +47,11 @@ func NewScheduler(logger logrus.FieldLogger) *Scheduler {
 	return s
 }
 
-func (s *Scheduler) Stop() {
+func (s *scheduler) Stop() {
 	s.close <- struct{}{}
 }
 
-func (s *Scheduler) ScheduleJob(jobID string, interval time.Duration, job func() error) error {
+func (s *scheduler) ScheduleJob(jobID string, interval time.Duration, job func() error) error {
 	s.m.Lock()
 	defer s.m.Unlock()
 
@@ -83,7 +89,7 @@ func (s *Scheduler) ScheduleJob(jobID string, interval time.Duration, job func()
 	return nil
 }
 
-func (s *Scheduler) RemoveJob(jobID string) error {
+func (s *scheduler) RemoveJob(jobID string) error {
 	s.m.Lock()
 	defer s.m.Unlock()
 
