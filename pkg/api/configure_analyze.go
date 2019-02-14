@@ -4,6 +4,9 @@ package api
 
 import (
 	"crypto/tls"
+	"k8s.io/client-go/rest"
+	"net/http/httputil"
+	"net/url"
 
 	"net/http"
 	"strings"
@@ -82,8 +85,9 @@ func setupGlobalMiddleware(handler http.Handler) http.Handler {
 
 	handlerWithSwagger := swaggerMiddleware(corsHandler)
 	handlerWithUi := uiMiddleware(handlerWithSwagger)
+	handlerWithProxy := proxyMiddleware(handlerWithUi)
 
-	return handlerWithUi
+	return handlerWithProxy
 }
 
 func swaggerMiddleware(handler http.Handler) http.Handler {
@@ -118,5 +122,51 @@ func uiMiddleware(handler http.Handler) http.Handler {
 			return
 		}
 		handler.ServeHTTP(w, r)
+	})
+}
+
+func proxyMiddleware(handler http.Handler) http.Handler {
+	pluginsHosts := []string{"localhost:8988"}
+	url, err := url.Parse(pluginsHosts[0])
+	if err != nil {
+		panic("cant parse host")
+	}
+
+	config, err :=  rest.InClusterConfig()
+	if err != nil {
+		panic("cant get kube config")
+	}
+
+	//restClient, err := rest.RESTClientFor(config)
+	//if err != nil {
+	//	panic("cant get kube rest client")
+	//}
+
+	tr, err := rest.TransportFor(config)
+	if err != nil {
+		panic("cant get transport")
+	}
+
+	reverseProxy := httputil.NewSingleHostReverseProxy(url)
+	reverseProxy.Transport = tr
+
+
+
+
+
+
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		// need to be proxied
+		if true {
+			// Path prefix has been set to proxy
+			req.URL.Path = strings.TrimPrefix(req.URL.Path, baseuri)
+
+			// Update the headers to allow for SSL redirection
+			req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
+
+			// Note that ServeHttp is non blocking and uses a go routine under the hood
+			reverseProxy.ServeHTTP(res, req)
+		}
+		handler.ServeHTTP(res, req)
 	})
 }

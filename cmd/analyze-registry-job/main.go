@@ -40,7 +40,7 @@ func main() {
 }
 
 func runCommand(cmd *cobra.Command, _ []string) error {
-	var pluginVersion = ""
+	var pluginInfo = ""
 	remove, err := cmd.Flags().GetBool("remove")
 	if err != nil {
 		return errors.Wrap(err, "unable to get config flag remove")
@@ -57,7 +57,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	for i := 0;i <10; i++ {
 		resp, err := http.Get("http://" + pluginApiAddress + "/api/v1/info")
 		if err != nil || (resp != nil && resp.StatusCode != http.StatusOK) {
-			logger.Debugf("unable to get plugin version: %v, statusCode: %v try in 1 sec", err, resp)
+			logger.Debugf("unable to get plugin info: %v, statusCode: %v try in 1 sec", err, resp)
 			continue
 		}
 		bytes, err := ioutil.ReadAll(resp.Body)
@@ -66,12 +66,12 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		}
 		resp.Body.Close()
 
-		pluginVersion = string(bytes)
+		pluginInfo = string(bytes)
 		break
 	}
 
-	logger.Debugf("plugin version: %v", pluginVersion)
-	if pluginVersion == "" {
+	logger.Debugf("plugin version: %v", pluginInfo)
+	if pluginInfo == "" {
 		return errors.New("failed to get plugin version")
 	}
 
@@ -99,7 +99,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	logger.Debugf("analyze service name %v, service port %v", analyzeServiceName, analyzeApiPort)
 
 	pluginsEndpointUri := "http://" + analyzeServiceName + ":" + analyzeApiPort + "/api/v1/plugins"
-	resp, err := http.Post( pluginsEndpointUri, "application/json", strings.NewReader(pluginVersion))
+	resp, err := http.Post( pluginsEndpointUri, "application/json", strings.NewReader(pluginInfo))
 	if err != nil {
 		return errors.Wrap(err, "failed to register plugin")
 	}

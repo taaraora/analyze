@@ -26,8 +26,3 @@ func main() {
 	}
 }
 
-//func logEnvs(logger logrus.FieldLogger) {
-//	for _, pair := range os.Environ() {
-//		logger.Warnf("%s", pair)
-//	}
-//}
