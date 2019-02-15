@@ -59,7 +59,7 @@ gen-swagger: validate
 		--spec=./swagger/api-spec.yml \
 		--exclude-main \
 		--name=analyze \
-		--existing-models=./pkg/models
+		--existing-models=github.com/supergiant/analyze/pkg/models
 	cp ./swagger/api-spec.yml ./asset/swagger/api-spec.yml
 
 .PHONY: test
