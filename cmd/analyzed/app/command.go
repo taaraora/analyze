@@ -214,56 +214,60 @@ func newProxyMiddleware(storage storage.Interface, logger logrus.FieldLogger) fu
 		panic("cant get kube config")
 	}
 
-	//restClient, err := rest.RESTClientFor(config)
-	//if err != nil {
-	//	panic("cant get kube rest client")
-	//}
-
 	tr, err := rest.TransportFor(config)
 	if err != nil {
 		panic("cant get transport")
 	}
 
+	var proxies = make(map[string]*httputil.ReverseProxy)
+
 	return func(handler http.Handler) http.Handler {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
-		pluginRaw, err := storage.GetAll(ctx, models.PluginPrefix)
+		pluginsRaw, err := storage.GetAll(ctx, models.PluginPrefix)
 		if err != nil {
 			panic("cent get plugins")
 		}
 
-		result := []*models.Plugin{}
-
-		for _, rawPlugin := range pluginRaw {
+		for _, rawPlugin := range pluginsRaw {
 			p := &models.Plugin{}
 			err := p.UnmarshalBinary(rawPlugin.Payload())
 			if err != nil {
 				panic("cent unmarshal plugin")
 			}
-			result = append(result, p)
+			_, exists := proxies[p.ID]
+			if !exists {
+				url, err := url.Parse(p.ServiceEndpoint)
+				if err != nil {
+					panic("cant parse host")
+				}
+
+				reverseProxy := httputil.NewSingleHostReverseProxy(url)
+				reverseProxy.Transport = tr
+				proxies[p.ID] = reverseProxy
+			}
 		}
 
-		url, err := url.Parse(result[0].ServiceName)
-		if err != nil {
-			panic("cant parse host")
-		}
-
-		reverseProxy := httputil.NewSingleHostReverseProxy(url)
-		reverseProxy.Transport = tr
 
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			// need to be proxied
-			if true {
-				// Path prefix has been set to proxy
-				req.URL.Path = strings.TrimPrefix(req.URL.Path, baseuri)
-
-				// Update the headers to allow for SSL redirection
-				req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
-
-				// Note that ServeHttp is non blocking and uses a go routine under the hood
-				reverseProxy.ServeHTTP(res, req)
+			// need to be proxied?
+			var targetProxy *httputil.ReverseProxy
+			for pluginID, proxy := range proxies {
+				if strings.Contains(req.URL.Path, pluginID) {
+					targetProxy = proxy
+				}
 			}
-			handler.ServeHTTP(res, req)
+
+			if targetProxy == nil {
+				handler.ServeHTTP(res, req)
+				return
+			}
+
+			// Update the headers to allow for SSL redirection
+			req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
+
+			// Note that ServeHttp is non blocking and uses a go routine under the hood
+			targetProxy.ServeHTTP(res, req)
 		})
 	}
 }

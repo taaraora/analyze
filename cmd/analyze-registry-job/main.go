@@ -141,14 +141,19 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	logger.Debugf("analyze service name %v, service port %v", analyzeServiceName, analyzeApiPort)
 
 	pi.ServiceEndpoint = analyzeServiceName + ":" + analyzeApiPort
+	pi.ServiceLabels = analyzeService.Labels
+	bytes, err := json.Marshal(pi)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal plugin info")
+	}
 
-	pluginsEndpointUri := "http://" + analyzeServiceName + ":" + analyzeApiPort + "/api/v1/plugins"
-	resp, err := http.Post( pluginsEndpointUri, "application/json", strings.NewReader(rawPluginInfo))
+	pluginsEndpointUri := "http://" + pi.ServiceEndpoint + "/api/v1/plugins"
+	resp, err := http.Post( pluginsEndpointUri, "application/json", strings.NewReader(string(bytes)))
 	if err != nil {
 		return errors.Wrap(err, "failed to register plugin")
 	}
 
-	if resp.StatusCode != http.StatusCreated || resp.StatusCode != http.StatusOK {
+	if !(resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK) {
 		return errors.Errorf("failed to register plugin, status code %v", resp.StatusCode)
 	}
 
@@ -160,16 +165,18 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	result := []*models.Plugin{}
 	//TODO: generate swagger client?
 
-	bytes, err := ioutil.ReadAll(resp.Body)
 	defer func() {
 		var err = resp.Body.Close()
 		if err != nil {
 			logger.Error("post request body read error")
 		}
 	}()
+
+	bytes, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return errors.Wrap(err, "unable to read registered plugins")
 	}
+
 	err = json.Unmarshal(bytes, result)
 	if err != nil {
 		return errors.Wrap(err, "unable to unmarshal registered plugins")
