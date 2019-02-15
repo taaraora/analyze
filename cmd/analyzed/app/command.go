@@ -2,9 +2,14 @@ package app
 
 import (
 	"context"
+	"github.com/dre1080/recover"
 	"github.com/go-openapi/loads"
+	"github.com/justinas/alice"
 	"github.com/pkg/errors"
+	"github.com/rs/cors"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/supergiant/analyze/asset"
 	"github.com/supergiant/analyze/pkg/analyze"
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/api/handlers"
@@ -14,8 +19,15 @@ import (
 	"github.com/supergiant/analyze/pkg/logger"
 	"github.com/supergiant/analyze/pkg/models"
 	"github.com/supergiant/analyze/pkg/scheduler"
+	"github.com/supergiant/analyze/pkg/storage"
 	"github.com/supergiant/analyze/pkg/storage/etcd"
+	"k8s.io/client-go/rest"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
+	"strings"
+	"time"
 )
 
 func RunCommand(cmd *cobra.Command, _ []string) error {
@@ -87,6 +99,7 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 	//TODO: add request logging middleware
 	//TODO: add metrics middleware
 	analyzeAPI := operations.NewAnalyzeAPI(swaggerSpec)
+	analyzeAPI.Logger = log.WithField("component", "analyzeApi").Errorf
 
 	analyzeAPI.GetCheckResultsHandler = handlers.NewChecksResultsHandler(
 		etcdStorage,
@@ -119,6 +132,29 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 	server.Host = cfg.API.ServerHost
 	server.ConfigureAPI()
 
+	handlerWithRecovery := recover.New(&recover.Options{
+		Log: logrus.Error,
+	})
+
+	//TODO fix CORS till release
+	corsHandler := cors.New(cors.Options{
+		Debug:          false,
+		AllowedHeaders: []string{"*"},
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{},
+		MaxAge:         1000,
+	}).Handler
+
+	handler := alice.New(
+		handlerWithRecovery,
+		corsHandler,
+		swaggerMiddleware,
+		uiMiddleware,
+		newProxyMiddleware(etcdStorage, log.WithField("middleware", "proxy")),
+	).Then(analyzeAPI.Serve(nil))
+
+	server.SetHandler(handler)
+
 	defer server.Shutdown()
 
 	if servingError := server.Serve(); servingError != nil {
@@ -135,4 +171,99 @@ func discoverETCDEndpoint() string {
 		return ""
 	}
 	return etcdHost + ":" + etcdPort
+}
+
+func swaggerMiddleware(handler http.Handler) http.Handler {
+	var staticServer = http.FileServer(asset.Assets)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// Shortcut helpers for swagger-ui
+		if r.URL.Path == "/api/v1/swagger-ui" || r.URL.Path == "/api/v1/help" {
+			http.Redirect(w, r, "/api/v1/swagger-ui/", http.StatusFound)
+			return
+		}
+		// Serving ./swagger-ui/
+		if strings.HasPrefix(r.URL.Path, "/api/v1/swagger-ui/") {
+			url := strings.TrimPrefix(r.URL.Path, "/api/v1/swagger-ui/")
+			r.URL.Path = "/swagger/" + url
+			staticServer.ServeHTTP(w, r)
+			return
+		}
+		handler.ServeHTTP(w, r)
+	})
+}
+
+func uiMiddleware(handler http.Handler) http.Handler {
+	var staticServer = http.FileServer(asset.Assets)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if !strings.HasPrefix(r.URL.Path, "/api/v1") {
+			r.URL.Path = "/ui" + r.URL.Path
+			staticServer.ServeHTTP(w, r)
+			return
+		}
+		handler.ServeHTTP(w, r)
+	})
+}
+
+func newProxyMiddleware(storage storage.Interface, logger logrus.FieldLogger) func(handler http.Handler) http.Handler {
+	config, err :=  rest.InClusterConfig()
+	if err != nil {
+		panic("cant get kube config")
+	}
+
+	//restClient, err := rest.RESTClientFor(config)
+	//if err != nil {
+	//	panic("cant get kube rest client")
+	//}
+
+	tr, err := rest.TransportFor(config)
+	if err != nil {
+		panic("cant get transport")
+	}
+
+	return func(handler http.Handler) http.Handler {
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+		pluginRaw, err := storage.GetAll(ctx, models.PluginPrefix)
+		if err != nil {
+			panic("cent get plugins")
+		}
+
+		result := []*models.Plugin{}
+
+		for _, rawPlugin := range pluginRaw {
+			p := &models.Plugin{}
+			err := p.UnmarshalBinary(rawPlugin.Payload())
+			if err != nil {
+				panic("cent unmarshal plugin")
+			}
+			result = append(result, p)
+		}
+
+		url, err := url.Parse(result[0].ServiceName)
+		if err != nil {
+			panic("cant parse host")
+		}
+
+		reverseProxy := httputil.NewSingleHostReverseProxy(url)
+		reverseProxy.Transport = tr
+
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			// need to be proxied
+			if true {
+				// Path prefix has been set to proxy
+				req.URL.Path = strings.TrimPrefix(req.URL.Path, baseuri)
+
+				// Update the headers to allow for SSL redirection
+				req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
+
+				// Note that ServeHttp is non blocking and uses a go routine under the hood
+				reverseProxy.ServeHTTP(res, req)
+			}
+			handler.ServeHTTP(res, req)
+		})
+	}
 }

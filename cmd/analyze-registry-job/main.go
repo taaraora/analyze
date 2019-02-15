@@ -16,6 +16,47 @@ import (
 	"strings"
 )
 
+// TODO this is copypaste from sunsetting plugin repository
+type PluginInfo struct {
+	// detailed plugin description
+	Description string `json:"description,omitempty"`
+
+	// unique ID of installed plugin
+	// basically it is slugged URI of plugin repository name e. g. supergiant-request-limits-check
+	//
+	ID string `json:"id,omitempty"`
+
+	// date/Time the plugin was installed
+	// Filled by post-install job
+	InstalledAt string `json:"installedAt,omitempty"`
+
+	// name is the name of the plugin.
+	Name string `json:"name,omitempty"`
+
+	// service labels
+	// Filled by post-install job
+	ServiceLabels map[string]string `json:"serviceLabels,omitempty"`
+
+	// name of k8s service which is front of plugin deployment
+	// Filled by post-install job
+	ServiceEndpoint string `json:"serviceEndpoint,omitempty"`
+
+	// entry points for web components
+	SettingsComponentEntryPoint string `json:"settingsComponentEntryPoint,omitempty"`
+	CheckComponentEntryPoint    string `json:"checkComponentEntryPoint,omitempty"`
+
+	// plugin status
+	Status string `json:"status,omitempty"`
+
+	// plugin version, major version shall be equal to analyze-core version
+	Version string `json:"version,omitempty"`
+
+	Revision string `json:"revision,omitempty"`
+	Branch    string `json:"branch,omitempty"`
+	BuildDate string `json:"buildDate,omitempty"`
+	GoVersion string `json:"goVersion,omitempty"`
+}
+
 var AnalyzeLabelSet = labels.Set{
 	"app.kubernetes.io/name": "analyze",
 }
@@ -40,7 +81,7 @@ func main() {
 }
 
 func runCommand(cmd *cobra.Command, _ []string) error {
-	var pluginInfo = ""
+	var rawPluginInfo []byte
 	remove, err := cmd.Flags().GetBool("remove")
 	if err != nil {
 		return errors.Wrap(err, "unable to get config flag remove")
@@ -60,20 +101,21 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 			logger.Debugf("unable to get plugin info: %v, statusCode: %v try in 1 sec", err, resp)
 			continue
 		}
-		bytes, err := ioutil.ReadAll(resp.Body)
+		rawPluginInfo, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
 			logger.Debugf("unable to read plugin version from response body: %v", err)
 		}
 		resp.Body.Close()
-
-		pluginInfo = string(bytes)
 		break
 	}
 
-	logger.Debugf("plugin version: %v", pluginInfo)
-	if pluginInfo == "" {
-		return errors.New("failed to get plugin version")
+	pi := &PluginInfo{}
+	err = json.Unmarshal(rawPluginInfo, pi)
+	if err != nil {
+		return errors.Wrap(err, "failed to unmarshal plugin info")
 	}
+
+	logger.Debugf("plugin info: %v", string(rawPluginInfo))
 
 	kubeClient, err := kube.NewKubeClient(logger.WithField("component", "kubeClient"))
 	if err != nil {
@@ -85,7 +127,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return errors.New("failed to find analyze service")
 	}
 
-	var analyzeApiPort, analyzeServiceName string = "", ""
+	var analyzeApiPort, analyzeServiceName = "", ""
 
 	for _, port := range analyzeService.Spec.Ports {
 		if port.Name == "http" {
@@ -98,8 +140,10 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 	logger.Debugf("analyze service name %v, service port %v", analyzeServiceName, analyzeApiPort)
 
+	pi.ServiceEndpoint = analyzeServiceName + ":" + analyzeApiPort
+
 	pluginsEndpointUri := "http://" + analyzeServiceName + ":" + analyzeApiPort + "/api/v1/plugins"
-	resp, err := http.Post( pluginsEndpointUri, "application/json", strings.NewReader(pluginInfo))
+	resp, err := http.Post( pluginsEndpointUri, "application/json", strings.NewReader(rawPluginInfo))
 	if err != nil {
 		return errors.Wrap(err, "failed to register plugin")
 	}
@@ -117,7 +161,12 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	//TODO: generate swagger client?
 
 	bytes, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	defer func() {
+		var err = resp.Body.Close()
+		if err != nil {
+			logger.Error("post request body read error")
+		}
+	}()
 	if err != nil {
 		return errors.Wrap(err, "unable to read registered plugins")
 	}

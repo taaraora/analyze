@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/supergiant/analyze/pkg/models"
+	"./pkg/models"
 )
 
 // ReplacePluginConfigOKCode is the HTTP code returned for type ReplacePluginConfigOK

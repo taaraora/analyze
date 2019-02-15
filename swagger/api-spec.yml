@@ -43,8 +43,8 @@ definitions:
         type: "string"
         format: "date-time"
         description: "date/Time the plugin was installed"
-      serviceName:
-        description: "name of k8s service which is front of plugin deployment"
+      serviceEndpoint:
+        description: "name and port of k8s service which is front of plugin deployment"
         type: "string"
       serviceLabels:
         type: "object"

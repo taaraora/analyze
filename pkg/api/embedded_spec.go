@@ -493,15 +493,15 @@ func init() {
           "description": "name is the name of the plugin.",
           "type": "string"
         },
+        "serviceEndpoint": {
+          "description": "name and port of k8s service which is front of plugin deployment",
+          "type": "string"
+        },
         "serviceLabels": {
           "type": "object",
           "additionalProperties": {
             "type": "object"
           }
-        },
-        "serviceName": {
-          "description": "name of k8s service which is front of plugin deployment",
-          "type": "string"
         },
         "settingsComponentEntryPoint": {
           "description": "path to the bundle to load settings plugin ui component",
@@ -1045,15 +1045,15 @@ func init() {
           "description": "name is the name of the plugin.",
           "type": "string"
         },
+        "serviceEndpoint": {
+          "description": "name and port of k8s service which is front of plugin deployment",
+          "type": "string"
+        },
         "serviceLabels": {
           "type": "object",
           "additionalProperties": {
             "type": "object"
           }
-        },
-        "serviceName": {
-          "description": "name of k8s service which is front of plugin deployment",
-          "type": "string"
         },
         "settingsComponentEntryPoint": {
           "description": "path to the bundle to load settings plugin ui component",
