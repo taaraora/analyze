@@ -3,29 +3,31 @@ package analyze
 import (
 	"context"
 	"encoding/json"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
 	"github.com/supergiant/analyze/pkg/kube"
 	"github.com/supergiant/analyze/pkg/models"
 	"github.com/supergiant/analyze/pkg/plugin"
 	"github.com/supergiant/analyze/pkg/plugin/proto"
 	"github.com/supergiant/analyze/pkg/scheduler"
 	"github.com/supergiant/analyze/pkg/storage"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type PluginController struct {
-	events <-chan storage.WatchEvent
-	stor storage.Interface
-	kubeClient kube.Interface
-	logger logrus.FieldLogger
-	scheduler scheduler.Interface
+	events        <-chan storage.WatchEvent
+	stor          storage.Interface
+	kubeClient    kube.Interface
+	logger        logrus.FieldLogger
+	scheduler     scheduler.Interface
 	pluginClients map[string]*plugin.Client
 }
 
@@ -35,18 +37,18 @@ func NewPluginController(
 	kubeClient kube.Interface,
 	scheduler scheduler.Interface,
 	logger logrus.FieldLogger,
-	) *PluginController {
+) *PluginController {
 	return &PluginController{
-		events: events,
-		stor:stor,
-		kubeClient:kubeClient,
-		scheduler: scheduler,
+		events:        events,
+		stor:          stor,
+		kubeClient:    kubeClient,
+		scheduler:     scheduler,
 		pluginClients: make(map[string]*plugin.Client),
-		logger:logger,
+		logger:        logger,
 	}
 }
 
-func (pc *PluginController) Loop(){
+func (pc *PluginController) Loop() {
 	for we := range pc.events {
 		if err := pc.parseEvent(we); err != nil {
 			pc.logger.Errorf("unable to handle watch event, err: %+v", err)
@@ -112,7 +114,7 @@ func (pc *PluginController) newPluginClient(pluginEntry *models.Plugin) (*plugin
 			"unable to find service  port for plugin, %+v, list of ports: %+v",
 			pluginEntry,
 			service.Spec.Ports,
-			)
+		)
 	}
 
 	pluginClient, err := plugin.NewClient(service.Spec.ClusterIP + ":" + servicePort)
@@ -123,7 +125,7 @@ func (pc *PluginController) newPluginClient(pluginEntry *models.Plugin) (*plugin
 	return pluginClient, nil
 }
 
-func (pc *PluginController) unregisterPlugin(pluginEntry *models.Plugin)error{
+func (pc *PluginController) unregisterPlugin(pluginEntry *models.Plugin) error {
 	pluginClient, exists := pc.pluginClients[pluginEntry.ID]
 	if !exists {
 		return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.ID)
@@ -144,7 +146,7 @@ func (pc *PluginController) unregisterPlugin(pluginEntry *models.Plugin)error{
 	return nil
 }
 
-func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin)error{
+func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 	var pluginConfig *proto.PluginConfig
 	pluginClient, err := pc.newPluginClient(pluginEntry)
 	if err != nil {
@@ -161,7 +163,7 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin)error{
 			pluginEntry.ID,
 			pluginClient.GetConnTarget(),
 			err,
-			)
+		)
 	}
 	pc.logger.Infof("plugin info loaded %+v", *pluginInfo)
 
@@ -195,8 +197,8 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin)error{
 		pluginConfig = &proto.PluginConfig{
 			ExecutionInterval: ptypes.DurationProto(time.Second * time.Duration(pluginConfigEntry.ExecutionInterval)),
 			PluginSpecificConfig: &any.Any{
-				TypeUrl:              "io.supergiant.analyze-plugin-sunsetting.plugin-config",
-				Value:                bytes,
+				TypeUrl: "io.supergiant.analyze-plugin-sunsetting.plugin-config",
+				Value:   bytes,
 			},
 		}
 	}
@@ -221,9 +223,9 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin)error{
 	return nil
 }
 
-func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) func()error {
+func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) func() error {
 	return func() error {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second * 120)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 		checkResponse, err := pluginClient.Check(ctx, &proto.CheckRequest{})
 		if err != nil {
 			cancel()
@@ -269,6 +271,6 @@ func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) 
 
 type msg []byte
 
-func (d msg) Payload() []byte{
+func (d msg) Payload() []byte {
 	return d
 }

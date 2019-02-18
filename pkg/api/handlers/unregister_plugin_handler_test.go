@@ -1,14 +1,16 @@
 package handlers_test
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/sirupsen/logrus"
+
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/api/handlers"
 	"github.com/supergiant/analyze/pkg/models"
 	"github.com/supergiant/analyze/pkg/storage"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func TestUnregisterPluginHandler_ReturnBadRequest(t *testing.T) {

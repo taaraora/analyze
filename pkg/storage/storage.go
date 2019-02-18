@@ -28,5 +28,5 @@ const (
 	Modified WatchEventType = "MODIFIED"
 	Deleted  WatchEventType = "DELETED"
 	Error    WatchEventType = "ERROR"
-	Unknown WatchEventType = "UNKNOWN"
+	Unknown  WatchEventType = "UNKNOWN"
 )

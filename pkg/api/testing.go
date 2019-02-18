@@ -1,9 +1,11 @@
 package api
 
 import (
-	"github.com/go-openapi/loads"
-	"github.com/supergiant/analyze/pkg/api/operations"
 	"testing"
+
+	"github.com/go-openapi/loads"
+
+	"github.com/supergiant/analyze/pkg/api/operations"
 )
 
 func GetTestAPI(t *testing.T) *operations.AnalyzeAPI {

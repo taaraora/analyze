@@ -1,15 +1,17 @@
 package handlers_test
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/supergiant/analyze/pkg/api"
-	"github.com/supergiant/analyze/pkg/api/handlers"
-	"github.com/supergiant/analyze/pkg/models"
-	"github.com/supergiant/analyze/pkg/storage"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/supergiant/analyze/pkg/api"
+	"github.com/supergiant/analyze/pkg/api/handlers"
+	"github.com/supergiant/analyze/pkg/models"
+	"github.com/supergiant/analyze/pkg/storage"
 )
 
 func TestPluginHandler_ReturnResultsSuccessfully(t *testing.T) {

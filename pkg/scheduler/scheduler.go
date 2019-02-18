@@ -1,10 +1,11 @@
 package scheduler
 
 import (
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 type Interface interface {
@@ -14,9 +15,9 @@ type Interface interface {
 }
 
 type workItem struct {
-	ID string
-	ticker    *time.Ticker
-	done chan struct{}
+	ID     string
+	ticker *time.Ticker
+	done   chan struct{}
 }
 
 type scheduler struct {
@@ -24,13 +25,13 @@ type scheduler struct {
 	close     chan struct{}
 	m         sync.Mutex
 	workItems map[string]*workItem
-	isClosed bool
+	isClosed  bool
 }
 
 func NewScheduler(logger logrus.FieldLogger) Interface {
 	s := &scheduler{
-		logger: logger,
-		close:  make(chan struct{}),
+		logger:    logger,
+		close:     make(chan struct{}),
 		workItems: make(map[string]*workItem),
 	}
 
@@ -40,7 +41,7 @@ func NewScheduler(logger logrus.FieldLogger) Interface {
 		defer s.m.Unlock()
 		// TODO: shall I make it synchronous?
 		for _, wi := range s.workItems {
-			go func() {wi.done <-struct {}{}}()
+			go func() { wi.done <- struct{}{} }()
 		}
 		s.isClosed = true
 	}()
@@ -65,20 +66,20 @@ func (s *scheduler) ScheduleJob(jobID string, interval time.Duration, job func()
 	}
 
 	wi := &workItem{
-		ID: jobID,
-		ticker:    time.NewTicker(interval),
-		done: make(chan struct{}),
+		ID:     jobID,
+		ticker: time.NewTicker(interval),
+		done:   make(chan struct{}),
 	}
 
 	go func() {
-		for  {
+		for {
 			select {
-			case <- wi.ticker.C:
+			case <-wi.ticker.C:
 				err := job()
 				if err != nil {
 					s.logger.Errorf("Job: %v, failed, error: %v", wi.ID, err)
 				}
-			case <- wi.done:
+			case <-wi.done:
 				wi.ticker.Stop()
 				return
 			}

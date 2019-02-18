@@ -8,28 +8,27 @@ import (
 )
 
 type mockStorage struct {
-	data map[string][]byte
+	data     map[string][]byte
 	isBroken bool
 }
 
 type mockMsg []byte
 
-func (m mockMsg)Payload() []byte {
+func (m mockMsg) Payload() []byte {
 	return m
 }
 
 var errBroken = errors.New("internal storage error")
 
-func GetMockStorage(t *testing.T, data map[string]string)Interface {
+func GetMockStorage(t *testing.T, data map[string]string) Interface {
 	t.Helper()
-	return 	NewMockStorage(data, false)
+	return NewMockStorage(data, false)
 }
 
-func GetMockBrokenStorage(t *testing.T)Interface {
+func GetMockBrokenStorage(t *testing.T) Interface {
 	t.Helper()
-	return 	NewMockStorage(nil, true)
+	return NewMockStorage(nil, true)
 }
-
 
 func NewMockStorage(data map[string]string, isBroken bool) Interface {
 	result := map[string][]byte{}
@@ -38,18 +37,18 @@ func NewMockStorage(data map[string]string, isBroken bool) Interface {
 	}
 
 	return &mockStorage{
-		data: result,
+		data:     result,
 		isBroken: isBroken,
 	}
 }
 
-func (s *mockStorage)GetAll(ctx context.Context, prefix string) ([]Message, error) {
+func (s *mockStorage) GetAll(ctx context.Context, prefix string) ([]Message, error) {
 	if s.isBroken {
 		return nil, errBroken
 	}
 	result := []Message{}
 	for key, _ := range s.data {
-		if strings.Contains(key, prefix){
+		if strings.Contains(key, prefix) {
 			result = append(result, mockMsg(s.data[key]))
 		}
 	}
@@ -57,7 +56,7 @@ func (s *mockStorage)GetAll(ctx context.Context, prefix string) ([]Message, erro
 	return result, nil
 }
 
-func (s *mockStorage)Get(ctx context.Context, prefix string, key string) (Message, error) {
+func (s *mockStorage) Get(ctx context.Context, prefix string, key string) (Message, error) {
 	if s.isBroken {
 		return nil, errBroken
 	}
@@ -69,7 +68,7 @@ func (s *mockStorage)Get(ctx context.Context, prefix string, key string) (Messag
 	return mockMsg(v), nil
 }
 
-func (s *mockStorage)Put(ctx context.Context, prefix string, key string, value Message) error {
+func (s *mockStorage) Put(ctx context.Context, prefix string, key string, value Message) error {
 	if s.isBroken {
 		return errBroken
 	}
@@ -78,7 +77,7 @@ func (s *mockStorage)Put(ctx context.Context, prefix string, key string, value M
 	return nil
 }
 
-func (s *mockStorage)Delete(ctx context.Context, prefix string, key string) error {
+func (s *mockStorage) Delete(ctx context.Context, prefix string, key string) error {
 	if s.isBroken {
 		return errBroken
 	}
@@ -86,7 +85,7 @@ func (s *mockStorage)Delete(ctx context.Context, prefix string, key string) erro
 	return nil
 }
 
-func (s *mockStorage)Close() error {
+func (s *mockStorage) Close() error {
 	if s.isBroken {
 		return errBroken
 	}

@@ -2,6 +2,7 @@ package etcd
 
 import (
 	"context"
+
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sirupsen/logrus"
 
@@ -19,21 +20,21 @@ type ETCDStorage struct {
 
 type msg []byte
 
-func (m msg)Payload() []byte {
+func (m msg) Payload() []byte {
 	return m
 }
 
 type watchEvent struct {
 	msg
-	err error
+	err       error
 	eventType storage.WatchEventType
 }
 
-func (we *watchEvent)Err() error {
+func (we *watchEvent) Err() error {
 	return we.err
 }
 
-func (we *watchEvent)Type() storage.WatchEventType {
+func (we *watchEvent) Type() storage.WatchEventType {
 	return we.eventType
 }
 
@@ -80,7 +81,7 @@ func NewETCDStorage(cfg clientv3.Config, logger logrus.FieldLogger) (storage.Int
 	return &ETCDStorage{
 		cfg:    cfg,
 		client: client,
-		logger:logger,
+		logger: logger,
 	}, nil
 }
 
@@ -91,14 +92,14 @@ func (e *ETCDStorage) Close() error {
 // TODO: etcd does not ensure linearizability for watch operations. revisit this logic in future
 func (e *ETCDStorage) WatchRange(ctx context.Context, key string) <-chan storage.WatchEvent {
 	w := clientv3.NewWatcher(e.client)
-	watchChan := w.Watch(ctx, key, clientv3.WithPrefix(), /*clientv3.WithProgressNotify()*/)
+	watchChan := w.Watch(ctx, key, clientv3.WithPrefix() /*clientv3.WithProgressNotify()*/)
 	results := make(chan storage.WatchEvent)
 	values, err := e.GetAll(ctx, key)
 	if err != nil {
 		e.logger.Errorf("got error at loading initial values, for k: %v, error: %v", key, err)
 		results <- &watchEvent{
 			eventType: storage.Error,
-			err: errors.Errorf("got error at loading initial values, for k: %v, error: %v", key, err),
+			err:       errors.Errorf("got error at loading initial values, for k: %v, error: %v", key, err),
 		}
 	}
 
@@ -114,9 +115,8 @@ func (e *ETCDStorage) WatchRange(ctx context.Context, key string) <-chan storage
 		initialSyncDone <- struct{}{}
 	}()
 
-
 	go func() {
-		<- initialSyncDone
+		<-initialSyncDone
 		for v := range watchChan {
 			e.logger.Infof("got watch message: %+v", v)
 			we := &watchEvent{
@@ -143,7 +143,7 @@ func (e *ETCDStorage) WatchRange(ctx context.Context, key string) <-chan storage
 				if event.IsCreate() {
 					we.eventType = storage.Added
 				}
-				if event.IsModify(){
+				if event.IsModify() {
 					we.eventType = storage.Modified
 				}
 				if event.Type == mvccpb.DELETE {

@@ -1,19 +1,20 @@
 package handlers_test
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/supergiant/analyze/pkg/api"
-	"github.com/supergiant/analyze/pkg/api/handlers"
-	"github.com/supergiant/analyze/pkg/models"
-	"github.com/supergiant/analyze/pkg/storage"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/supergiant/analyze/pkg/api"
+	"github.com/supergiant/analyze/pkg/api/handlers"
+	"github.com/supergiant/analyze/pkg/models"
+	"github.com/supergiant/analyze/pkg/storage"
 )
 
 const fixtureCheckResult = `{"checkStatus":"GREEN","completedAt":"1970-01-01T00:00:00.000Z","description":"detailed check result description","executionStatus":"no execution errors","id":"uniqueUUID","name":"some interesting check"}`
-
 
 func TestChecksResultsHandler_ReturnResultsSuccessfully(t *testing.T) {
 	analyzeApi := api.GetTestAPI(t)

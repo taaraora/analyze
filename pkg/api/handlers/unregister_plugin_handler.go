@@ -19,7 +19,7 @@ type unregisterPluginHandler struct {
 	log     logrus.FieldLogger
 }
 
-func NewUnregisterPluginHandler(storage storage.Interface, logger logrus.FieldLogger) operations.UnregisterPluginHandler{
+func NewUnregisterPluginHandler(storage storage.Interface, logger logrus.FieldLogger) operations.UnregisterPluginHandler {
 	return &unregisterPluginHandler{
 		storage: storage,
 		log:     logger,
@@ -32,7 +32,7 @@ func (h *unregisterPluginHandler) Handle(params operations.UnregisterPluginParam
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	if "" == strings.TrimSpace(params.PluginID){
+	if "" == strings.TrimSpace(params.PluginID) {
 		r := operations.NewUnregisterPluginDefault(http.StatusBadRequest)
 		message := "plugin id can't be empty"
 		r.Payload = &models.Error{

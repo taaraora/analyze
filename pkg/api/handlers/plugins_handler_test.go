@@ -3,28 +3,30 @@ package handlers_test
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/go-openapi/strfmt"
-	"github.com/sirupsen/logrus"
-	"github.com/supergiant/analyze/pkg/api"
-	"github.com/supergiant/analyze/pkg/api/handlers"
-	"github.com/supergiant/analyze/pkg/models"
-	"github.com/supergiant/analyze/pkg/storage"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/go-openapi/strfmt"
+	"github.com/sirupsen/logrus"
+
+	"github.com/supergiant/analyze/pkg/api"
+	"github.com/supergiant/analyze/pkg/api/handlers"
+	"github.com/supergiant/analyze/pkg/models"
+	"github.com/supergiant/analyze/pkg/storage"
 )
 
 type pluginFixture models.Plugin
 
-func (p pluginFixture)getPlugin() models.Plugin {
+func (p pluginFixture) getPlugin() models.Plugin {
 	return models.Plugin(p)
 }
 
-func (p pluginFixture)string() string {
+func (p pluginFixture) string() string {
 	pp := models.Plugin(p)
-	b , _ := pp.MarshalBinary()
+	b, _ := pp.MarshalBinary()
 	return string(b)
 }
 
@@ -37,7 +39,7 @@ func newPluginFixture(id string) pluginFixture {
 		InstalledAt:                 d,
 		Name:                        "the name of the plugin",
 		ServiceEndpoint:             "dfdsfsdfsd:8089",
-		ServiceLabels: nil,
+		ServiceLabels:               nil,
 		SettingsComponentEntryPoint: "/settings/analyze-plugin-sunsetting-settings-main.js",
 		Status:                      "OK",
 		Version:                     "v2.0.0",
@@ -46,7 +48,7 @@ func newPluginFixture(id string) pluginFixture {
 	return pluginFixture(p)
 }
 
-func toPlugin(t *testing.T, body *bytes.Buffer)*models.Plugin{
+func toPlugin(t *testing.T, body *bytes.Buffer) *models.Plugin {
 	t.Helper()
 
 	p := &models.Plugin{}
@@ -62,7 +64,7 @@ func toPlugin(t *testing.T, body *bytes.Buffer)*models.Plugin{
 	return p
 }
 
-func toPlugins(t *testing.T, body *bytes.Buffer)[]models.Plugin{
+func toPlugins(t *testing.T, body *bytes.Buffer) []models.Plugin {
 	t.Helper()
 
 	p := make([]models.Plugin, 0, 0)
@@ -78,7 +80,6 @@ func toPlugins(t *testing.T, body *bytes.Buffer)[]models.Plugin{
 	return p
 }
 
-
 func TestPluginsHandler_ReturnResultsSuccessfully(t *testing.T) {
 	analyzeApi := api.GetTestAPI(t)
 	fixturePlugins1 := newPluginFixture("123456798")
@@ -86,7 +87,7 @@ func TestPluginsHandler_ReturnResultsSuccessfully(t *testing.T) {
 
 	//TODO: create interface for logger, and use dummy logger for tests
 	analyzeApi.GetPluginsHandler = handlers.NewPluginsHandler(storage.GetMockStorage(t, map[string]string{
-		models.PluginPrefix + "123456798": fixturePlugins1.string(),
+		models.PluginPrefix + "123456798":  fixturePlugins1.string(),
 		models.PluginPrefix + "1234567980": fixturePlugins2.string(),
 	}), logrus.New())
 	server := api.NewServer(analyzeApi)
@@ -106,8 +107,8 @@ func TestPluginsHandler_ReturnResultsSuccessfully(t *testing.T) {
 	}
 
 	plugins := toPlugins(t, rr.Body)
-	if  !reflect.DeepEqual(plugins, []models.Plugin{fixturePlugins1.getPlugin(), fixturePlugins2.getPlugin()}) &&
-		!reflect.DeepEqual(plugins, []models.Plugin{fixturePlugins2.getPlugin(), fixturePlugins1.getPlugin()}){
+	if !reflect.DeepEqual(plugins, []models.Plugin{fixturePlugins1.getPlugin(), fixturePlugins2.getPlugin()}) &&
+		!reflect.DeepEqual(plugins, []models.Plugin{fixturePlugins2.getPlugin(), fixturePlugins1.getPlugin()}) {
 		t.Fatalf("handler returned unexpected body: got %v", rr.Body.String())
 	}
 }

@@ -21,11 +21,11 @@ type registerPluginHandler struct {
 
 type storageMessage []byte
 
-func (m storageMessage)Payload() []byte {
+func (m storageMessage) Payload() []byte {
 	return m
 }
 
-func NewRegisterPluginHandler(storage storage.Interface, logger logrus.FieldLogger) operations.RegisterPluginHandler{
+func NewRegisterPluginHandler(storage storage.Interface, logger logrus.FieldLogger) operations.RegisterPluginHandler {
 	return &registerPluginHandler{
 		storage: storage,
 		log:     logger,
@@ -38,7 +38,7 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	if params.Body == nil || "" == strings.TrimSpace(params.Body.ID){
+	if params.Body == nil || "" == strings.TrimSpace(params.Body.ID) {
 		r := operations.NewRegisterPluginDefault(http.StatusBadRequest)
 		message := "plugin id can't be empty"
 		r.Payload = &models.Error{

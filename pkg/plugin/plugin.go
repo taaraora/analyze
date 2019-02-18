@@ -2,8 +2,9 @@ package plugin
 
 import (
 	"context"
-	"google.golang.org/grpc/keepalive"
 	"time"
+
+	"google.golang.org/grpc/keepalive"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"

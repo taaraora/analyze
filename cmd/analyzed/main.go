@@ -1,9 +1,11 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/supergiant/analyze/cmd/analyzed/app"
 	"log"
+
+	"github.com/spf13/cobra"
+
+	"github.com/supergiant/analyze/cmd/analyzed/app"
 )
 
 func main() {
@@ -25,4 +27,3 @@ func main() {
 		log.Fatalf("\n%v\n", err)
 	}
 }
-

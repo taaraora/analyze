@@ -2,6 +2,13 @@ package app
 
 import (
 	"context"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/dre1080/recover"
 	"github.com/go-openapi/loads"
 	"github.com/justinas/alice"
@@ -9,6 +16,8 @@ import (
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/rest"
+
 	"github.com/supergiant/analyze/asset"
 	"github.com/supergiant/analyze/pkg/analyze"
 	"github.com/supergiant/analyze/pkg/api"
@@ -21,13 +30,6 @@ import (
 	"github.com/supergiant/analyze/pkg/scheduler"
 	"github.com/supergiant/analyze/pkg/storage"
 	"github.com/supergiant/analyze/pkg/storage/etcd"
-	"k8s.io/client-go/rest"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"os"
-	"strings"
-	"time"
 )
 
 func RunCommand(cmd *cobra.Command, _ []string) error {
@@ -87,7 +89,7 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 		kubeClient,
 		scheduler,
 		log.WithField("component", "pluginController"),
-		)
+	)
 
 	go pluginController.Loop()
 
@@ -209,7 +211,7 @@ func uiMiddleware(handler http.Handler) http.Handler {
 }
 
 func newProxyMiddleware(storage storage.Interface, logger logrus.FieldLogger) func(handler http.Handler) http.Handler {
-	config, err :=  rest.InClusterConfig()
+	config, err := rest.InClusterConfig()
 	if err != nil {
 		panic("can't get kube config")
 	}
@@ -253,7 +255,6 @@ func newProxyMiddleware(storage storage.Interface, logger logrus.FieldLogger) fu
 				proxies[p.ID] = reverseProxy
 			}
 		}
-
 
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			var targetProxy *httputil.ReverseProxy

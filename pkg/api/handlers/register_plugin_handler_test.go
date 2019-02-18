@@ -3,16 +3,18 @@ package handlers_test
 import (
 	"bytes"
 	"context"
-	"github.com/sirupsen/logrus"
-	"github.com/supergiant/analyze/pkg/api"
-	"github.com/supergiant/analyze/pkg/api/handlers"
-	"github.com/supergiant/analyze/pkg/models"
-	"github.com/supergiant/analyze/pkg/storage"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/supergiant/analyze/pkg/api"
+	"github.com/supergiant/analyze/pkg/api/handlers"
+	"github.com/supergiant/analyze/pkg/models"
+	"github.com/supergiant/analyze/pkg/storage"
 )
 
 func TestRegisterPluginHandler_ReturnCreated(t *testing.T) {
@@ -39,7 +41,7 @@ func TestRegisterPluginHandler_ReturnCreated(t *testing.T) {
 	}
 
 	pBody := toPlugin(t, rr.Body)
-	if !reflect.DeepEqual(*pBody, fixturePlugins1.getPlugin()){
+	if !reflect.DeepEqual(*pBody, fixturePlugins1.getPlugin()) {
 		t.Fatalf("handler returned unexpected body: got %v want %v", rr.Body.String(), fixturePlugins1.string())
 	}
 
@@ -49,7 +51,7 @@ func TestRegisterPluginHandler_ReturnCreated(t *testing.T) {
 		t.Fatalf("handler put in storage something broken")
 	}
 
-	if !reflect.DeepEqual(*p, fixturePlugins1.getPlugin()){
+	if !reflect.DeepEqual(*p, fixturePlugins1.getPlugin()) {
 		t.Fatalf("storage returned unexpected content: got %v want %v", string(b.Payload()), fixturePlugins1)
 	}
 }
@@ -96,8 +98,7 @@ func TestRegisterPluginHandler_ReturnUpdated(t *testing.T) {
 	}
 	p2 := toPlugin(t, &buffer)
 
-
-	if !reflect.DeepEqual(*p2, fixturePlugins1.getPlugin())  {
+	if !reflect.DeepEqual(*p2, fixturePlugins1.getPlugin()) {
 		t.Fatalf("storage returned unexpected content: got %+v want %+v", *p2, fixturePlugins1.getPlugin())
 	}
 }

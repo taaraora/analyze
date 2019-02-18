@@ -2,18 +2,20 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"github.com/supergiant/analyze/pkg/kube"
-	"github.com/supergiant/analyze/pkg/models"
 	"io/ioutil"
-	"k8s.io/apimachinery/pkg/labels"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/supergiant/analyze/pkg/kube"
+	"github.com/supergiant/analyze/pkg/models"
 )
 
 // TODO this is copypaste from sunsetting plugin repository
@@ -51,7 +53,7 @@ type PluginInfo struct {
 	// plugin version, major version shall be equal to analyze-core version
 	Version string `json:"version,omitempty"`
 
-	Revision string `json:"revision,omitempty"`
+	Revision  string `json:"revision,omitempty"`
 	Branch    string `json:"branch,omitempty"`
 	BuildDate string `json:"buildDate,omitempty"`
 	GoVersion string `json:"goVersion,omitempty"`
@@ -62,7 +64,7 @@ var analyzeLabelSet = labels.Set{
 }
 
 var pluginLabelSet = labels.Set{
-	"app.kubernetes.io/part-of": "analyze",
+	"app.kubernetes.io/part-of":   "analyze",
 	"app.kubernetes.io/component": "analyze-plugin",
 }
 
@@ -126,9 +128,8 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return errors.New("failed to find http port for analyze plugin")
 	}
 
-
 	// TODO: make it configurable
-	for i := 0;i <10; i++ {
+	for i := 0; i < 10; i++ {
 		resp, err := http.Get("http://" + pluginServiceName + ":" + pluginApiPort + "/api/v1/info")
 		if err != nil || (resp != nil && resp.StatusCode != http.StatusOK) {
 			logger.Debugf("unable to get plugin info: %v, statusCode: %v try in 1 sec", err, resp)
@@ -180,7 +181,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	pluginsEndpointUri := "http://" + analyzeServiceName + ":" + analyzeApiPort + "/api/v1/plugins"
-	resp, err := http.Post( pluginsEndpointUri, "application/json", strings.NewReader(string(bytes)))
+	resp, err := http.Post(pluginsEndpointUri, "application/json", strings.NewReader(string(bytes)))
 	if err != nil {
 		return errors.Wrap(err, "failed to register plugin")
 	}
