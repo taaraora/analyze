@@ -57,8 +57,13 @@ type PluginInfo struct {
 	GoVersion string `json:"goVersion,omitempty"`
 }
 
-var AnalyzeLabelSet = labels.Set{
+var analyzeLabelSet = labels.Set{
 	"app.kubernetes.io/name": "analyze",
+}
+
+var pluginLabelSet = labels.Set{
+	"app.kubernetes.io/part-of": "analyze",
+	"app.kubernetes.io/component": "analyze-plugin",
 }
 
 func main() {
@@ -87,16 +92,44 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return errors.Wrap(err, "unable to get config flag remove")
 	}
 
-	pluginApiAddress := discoverPluginApiAddress()
+	pluginServiceName, err := discoverPluginServiceName()
+	if err != nil {
+		return errors.Wrap(err, "unable to get plugin service name")
+	}
 
 	logger := logrus.New()
 	logger.SetLevel(logrus.DebugLevel)
 
 	logger.Debugf("remove: %v", remove)
-	logger.Debugf("pluginApiAddress: %v", pluginApiAddress)
+	logger.Debugf("pluginServiceName: %v", pluginServiceName)
+
+	kubeClient, err := kube.NewKubeClient(logger.WithField("component", "kubeClient"))
+	if err != nil {
+		return errors.Wrap(err, "unable to create kube client")
+	}
+
+	pluginService, err := kubeClient.GetService(pluginServiceName, pluginLabelSet)
+	if err != nil {
+		return errors.Wrap(err, "failed to find analyze service")
+	}
+
+	var pluginApiPort string
+	for _, port := range pluginService.Spec.Ports {
+		if port.Name == "http" {
+			pluginApiPort = strconv.Itoa(int(port.Port))
+			break
+		}
+	}
+
+	if pluginApiPort == "" {
+		logger.Debugf("pluginService spec: %+v", pluginService.Spec)
+		return errors.New("failed to find http port for analyze plugin")
+	}
+
+
 	// TODO: make it configurable
 	for i := 0;i <10; i++ {
-		resp, err := http.Get("http://" + pluginApiAddress + "/api/v1/info")
+		resp, err := http.Get("http://" + pluginServiceName + ":" + pluginApiPort + "/api/v1/info")
 		if err != nil || (resp != nil && resp.StatusCode != http.StatusOK) {
 			logger.Debugf("unable to get plugin info: %v, statusCode: %v try in 1 sec", err, resp)
 			continue
@@ -117,12 +150,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 	logger.Debugf("plugin info: %v", string(rawPluginInfo))
 
-	kubeClient, err := kube.NewKubeClient(logger.WithField("component", "kubeClient"))
-	if err != nil {
-		return errors.Wrap(err, "unable to create kube client")
-	}
-
-	analyzeService, err := kubeClient.GetServiceByLabels(AnalyzeLabelSet)
+	analyzeService, err := kubeClient.GetServiceByLabels(analyzeLabelSet)
 	if err != nil {
 		return errors.New("failed to find analyze service")
 	}
@@ -136,18 +164,22 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
+	if analyzeApiPort == "" {
+		return errors.New("failed to find http port for analyze service")
+	}
+
 	analyzeServiceName = analyzeService.Name
 
 	logger.Debugf("analyze service name %v, service port %v", analyzeServiceName, analyzeApiPort)
 
-	pi.ServiceEndpoint = analyzeServiceName + ":" + analyzeApiPort
-	pi.ServiceLabels = analyzeService.Labels
+	pi.ServiceEndpoint = pluginServiceName + ":" + pluginApiPort
+	pi.ServiceLabels = pluginService.Labels
 	bytes, err := json.Marshal(pi)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal plugin info")
 	}
 
-	pluginsEndpointUri := "http://" + pi.ServiceEndpoint + "/api/v1/plugins"
+	pluginsEndpointUri := "http://" + analyzeServiceName + ":" + analyzeApiPort + "/api/v1/plugins"
 	resp, err := http.Post( pluginsEndpointUri, "application/json", strings.NewReader(string(bytes)))
 	if err != nil {
 		return errors.Wrap(err, "failed to register plugin")
@@ -162,7 +194,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return errors.Wrap(err, "unable to check registered plugin")
 	}
 
-	result := []*models.Plugin{}
+	result := make([]*models.Plugin, 0, 0)
 	//TODO: generate swagger client?
 
 	defer func() {
@@ -177,7 +209,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return errors.Wrap(err, "unable to read registered plugins")
 	}
 
-	err = json.Unmarshal(bytes, result)
+	err = json.Unmarshal(bytes, &result)
 	if err != nil {
 		return errors.Wrap(err, "unable to unmarshal registered plugins")
 	}
@@ -190,10 +222,10 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func discoverPluginApiAddress() string {
-	address, exists := os.LookupEnv("PLUGIN_API_ADDRESS")
+func discoverPluginServiceName() (string, error) {
+	address, exists := os.LookupEnv("PLUGIN_SERVICE_NAME")
 	if !exists {
-		return ""
+		return "", errors.New("Environment variable PLUGIN_SERVICE_NAME is not set")
 	}
-	return address
+	return address, nil
 }

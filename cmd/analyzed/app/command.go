@@ -149,8 +149,8 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 		handlerWithRecovery,
 		corsHandler,
 		swaggerMiddleware,
-		uiMiddleware,
 		newProxyMiddleware(etcdStorage, log.WithField("middleware", "proxy")),
+		uiMiddleware,
 	).Then(analyzeAPI.Serve(nil))
 
 	server.SetHandler(handler)
@@ -211,12 +211,12 @@ func uiMiddleware(handler http.Handler) http.Handler {
 func newProxyMiddleware(storage storage.Interface, logger logrus.FieldLogger) func(handler http.Handler) http.Handler {
 	config, err :=  rest.InClusterConfig()
 	if err != nil {
-		panic("cant get kube config")
+		panic("can't get kube config")
 	}
 
 	tr, err := rest.TransportFor(config)
 	if err != nil {
-		panic("cant get transport")
+		panic("can't get transport")
 	}
 
 	var proxies = make(map[string]*httputil.ReverseProxy)
@@ -226,42 +226,49 @@ func newProxyMiddleware(storage storage.Interface, logger logrus.FieldLogger) fu
 		defer cancel()
 		pluginsRaw, err := storage.GetAll(ctx, models.PluginPrefix)
 		if err != nil {
-			panic("cent get plugins")
+			panic("can't get plugins")
 		}
 
 		for _, rawPlugin := range pluginsRaw {
 			p := &models.Plugin{}
 			err := p.UnmarshalBinary(rawPlugin.Payload())
 			if err != nil {
-				panic("cent unmarshal plugin")
+				panic("can't unmarshal plugin")
 			}
 			_, exists := proxies[p.ID]
 			if !exists {
-				url, err := url.Parse(p.ServiceEndpoint)
+				url, err := url.Parse("http://" + p.ServiceEndpoint)
 				if err != nil {
-					panic("cant parse host")
+					panic("can't parse host")
 				}
 
+				logger.Debugf("create proxy for url: %+v", *url)
 				reverseProxy := httputil.NewSingleHostReverseProxy(url)
 				reverseProxy.Transport = tr
+				reverseProxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
+					logger.Errorf("reverse proxy error params: %+v", *req.URL)
+					logger.Errorf("reverse proxy error: %v", err)
+					rw.WriteHeader(http.StatusBadGateway)
+				}
 				proxies[p.ID] = reverseProxy
 			}
 		}
 
 
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			// need to be proxied?
 			var targetProxy *httputil.ReverseProxy
-			for pluginID, proxy := range proxies {
-				if strings.Contains(req.URL.Path, pluginID) {
+			for id, proxy := range proxies {
+				if strings.Contains(req.URL.Path, id) {
 					targetProxy = proxy
 				}
 			}
-
 			if targetProxy == nil {
 				handler.ServeHTTP(res, req)
 				return
 			}
+
+			logger.Debugf("got proxy request at: %v, request: %+v", time.Now(), req.URL)
+			defer logger.Debugf("proxy request processing finished at: %v, request: %+v", time.Now(), req.URL)
 
 			// Update the headers to allow for SSL redirection
 			req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))

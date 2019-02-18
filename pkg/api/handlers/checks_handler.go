@@ -27,6 +27,7 @@ func NewChecksResultsHandler(storage storage.Interface, logger logrus.FieldLogge
 
 func (h *checksResultsHandler) Handle(params operations.GetCheckResultsParams) middleware.Responder {
 	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
+	defer h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	resultsRaw, err := h.storage.GetAll(ctx, models.CheckResultPrefix)
@@ -57,7 +58,6 @@ func (h *checksResultsHandler) Handle(params operations.GetCheckResultsParams) m
 		}
 		result = append(result, checkResult)
 	}
-	h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
 
 	return operations.NewGetCheckResultsOK().WithPayload(result)
 }

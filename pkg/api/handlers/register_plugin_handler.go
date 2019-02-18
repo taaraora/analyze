@@ -48,14 +48,16 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 		return r
 	}
 	p := &models.Plugin{
-		Description:   params.Body.Description,
-		ID:            params.Body.ID,
-		InstalledAt:   params.Body.InstalledAt,
-		Name:          params.Body.Name,
-		ServiceLabels: params.Body.ServiceLabels,
-		ServiceName:   params.Body.ServiceName,
-		Status:        params.Body.Status,
-		Version:       params.Body.Version,
+		CheckComponentEntryPoint:    params.Body.CheckComponentEntryPoint,
+		Description:                 params.Body.Description,
+		ID:                          params.Body.ID,
+		InstalledAt:                 params.Body.InstalledAt,
+		Name:                        params.Body.Name,
+		ServiceEndpoint:             params.Body.ServiceEndpoint,
+		ServiceLabels:               params.Body.ServiceLabels,
+		SettingsComponentEntryPoint: params.Body.SettingsComponentEntryPoint,
+		Status:                      params.Body.Status,
+		Version:                     params.Body.Version,
 	}
 
 	rawPlugin, err := p.MarshalBinary()

@@ -15,6 +15,8 @@ import (
 	"github.com/supergiant/analyze/pkg/plugin/proto"
 	"github.com/supergiant/analyze/pkg/scheduler"
 	"github.com/supergiant/analyze/pkg/storage"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -39,6 +41,7 @@ func NewPluginController(
 		stor:stor,
 		kubeClient:kubeClient,
 		scheduler: scheduler,
+		pluginClients: make(map[string]*plugin.Client),
 		logger:logger,
 	}
 }
@@ -46,7 +49,7 @@ func NewPluginController(
 func (pc *PluginController) Loop(){
 	for we := range pc.events {
 		if err := pc.parseEvent(we); err != nil {
-			pc.logger.Errorf("unable to parse watch event")
+			pc.logger.Errorf("unable to handle watch event, err: %+v", err)
 		}
 	}
 }
@@ -59,9 +62,10 @@ func (pc *PluginController) parseEvent(we storage.WatchEvent) error {
 	var err error
 
 	pluginEntry := &models.Plugin{}
-	err = pluginEntry.UnmarshalBinary(we.Payload())
+	err = pluginEntry.UnmarshalBinary(we.Payload()) // TODO: handle DELETE logic, it requires storage interface update
 	if err != nil {
-		return errors.Errorf("unable to unmarshal pluginEntry entity, %s", string(we.Payload()))
+		pc.logger.Errorf("we payload '%s'", string(we.Payload()))
+		return errors.Errorf("unable to unmarshal pluginEntry entity err: %v", err)
 	}
 
 	if we.Type() == storage.Deleted {
@@ -87,12 +91,31 @@ func (pc *PluginController) parseEvent(we storage.WatchEvent) error {
 func (pc *PluginController) newPluginClient(pluginEntry *models.Plugin) (*plugin.Client, error) {
 
 	// pluginEntry.ServiceLabels
-	service, err := pc.kubeClient.GetService(pluginEntry.ServiceName, pluginEntry.ServiceLabels)
+	ss := strings.Split(pluginEntry.ServiceEndpoint, ":")
+	if len(ss) < 2 {
+		return nil, errors.Errorf("unable get service name, %+v", pluginEntry.ServiceEndpoint)
+	}
+	service, err := pc.kubeClient.GetService(ss[0], pluginEntry.ServiceLabels)
 	if err != nil {
 		return nil, errors.Errorf("unable to find service for registered plugin, %+v", pluginEntry)
 	}
 
-	pluginClient, err := plugin.NewClient(service.Spec.ClusterIP)
+	var servicePort string
+	for _, port := range service.Spec.Ports {
+		if port.Name == "grpc" {
+			servicePort = strconv.Itoa(int(port.Port))
+		}
+	}
+
+	if servicePort == "" {
+		return nil, errors.Errorf(
+			"unable to find service  port for plugin, %+v, list of ports: %+v",
+			pluginEntry,
+			service.Spec.Ports,
+			)
+	}
+
+	pluginClient, err := plugin.NewClient(service.Spec.ClusterIP + ":" + servicePort)
 	if err != nil {
 		return nil, errors.Errorf("unable to instantiate pluginClient client for entity, %+v", pluginEntry)
 	}
@@ -103,7 +126,7 @@ func (pc *PluginController) newPluginClient(pluginEntry *models.Plugin) (*plugin
 func (pc *PluginController) unregisterPlugin(pluginEntry *models.Plugin)error{
 	pluginClient, exists := pc.pluginClients[pluginEntry.ID]
 	if !exists {
-		return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.Name)
+		return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.ID)
 	}
 
 	delete(pc.pluginClients, pluginEntry.ID)
@@ -115,7 +138,7 @@ func (pc *PluginController) unregisterPlugin(pluginEntry *models.Plugin)error{
 
 	err = pluginClient.Close()
 	if err != nil {
-		return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.Name)
+		return errors.Errorf("unable to close pluginClient, id: %v, err: %+v", pluginEntry.ID, err)
 	}
 
 	return nil
@@ -129,25 +152,35 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin)error{
 	}
 
 	// TODO: make it configurable
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
-	pluginInfo, err := pluginClient.Info(ctx, &empty.Empty{})
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 	defer cancel()
+	pluginInfo, err := pluginClient.Info(ctx, &empty.Empty{})
 	if err != nil {
-		return errors.Errorf("unable to load pluginInfo, name: %v, error %v", pluginEntry.Name, err)
+		return errors.Errorf(
+			"unable to load pluginInfo, name: %v, target: %s, error %v",
+			pluginEntry.ID,
+			pluginClient.GetConnTarget(),
+			err,
+			)
 	}
+	pc.logger.Infof("plugin info loaded %+v", *pluginInfo)
 
 	rawConfig, err := pc.stor.Get(ctx, models.PluginConfigPrefix, pluginInfo.Id)
-	if err == storage.ErrNotFound {
-		pluginConfig = pluginInfo.DefaultConfig
-	}
-
 	if err != nil && err != storage.ErrNotFound {
 		return errors.Errorf("unable to load plugin config, id: %v, error %v", pluginEntry.ID, err)
 	}
 
+	if err == storage.ErrNotFound && pluginInfo.DefaultConfig == nil {
+		return errors.Errorf("unable to register plugin, without default config, id: %v", pluginEntry.ID)
+	}
+
+	if err == storage.ErrNotFound {
+		pluginConfig = pluginInfo.DefaultConfig
+		pc.logger.Infof("plugin %s config not found, default config %+v", pluginInfo.Id, pluginInfo.DefaultConfig)
+	}
 
 	if pluginConfig == nil {
-		pluginConfigEntry := models.PluginConfig{}
+		pluginConfigEntry := &models.PluginConfig{}
 		err = pluginConfigEntry.UnmarshalBinary(rawConfig.Payload())
 		if err != nil {
 			return errors.Errorf("unable to unmarshal plugin config, id: %v, error %v", pluginEntry.ID, err)
@@ -168,12 +201,8 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin)error{
 		}
 	}
 
-
-
 	pc.pluginClients[pluginInfo.Id] = pluginClient
 
-	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
-	defer cancel()
 	_, err = pluginClient.Configure(ctx, pluginConfig)
 	if err != nil {
 		return errors.Wrap(err, "unable to configure plugin")
@@ -194,7 +223,7 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin)error{
 
 func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) func()error {
 	return func() error {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second * 120)
 		checkResponse, err := pluginClient.Check(ctx, &proto.CheckRequest{})
 		if err != nil {
 			cancel()

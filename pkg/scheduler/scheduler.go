@@ -31,6 +31,7 @@ func NewScheduler(logger logrus.FieldLogger) Interface {
 	s := &scheduler{
 		logger: logger,
 		close:  make(chan struct{}),
+		workItems: make(map[string]*workItem),
 	}
 
 	go func() {

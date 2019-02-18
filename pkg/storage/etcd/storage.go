@@ -150,7 +150,11 @@ func (e *ETCDStorage) WatchRange(ctx context.Context, key string) <-chan storage
 					we.eventType = storage.Deleted
 				}
 				if event.Kv == nil {
-					e.logger.Errorf("got empty v, for kv: %v", event)
+					e.logger.Errorf("got nil kv, for kv: %v", event)
+					continue
+				}
+				if len(event.Kv.Key) == 0 {
+					e.logger.Errorf("got empty key, for kv: %v", event)
 					continue
 				}
 				we.msg = event.Kv.Value

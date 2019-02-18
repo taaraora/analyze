@@ -1,6 +1,8 @@
 package plugin
 
 import (
+	"context"
+	"google.golang.org/grpc/keepalive"
 	"time"
 
 	"github.com/pkg/errors"
@@ -34,7 +36,20 @@ type Client struct {
 }
 
 func NewClient(pluginServerAddress string) (*Client, error) {
-	conn, err := grpc.Dial(pluginServerAddress, grpc.WithInsecure())
+	keepaliveCfg := keepalive.ClientParameters{
+		Time:                60 * time.Minute,
+		Timeout:             60 * time.Second,
+		PermitWithoutStream: false,
+	}
+
+	opts := []grpc.DialOption{
+		grpc.WithInsecure(),
+		grpc.WithKeepaliveParams(keepaliveCfg),
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	conn, err := grpc.DialContext(ctx, pluginServerAddress, opts...)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to dial plugin server side: %s ", pluginServerAddress)
 	}
@@ -48,6 +63,10 @@ func NewClient(pluginServerAddress string) (*Client, error) {
 
 func (c *Client) Close() error {
 	return c.conn.Close()
+}
+
+func (c *Client) GetConnTarget() string {
+	return c.conn.Target()
 }
 
 func (c Config) Validate() error {
