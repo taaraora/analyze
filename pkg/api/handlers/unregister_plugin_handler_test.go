@@ -82,9 +82,10 @@ func TestUnregisterPluginHandler_ReturnInternalServerError(t *testing.T) {
 
 func TestUnregisterPluginHandler_ReturnNoContent(t *testing.T) {
 	analyzeApi := api.GetTestAPI(t)
+	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockStorage(t, map[string]string{
-		models.PluginPrefix + "123456798": fixturePlugins1,
+		models.PluginPrefix + "123456798": fixturePlugins1.string(),
 	})
 	analyzeApi.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
 	server := api.NewServer(analyzeApi)

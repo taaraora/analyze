@@ -1,26 +1,93 @@
 package handlers_test
 
 import (
+	"bytes"
+	"encoding/json"
+	"github.com/go-openapi/strfmt"
 	"github.com/sirupsen/logrus"
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/api/handlers"
 	"github.com/supergiant/analyze/pkg/models"
 	"github.com/supergiant/analyze/pkg/storage"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
+	"reflect"
 	"testing"
 )
 
-const fixturePlugins1 = `{"description":"detailed plugin description","id":"123456798","installedAt":"1970-01-01T00:00:00.000Z","name":"the name of the plugin","serviceLabels":{"app":"test"},"serviceName":"name of k8s service which is front of plugin deployment","status":"plugin status","version":"2.0.0"}`
-const fixturePlugins2 = `{"description":"detailed plugin description2","id":"1234567980","installedAt":"1970-01-01T00:00:00.001Z","name":"the name of the plugin2","serviceLabels":{"app2":"test"},"serviceName":"name of k8s service which is front of plugin deployment2","status":"plugin status2","version":"2.0.1"}`
+type pluginFixture models.Plugin
+
+func (p pluginFixture)getPlugin() models.Plugin {
+	return models.Plugin(p)
+}
+
+func (p pluginFixture)string() string {
+	pp := models.Plugin(p)
+	b , _ := pp.MarshalBinary()
+	return string(b)
+}
+
+func newPluginFixture(id string) pluginFixture {
+	d, _ := strfmt.ParseDateTime("2019-01-02T15:04:05Z07:00")
+	p := models.Plugin{
+		CheckComponentEntryPoint:    "/check/analyze-plugin-sunsetting-check-main.js",
+		Description:                 "detailed plugin description",
+		ID:                          id,
+		InstalledAt:                 d,
+		Name:                        "the name of the plugin",
+		ServiceEndpoint:             "dfdsfsdfsd:8089",
+		ServiceLabels: nil,
+		SettingsComponentEntryPoint: "/settings/analyze-plugin-sunsetting-settings-main.js",
+		Status:                      "OK",
+		Version:                     "v2.0.0",
+	}
+
+	return pluginFixture(p)
+}
+
+func toPlugin(t *testing.T, body *bytes.Buffer)*models.Plugin{
+	t.Helper()
+
+	p := &models.Plugin{}
+	b, err := ioutil.ReadAll(body)
+
+	if err != nil {
+		t.Fatalf("can't read body: got %+v", err)
+	}
+	err = p.UnmarshalBinary(b)
+	if err != nil {
+		t.Fatalf("can't unmarshal body: got %+v", err)
+	}
+	return p
+}
+
+func toPlugins(t *testing.T, body *bytes.Buffer)[]models.Plugin{
+	t.Helper()
+
+	p := make([]models.Plugin, 0, 0)
+	b, err := ioutil.ReadAll(body)
+
+	if err != nil {
+		t.Fatalf("can't read body: got %+v", err)
+	}
+	err = json.Unmarshal(b, &p)
+	if err != nil {
+		t.Fatalf("can't unmarshal body: got %+v", err)
+	}
+	return p
+}
+
 
 func TestPluginsHandler_ReturnResultsSuccessfully(t *testing.T) {
 	analyzeApi := api.GetTestAPI(t)
+	fixturePlugins1 := newPluginFixture("123456798")
+	fixturePlugins2 := newPluginFixture("1234567980")
+
 	//TODO: create interface for logger, and use dummy logger for tests
 	analyzeApi.GetPluginsHandler = handlers.NewPluginsHandler(storage.GetMockStorage(t, map[string]string{
-		models.PluginPrefix + "123456798": fixturePlugins1,
-		models.PluginPrefix + "1234567980": fixturePlugins2,
+		models.PluginPrefix + "123456798": fixturePlugins1.string(),
+		models.PluginPrefix + "1234567980": fixturePlugins2.string(),
 	}), logrus.New())
 	server := api.NewServer(analyzeApi)
 	server.ConfigureAPI()
@@ -38,9 +105,10 @@ func TestPluginsHandler_ReturnResultsSuccessfully(t *testing.T) {
 		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusOK, rr.Body.String())
 	}
 
-	body := rr.Body.String()
-	if  !strings.Contains(body, fixturePlugins1) || !strings.Contains(body, fixturePlugins2){
-		t.Fatalf("handler returned unexpected body: got %v", body)
+	plugins := toPlugins(t, rr.Body)
+	if  !reflect.DeepEqual(plugins, []models.Plugin{fixturePlugins1.getPlugin(), fixturePlugins2.getPlugin()}) &&
+		!reflect.DeepEqual(plugins, []models.Plugin{fixturePlugins2.getPlugin(), fixturePlugins1.getPlugin()}){
+		t.Fatalf("handler returned unexpected body: got %v", rr.Body.String())
 	}
 }
 

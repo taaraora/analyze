@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"bytes"
 	"context"
 	"github.com/sirupsen/logrus"
 	"github.com/supergiant/analyze/pkg/api"
@@ -9,12 +10,14 @@ import (
 	"github.com/supergiant/analyze/pkg/storage"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 )
 
 func TestRegisterPluginHandler_ReturnCreated(t *testing.T) {
 	analyzeApi := api.GetTestAPI(t)
+	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockStorage(t, nil)
 	analyzeApi.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
@@ -23,7 +26,7 @@ func TestRegisterPluginHandler_ReturnCreated(t *testing.T) {
 
 	h := server.GetHandler()
 
-	req, err := http.NewRequest("POST", "/api/v1/plugins", strings.NewReader(fixturePlugins1))
+	req, err := http.NewRequest("POST", "/api/v1/plugins", strings.NewReader(fixturePlugins1.string()))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,27 +38,28 @@ func TestRegisterPluginHandler_ReturnCreated(t *testing.T) {
 		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusCreated, rr.Body.String())
 	}
 
-	//TODO: investigate why it has extra spaces in the end
-	if strings.TrimSpace(rr.Body.String()) != fixturePlugins1 {
-		t.Fatalf("handler returned unexpected body: got %v want %v", rr.Body.String(), fixturePlugins1)
+	pBody := toPlugin(t, rr.Body)
+	if !reflect.DeepEqual(*pBody, fixturePlugins1.getPlugin()){
+		t.Fatalf("handler returned unexpected body: got %v want %v", rr.Body.String(), fixturePlugins1.string())
 	}
 
 	b, _ := strg.Get(context.TODO(), models.PluginPrefix, "123456798")
 	p := &models.Plugin{}
-	if err := (p).UnmarshalBinary(b); err != nil {
+	if err := (p).UnmarshalBinary(b.Payload()); err != nil {
 		t.Fatalf("handler put in storage something broken")
 	}
 
-	if string(b) != fixturePlugins1 {
-		t.Fatalf("storage returned unexpected content: got %v want %v", string(b), fixturePlugins1)
+	if !reflect.DeepEqual(*p, fixturePlugins1.getPlugin()){
+		t.Fatalf("storage returned unexpected content: got %v want %v", string(b.Payload()), fixturePlugins1)
 	}
 }
 
 func TestRegisterPluginHandler_ReturnUpdated(t *testing.T) {
 	analyzeApi := api.GetTestAPI(t)
+	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockStorage(t, map[string]string{
-		models.PluginPrefix + "123456798": fixturePlugins1,
+		models.PluginPrefix + "123456798": fixturePlugins1.string(),
 	})
 	analyzeApi.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
 	server := api.NewServer(analyzeApi)
@@ -63,8 +67,9 @@ func TestRegisterPluginHandler_ReturnUpdated(t *testing.T) {
 
 	h := server.GetHandler()
 
-	tmp := strings.Replace(fixturePlugins1, "the name of the plugin", "new super name of the plugin", 1)
-	req, err := http.NewRequest("POST", "/api/v1/plugins", strings.NewReader(tmp))
+	fixturePlugins1.Name = "new super name of the plugin"
+
+	req, err := http.NewRequest("POST", "/api/v1/plugins", strings.NewReader(fixturePlugins1.string()))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,24 +81,30 @@ func TestRegisterPluginHandler_ReturnUpdated(t *testing.T) {
 		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusOK, rr.Body.String())
 	}
 
-	//TODO: investigate why it has extra spaces in the end
-	if strings.TrimSpace(rr.Body.String()) != tmp {
-		t.Fatalf("handler returned unexpected body: got %v want %v", rr.Body.String(), tmp)
+	p := toPlugin(t, rr.Body)
+
+	if !reflect.DeepEqual(*p, fixturePlugins1.getPlugin()) {
+		t.Fatalf("handler returned unexpected body: got %+v want %+v", *p, fixturePlugins1.getPlugin())
 	}
 
-	b, _ := strg.Get(context.TODO(), models.PluginPrefix, "123456798")
-	p := &models.Plugin{}
-	if err := (p).UnmarshalBinary(b); err != nil {
-		t.Fatalf("handler put in storage something broken")
-	}
+	b2, _ := strg.Get(context.TODO(), models.PluginPrefix, "123456798")
 
-	if string(b) != tmp {
-		t.Fatalf("storage returned unexpected content: got %v want %v", string(b), fixturePlugins1)
+	var buffer bytes.Buffer
+	_, err = buffer.Write(b2.Payload())
+	if err != nil {
+		t.Fatal("can't write to buffer")
+	}
+	p2 := toPlugin(t, &buffer)
+
+
+	if !reflect.DeepEqual(*p2, fixturePlugins1.getPlugin())  {
+		t.Fatalf("storage returned unexpected content: got %+v want %+v", *p2, fixturePlugins1.getPlugin())
 	}
 }
 
 func TestRegisterPluginHandler_ReturnInternalError(t *testing.T) {
 	analyzeApi := api.GetTestAPI(t)
+	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockBrokenStorage(t)
 	analyzeApi.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
@@ -102,7 +113,7 @@ func TestRegisterPluginHandler_ReturnInternalError(t *testing.T) {
 
 	h := server.GetHandler()
 
-	req, err := http.NewRequest("POST", "/api/v1/plugins", strings.NewReader(fixturePlugins1))
+	req, err := http.NewRequest("POST", "/api/v1/plugins", strings.NewReader(fixturePlugins1.string()))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,6 +128,7 @@ func TestRegisterPluginHandler_ReturnInternalError(t *testing.T) {
 
 func TestRegisterPluginHandler_ReturnBadRequest(t *testing.T) {
 	analyzeApi := api.GetTestAPI(t)
+	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockStorage(t, nil)
 	analyzeApi.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
@@ -125,8 +137,8 @@ func TestRegisterPluginHandler_ReturnBadRequest(t *testing.T) {
 
 	h := server.GetHandler()
 
-	tmp := strings.Replace(fixturePlugins1, "123456798", " ", 1)
-	req, err := http.NewRequest("POST", "/api/v1/plugins", strings.NewReader(tmp))
+	fixturePlugins1.ID = " "
+	req, err := http.NewRequest("POST", "/api/v1/plugins", strings.NewReader(fixturePlugins1.string()))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-const fixtureCheckResult = `{"checkStatus":"GREEN","completedAt":"1970-01-01T00:00:00.000Z","description":"detailed check result description","executionStatus":"no execution errors","id":"uniqueUUID","name":"some interesting check","possibleActions":[{"description":"detailed action description","id":"uniqueUUID2","name":"name of plugin action"}]}`
+const fixtureCheckResult = `{"checkStatus":"GREEN","completedAt":"1970-01-01T00:00:00.000Z","description":"detailed check result description","executionStatus":"no execution errors","id":"uniqueUUID","name":"some interesting check"}`
 
 
 func TestChecksResultsHandler_ReturnResultsSuccessfully(t *testing.T) {

@@ -8,17 +8,16 @@ import (
 	"github.com/supergiant/analyze/pkg/storage"
 	"net/http"
 	"net/http/httptest"
-	"strings"
+	"reflect"
 	"testing"
 )
 
-const fixturePlugin = `{"description":"detailed plugin description","id":"123456798","installedAt":"1970-01-01T00:00:00.000Z","name":"the name of the plugin","serviceLabels":{"app":"test"},"serviceName":"name of k8s service which is front of plugin deployment","status":"plugin status","version":"2.0.0"}`
-
 func TestPluginHandler_ReturnResultsSuccessfully(t *testing.T) {
 	analyzeApi := api.GetTestAPI(t)
+	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	analyzeApi.GetPluginHandler = handlers.NewPluginHandler(storage.GetMockStorage(t, map[string]string{
-		models.PluginPrefix + "123456798": fixturePlugin,
+		models.PluginPrefix + "123456798": fixturePlugins1.string(),
 	}), logrus.New())
 	server := api.NewServer(analyzeApi)
 	server.ConfigureAPI()
@@ -36,9 +35,9 @@ func TestPluginHandler_ReturnResultsSuccessfully(t *testing.T) {
 		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusOK, rr.Body.String())
 	}
 
-	//TODO: investigate why it has extra spaces in the end
-	if strings.TrimSpace(rr.Body.String()) != fixturePlugin {
-		t.Fatalf("handler returned unexpected body: got %v want %v", rr.Body.String(), fixturePlugin)
+	p := toPlugin(t, rr.Body)
+	if reflect.DeepEqual(*p, fixturePlugins1) {
+		t.Fatalf("handler returned unexpected body: got %v want %v", rr.Body.String(), fixturePlugins1.string())
 	}
 }
 
