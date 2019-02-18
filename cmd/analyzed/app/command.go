@@ -79,7 +79,7 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return errors.Wrap(err, "can't get kube client transport")
 	}
-	proxySet := proxy.NewProxySet(tr, mainLogger.WithField("component", "proxySet"))
+	proxySet := proxy.NewProxySet(tr, log.WithField("component", "proxySet"))
 
 	etcdStorage, err := etcd.NewETCDStorage(cfg.ETCD, log.WithField("component", "etcdClient"))
 	if err != nil {
@@ -92,7 +92,7 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 	defer scheduler.Stop()
 
 	watchChan := etcdStorage.WatchRange(context.Background(), models.PluginPrefix)
-	log.Debug("watch stated")
+	log.Debug("etcd watch is started")
 	pluginController := analyze.NewPluginController(
 		watchChan,
 		etcdStorage,
@@ -101,8 +101,7 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 		proxySet,
 		log.WithField("component", "pluginController"),
 	)
-
-	go pluginController.Loop()
+	defer pluginController.Stop()
 
 	swaggerSpec, err := loads.Analyzed(api.SwaggerJSON, "2.0")
 	if err != nil {

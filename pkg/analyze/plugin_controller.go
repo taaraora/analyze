@@ -31,6 +31,7 @@ type PluginController struct {
 	scheduler     scheduler.Interface
 	proxySet      *proxy.Set
 	pluginClients map[string]*plugin.Client
+	stop          chan struct{}
 }
 
 func NewPluginController(
@@ -41,7 +42,7 @@ func NewPluginController(
 	set *proxy.Set,
 	logger logrus.FieldLogger,
 ) *PluginController {
-	return &PluginController{
+	pc := &PluginController{
 		events:        events,
 		stor:          stor,
 		kubeClient:    kubeClient,
@@ -49,13 +50,22 @@ func NewPluginController(
 		proxySet:      set,
 		pluginClients: make(map[string]*plugin.Client),
 		logger:        logger,
+		stop:          make(chan struct{}),
 	}
+
+	go pc.handlePluginChange()
+	return pc
 }
 
-func (pc *PluginController) Loop() {
-	for we := range pc.events {
-		if err := pc.parseEvent(we); err != nil {
-			pc.logger.Errorf("unable to handle watch event, err: %+v", err)
+func (pc *PluginController) handlePluginChange() {
+	for {
+		select {
+		case <-pc.stop:
+			return
+		case we := <-pc.events:
+			if err := pc.parseEvent(we); err != nil {
+				pc.logger.Errorf("unable to handle watch event, err: %+v", err)
+			}
 		}
 	}
 }
@@ -278,6 +288,10 @@ func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) 
 		cancel()
 		return nil
 	}
+}
+
+func (pc *PluginController) Stop() {
+	pc.stop <- struct{}{}
 }
 
 type msg []byte
