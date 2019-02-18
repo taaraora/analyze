@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -27,8 +26,8 @@ import (
 	"github.com/supergiant/analyze/pkg/kube"
 	"github.com/supergiant/analyze/pkg/logger"
 	"github.com/supergiant/analyze/pkg/models"
+	"github.com/supergiant/analyze/pkg/proxy"
 	"github.com/supergiant/analyze/pkg/scheduler"
-	"github.com/supergiant/analyze/pkg/storage"
 	"github.com/supergiant/analyze/pkg/storage/etcd"
 )
 
@@ -71,6 +70,17 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 		return errors.Wrap(err, "unable to create kube client")
 	}
 
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return errors.Wrap(err, "can't get kube config")
+	}
+
+	tr, err := rest.TransportFor(config)
+	if err != nil {
+		return errors.Wrap(err, "can't get kube client transport")
+	}
+	proxySet := proxy.NewProxySet(tr, mainLogger.WithField("component", "proxySet"))
+
 	etcdStorage, err := etcd.NewETCDStorage(cfg.ETCD, log.WithField("component", "etcdClient"))
 	if err != nil {
 		return errors.Wrap(err, "unable to create ETCD client")
@@ -88,6 +98,7 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 		etcdStorage,
 		kubeClient,
 		scheduler,
+		proxySet,
 		log.WithField("component", "pluginController"),
 	)
 
@@ -151,7 +162,7 @@ func RunCommand(cmd *cobra.Command, _ []string) error {
 		handlerWithRecovery,
 		corsHandler,
 		swaggerMiddleware,
-		newProxyMiddleware(etcdStorage, log.WithField("middleware", "proxy")),
+		newProxyMiddleware(proxySet, log.WithField("middleware", "proxy")),
 		uiMiddleware,
 	).Then(analyzeAPI.Serve(nil))
 
@@ -210,55 +221,11 @@ func uiMiddleware(handler http.Handler) http.Handler {
 	})
 }
 
-func newProxyMiddleware(storage storage.Interface, logger logrus.FieldLogger) func(handler http.Handler) http.Handler {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		panic("can't get kube config")
-	}
-
-	tr, err := rest.TransportFor(config)
-	if err != nil {
-		panic("can't get transport")
-	}
-
-	var proxies = make(map[string]*httputil.ReverseProxy)
-
+func newProxyMiddleware(proxySet *proxy.Set, logger logrus.FieldLogger) func(handler http.Handler) http.Handler {
 	return func(handler http.Handler) http.Handler {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
-		pluginsRaw, err := storage.GetAll(ctx, models.PluginPrefix)
-		if err != nil {
-			panic("can't get plugins")
-		}
-
-		for _, rawPlugin := range pluginsRaw {
-			p := &models.Plugin{}
-			err := p.UnmarshalBinary(rawPlugin.Payload())
-			if err != nil {
-				panic("can't unmarshal plugin")
-			}
-			_, exists := proxies[p.ID]
-			if !exists {
-				url, err := url.Parse("http://" + p.ServiceEndpoint)
-				if err != nil {
-					panic("can't parse host")
-				}
-
-				logger.Debugf("create proxy for url: %+v", *url)
-				reverseProxy := httputil.NewSingleHostReverseProxy(url)
-				reverseProxy.Transport = tr
-				reverseProxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
-					logger.Errorf("reverse proxy error params: %+v", *req.URL)
-					logger.Errorf("reverse proxy error: %v", err)
-					rw.WriteHeader(http.StatusBadGateway)
-				}
-				proxies[p.ID] = reverseProxy
-			}
-		}
-
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			var targetProxy *httputil.ReverseProxy
-			for id, proxy := range proxies {
+			for id, proxy := range proxySet.GetProxies() {
 				if strings.Contains(req.URL.Path, id) {
 					targetProxy = proxy
 				}

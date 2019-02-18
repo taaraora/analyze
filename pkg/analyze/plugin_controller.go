@@ -18,6 +18,7 @@ import (
 	"github.com/supergiant/analyze/pkg/models"
 	"github.com/supergiant/analyze/pkg/plugin"
 	"github.com/supergiant/analyze/pkg/plugin/proto"
+	"github.com/supergiant/analyze/pkg/proxy"
 	"github.com/supergiant/analyze/pkg/scheduler"
 	"github.com/supergiant/analyze/pkg/storage"
 )
@@ -28,6 +29,7 @@ type PluginController struct {
 	kubeClient    kube.Interface
 	logger        logrus.FieldLogger
 	scheduler     scheduler.Interface
+	proxySet      *proxy.Set
 	pluginClients map[string]*plugin.Client
 }
 
@@ -36,6 +38,7 @@ func NewPluginController(
 	stor storage.Interface,
 	kubeClient kube.Interface,
 	scheduler scheduler.Interface,
+	set *proxy.Set,
 	logger logrus.FieldLogger,
 ) *PluginController {
 	return &PluginController{
@@ -43,6 +46,7 @@ func NewPluginController(
 		stor:          stor,
 		kubeClient:    kubeClient,
 		scheduler:     scheduler,
+		proxySet:      set,
 		pluginClients: make(map[string]*plugin.Client),
 		logger:        logger,
 	}
@@ -143,6 +147,8 @@ func (pc *PluginController) unregisterPlugin(pluginEntry *models.Plugin) error {
 		return errors.Errorf("unable to close pluginClient, id: %v, err: %+v", pluginEntry.ID, err)
 	}
 
+	pc.proxySet.RemoveProxy(pluginEntry.ID)
+
 	return nil
 }
 
@@ -218,6 +224,11 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 	err = pc.scheduler.ScheduleJob(pluginInfo.Id, interval, pc.check(pluginInfo.Id, pluginClient))
 	if err != nil {
 		return errors.Wrap(err, "unable to schedule job for plugin")
+	}
+
+	err = pc.proxySet.SetProxy(pluginEntry)
+	if err != nil {
+		return errors.Wrap(err, "unable to register proxy for plugin")
 	}
 
 	return nil
