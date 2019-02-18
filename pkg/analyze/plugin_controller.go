@@ -24,14 +24,14 @@ import (
 )
 
 type PluginController struct {
-	events        <-chan storage.WatchEvent
-	stor          storage.Interface
-	kubeClient    kube.Interface
-	logger        logrus.FieldLogger
-	scheduler     scheduler.Interface
-	proxySet      *proxy.Set
-	pluginClients map[string]*plugin.Client
-	stop          chan struct{}
+	pluginChangeEvents <-chan storage.WatchEvent
+	stor               storage.Interface
+	kubeClient         kube.Interface
+	logger             logrus.FieldLogger
+	scheduler          scheduler.Interface
+	proxySet           *proxy.Set
+	pluginClients      map[string]*plugin.Client
+	stop               chan struct{}
 }
 
 func NewPluginController(
@@ -43,14 +43,14 @@ func NewPluginController(
 	logger logrus.FieldLogger,
 ) *PluginController {
 	pc := &PluginController{
-		events:        events,
-		stor:          stor,
-		kubeClient:    kubeClient,
-		scheduler:     scheduler,
-		proxySet:      set,
-		pluginClients: make(map[string]*plugin.Client),
-		logger:        logger,
-		stop:          make(chan struct{}),
+		pluginChangeEvents: events,
+		stor:               stor,
+		kubeClient:         kubeClient,
+		scheduler:          scheduler,
+		proxySet:           set,
+		pluginClients:      make(map[string]*plugin.Client),
+		logger:             logger,
+		stop:               make(chan struct{}),
 	}
 
 	go pc.handlePluginChange()
@@ -62,8 +62,8 @@ func (pc *PluginController) handlePluginChange() {
 		select {
 		case <-pc.stop:
 			return
-		case we := <-pc.events:
-			if err := pc.parseEvent(we); err != nil {
+		case we := <-pc.pluginChangeEvents:
+			if err := pc.handleEvent(we); err != nil {
 				pc.logger.Errorf("unable to handle watch event, err: %+v", err)
 			}
 		}
@@ -71,7 +71,7 @@ func (pc *PluginController) handlePluginChange() {
 }
 
 // TODO: maybe split config and plugin updates?
-func (pc *PluginController) parseEvent(we storage.WatchEvent) error {
+func (pc *PluginController) handleEvent(we storage.WatchEvent) error {
 	if we.Type() == storage.Error {
 		return errors.Wrap(we.Err(), "plugin watchEvent returned error")
 	}
