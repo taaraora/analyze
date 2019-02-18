@@ -17,7 +17,7 @@ language: go
 go:
 - "1.11.5"
 
-go_import_path: github.com/"$TRAVIS_REPO_SLUG"
+go_import_path: github.com/supergiant/analyze
 
 install:
 - make tools
