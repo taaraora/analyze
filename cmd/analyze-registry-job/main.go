@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -10,15 +11,14 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/supergiant/analyze/pkg/kube"
+	"github.com/supergiant/analyze/pkg/logger"
 	"github.com/supergiant/analyze/pkg/models"
 )
 
-// TODO this is copypaste from sunsetting plugin repository
+// TODO this is copy-paste from sunsetting plugin repository
 type PluginInfo struct {
 	// detailed plugin description
 	Description string `json:"description,omitempty"`
@@ -68,51 +68,42 @@ var pluginLabelSet = labels.Set{
 	"app.kubernetes.io/component": "analyze-plugin",
 }
 
+var (
+	remove    = flag.Bool("remove", false, "if true job will try to remove plugin from analyze registry")
+	logLevel  = flag.String("log-level", "debug", "logging level, e.g. info, warning, debug, error, fatal")
+	logFormat = flag.String("log-format", "TXT", "logging format [TXT JSON]")
+)
+
 func main() {
-	command := &cobra.Command{
-		Use:          "analyze-registry-job",
-		Short:        "analyze-registry-job is job which registers or removes plugin from analyze registry",
-		RunE:         runCommand,
-		SilenceUsage: true,
+	var rawPluginInfo []byte
+	flag.Parse()
+
+	loggerConf := logger.Config{
+		Level:     *logLevel,
+		Formatter: logger.Formatter(*logFormat),
 	}
 
-	command.PersistentFlags().BoolP(
-		"remove",
-		"r",
-		false,
-		"if true job will try to remove plugin from analyze registry")
-
-	if err := command.Execute(); err != nil {
+	if err := loggerConf.Validate(); err != nil {
 		log.Fatalf("\n%v\n", err)
 	}
-}
-
-func runCommand(cmd *cobra.Command, _ []string) error {
-	var rawPluginInfo []byte
-	remove, err := cmd.Flags().GetBool("remove")
-	if err != nil {
-		return errors.Wrap(err, "unable to get config flag remove")
-	}
+	logger := logger.NewLogger(loggerConf).WithField("app", "analyze-registry-job")
 
 	pluginServiceName, err := discoverPluginServiceName()
 	if err != nil {
-		return errors.Wrap(err, "unable to get plugin service name")
+		logger.Fatalf("unable to get plugin service name, err: %v", err)
 	}
 
-	logger := logrus.New()
-	logger.SetLevel(logrus.DebugLevel)
-
-	logger.Debugf("remove: %v", remove)
+	logger.Debugf("remove: %v", *remove)
 	logger.Debugf("pluginServiceName: %v", pluginServiceName)
 
 	kubeClient, err := kube.NewKubeClient(logger.WithField("component", "kubeClient"))
 	if err != nil {
-		return errors.Wrap(err, "unable to create kube client")
+		logger.Fatalf("unable to create kube client, err: %v", err)
 	}
 
 	pluginService, err := kubeClient.GetService(pluginServiceName, pluginLabelSet)
 	if err != nil {
-		return errors.Wrap(err, "failed to find analyze service")
+		logger.Fatalf("failed to find analyze service, err: %v", err)
 	}
 
 	var pluginApiPort string
@@ -125,7 +116,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 	if pluginApiPort == "" {
 		logger.Debugf("pluginService spec: %+v", pluginService.Spec)
-		return errors.New("failed to find http port for analyze plugin")
+		logger.Fatalf("failed to find http port for analyze plugin")
 	}
 
 	// TODO: make it configurable
@@ -146,14 +137,14 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	pi := &PluginInfo{}
 	err = json.Unmarshal(rawPluginInfo, pi)
 	if err != nil {
-		return errors.Wrap(err, "failed to unmarshal plugin info")
+		logger.Fatalf("failed to unmarshal plugin info, err: %v", err)
 	}
 
 	logger.Debugf("plugin info: %v", string(rawPluginInfo))
 
 	analyzeService, err := kubeClient.GetServiceByLabels(analyzeLabelSet)
 	if err != nil {
-		return errors.New("failed to find analyze service")
+		logger.Fatalf("failed to find analyze service")
 	}
 
 	var analyzeApiPort, analyzeServiceName = "", ""
@@ -166,7 +157,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	if analyzeApiPort == "" {
-		return errors.New("failed to find http port for analyze service")
+		logger.Fatalf("failed to find http port for analyze service")
 	}
 
 	analyzeServiceName = analyzeService.Name
@@ -177,25 +168,25 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	pi.ServiceLabels = pluginService.Labels
 	bytes, err := json.Marshal(pi)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal plugin info")
+		logger.Fatalf("failed to marshal plugin info, err: %v", err)
 	}
 
 	pluginsEndpointUri := "http://" + analyzeServiceName + ":" + analyzeApiPort + "/api/v1/plugins"
 	resp, err := http.Post(pluginsEndpointUri, "application/json", strings.NewReader(string(bytes)))
 	if err != nil {
-		return errors.Wrap(err, "failed to register plugin")
+		logger.Fatalf("failed to register plugin, err: %v", err)
 	}
 
 	if !(resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK) {
-		return errors.Errorf("failed to register plugin, status code %v", resp.StatusCode)
+		logger.Fatalf("failed to register plugin, status code %v", resp.StatusCode)
 	}
 
 	resp, err = http.Get(pluginsEndpointUri)
 	if err != nil {
-		return errors.Wrap(err, "unable to check registered plugin")
+		logger.Fatalf("unable to check registered plugin, err: %v", err)
 	}
 
-	result := make([]*models.Plugin, 0, 0)
+	result := make([]*models.Plugin, 0)
 	//TODO: generate swagger client?
 
 	defer func() {
@@ -207,20 +198,18 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 	bytes, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "unable to read registered plugins")
+		logger.Fatalf("unable to read registered plugins, err: %v", err)
 	}
 
 	err = json.Unmarshal(bytes, &result)
 	if err != nil {
-		return errors.Wrap(err, "unable to unmarshal registered plugins")
+		logger.Fatalf("unable to unmarshal registered plugins, err: %v", err)
 	}
 
 	logger.Debugf("analyze plugins %v", string(bytes))
 	for _, p := range result {
 		logger.Debugf("analyze plugins %+v", p)
 	}
-
-	return nil
 }
 
 func discoverPluginServiceName() (string, error) {

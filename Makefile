@@ -7,6 +7,7 @@ DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG},supergiant/ana
 NODEAGENT_DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG}-nodeagent,supergiant/analyze-nodeagent)
 JOB_DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG}-registry-job,supergiant/analyze-registry-job)
 DOCKER_IMAGE_TAG := $(if ${TAG},${TAG},$(shell git describe --tags --always | tr -d v || echo 'latest'))
+GO111MODULE=on
 
 
 define LINT
@@ -64,7 +65,7 @@ gen-swagger: validate
 
 .PHONY: test
 test:
-	go test -race ./...
+	go test -count=1 -tags=dev -race ./...
 
 .PHONY: tools
 tools:
