@@ -1,37 +1,42 @@
-import {Injectable} from '@angular/core';
-import {HttpClient} from "@angular/common/http";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { IPlugin }    from 'src/app/models/models';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class PluginsService {
 
   constructor(
-    private http: HttpClient
-  ) { }
-
-  all() {
-    return this.http.get('/api/v1/plugins');
+    private http: HttpClient,
+  ) {
   }
 
-  loadExternal(): void {
-    console.log('test1');
+  all(): Observable<IPlugin[]> {
+
+    return this.http.get<IPlugin[]>('/api/v1/plugins');
+  }
+
+  loadExternal(path: string): void {
     const header = document.querySelector('head');
+    // wtf
     header.addEventListener('loadingNotifier', (msg: CustomEvent) => {
       //get event that it was loaded
-      const element: HTMLElement = document.createElement(msg.detail.selector);
-      element.addEventListener('actionSubmit', msg => console.debug('plugin actionSubmit says: ',msg));
+      const pluginCustomEl: HTMLElement = document.createElement(msg.detail.selector);
+
+      pluginCustomEl.addEventListener('actionSubmit', msg => console.debug('plugin actionSubmit says: ', msg));
+
       const pluginsContainer = document.querySelector('app-plugins');
-      pluginsContainer.appendChild(element);
-      console.log('test2');
+      pluginsContainer.appendChild(pluginCustomEl);
 
       setTimeout(function () {
-        element.setAttribute('checkResult', 'init');
-        console.log('checkResult was sent')
+        pluginCustomEl.setAttribute('checkResult', 'init');
+        console.log('checkResult was sent');
       }, 2000);
     });
 
     const script = document.createElement('script');
-    script.src = 'http://127.0.0.1:8080/main.js'
+    // wtf
+    script.src = path;
     header.appendChild(script);
-
   }
 }
