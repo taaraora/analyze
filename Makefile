@@ -5,7 +5,9 @@ CURRENT_DIR := $(patsubst %/,%,$(dir $(MAKEFILE_PATH)))
 
 DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG},supergiant/analyze)
 NODEAGENT_DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG}-nodeagent,supergiant/analyze-nodeagent)
+JOB_DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG}-registry-job,supergiant/analyze-registry-job)
 DOCKER_IMAGE_TAG := $(if ${TAG},${TAG},$(shell git describe --tags --always | tr -d v || echo 'latest'))
+GO111MODULE=on
 
 
 define LINT
@@ -57,13 +59,13 @@ gen-swagger: validate
 		--server-package=api \
 		--spec=./swagger/api-spec.yml \
 		--exclude-main \
-		--name=analyze
-		--existing-models=./pkg/models
+		--name=analyze \
+		--existing-models=github.com/supergiant/analyze/pkg/models
 	cp ./swagger/api-spec.yml ./asset/swagger/api-spec.yml
 
 .PHONY: test
 test:
-	go test -race ./...
+	go test -count=1 -tags=dev -race ./...
 
 .PHONY: tools
 tools:
@@ -81,10 +83,14 @@ build-image:
 	docker build -t $(NODEAGENT_DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f cmd/analyze-nodeagent/Dockerfile .
 	docker tag $(NODEAGENT_DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(NODEAGENT_DOCKER_IMAGE_NAME):latest
 
+	docker build -t $(JOB_DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f cmd/analyze-registry-job/Dockerfile .
+	docker tag $(JOB_DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(JOB_DOCKER_IMAGE_NAME):latest
+
 .PHONY: push
 push:
-	docker push $(DOCKER_IMAGE_NAME):latest
-	docker push $(NODEAGENT_DOCKER_IMAGE_NAME):latest
+	docker push $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+	docker push $(NODEAGENT_DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+	docker push $(JOB_DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
 
 .PHONY: gofmt
 gofmt:
@@ -98,7 +104,7 @@ fmt: gofmt goimports
 # To compile all protobuf files in this repository, run "make protobuf"
 .PHONY: gen-protobuf
 gen-protobuf:
-	docker run --rm -v ${CURRENT_DIR}/pkg/plugin:/defs namely/protoc-all:1.16_0 -i proto -l go -d /defs -o .
+	docker run --rm -v ${CURRENT_DIR}/pkg/plugin:/defs namely/protoc-all:latest -i proto -l go -d /defs -o .
 
 .PHONY: gen-assets
 gen-assets:

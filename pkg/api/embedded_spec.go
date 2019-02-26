@@ -27,11 +27,11 @@ func init() {
   "swagger": "2.0",
   "info": {
     "title": "Analyze service API",
-    "version": "v0.0.1"
+    "version": "v2.0.0"
   },
   "basePath": "/api/v1",
   "paths": {
-    "/check": {
+    "/checks": {
       "get": {
         "produces": [
           "application/json"
@@ -58,12 +58,97 @@ func init() {
         }
       }
     },
-    "/plugin": {
+    "/integration/prometheus": {
       "get": {
         "produces": [
           "application/json"
         ],
-        "summary": "Returns list of the installed recommendation plugins",
+        "summary": "returns prometheus instance info and name of cluster",
+        "operationId": "getPromethiusIntegrationInfo",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/integrationInfo"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "updates prometheus instance info and name of cluster",
+        "operationId": "patchPromethiusIntegrationInfo",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/integrationInfo"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/integration/prometheus/validations": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns list of integration validations",
+        "operationId": "getPromethiusIntegrationValidations",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/integrationComponent"
+              }
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "This will trigger integration validations of all prometheus components",
+        "operationId": "triggerValidations",
+        "responses": {
+          "204": {
+            "description": "validation has been triggered"
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/plugins": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns list of the registered plugins",
         "operationId": "getPlugins",
         "responses": {
           "200": {
@@ -74,6 +159,188 @@ func init() {
               "items": {
                 "$ref": "#/definitions/plugin"
               }
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "registers plugin",
+        "operationId": "registerPlugin",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/plugins/{pluginId}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns registered plugin",
+        "operationId": "getPlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "unregisters plugin",
+        "operationId": "unregisterPlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "plugin is removed from registry"
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/plugins/{pluginId}/config": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns plugins specific settings object",
+        "operationId": "getPluginConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/pluginConfig"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "substitutes whole plugin config",
+        "operationId": "replacePluginConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "plugin is removed from registry"
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
             }
           },
           "default": {
@@ -106,8 +373,8 @@ func init() {
           "format": "date-time"
         },
         "description": {
-          "description": "detailed check result description",
-          "type": "string"
+          "description": "detailed check result description, it basically contains plugin specific check result info",
+          "type": "object"
         },
         "executionStatus": {
           "description": "shows check execution errors",
@@ -120,13 +387,6 @@ func init() {
         "name": {
           "description": "check name",
           "type": "string"
-        },
-        "possibleActions": {
-          "description": "list of possible actions to fix caveats check was found",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/pluginAction"
-          }
         }
       }
     },
@@ -145,10 +405,77 @@ func init() {
         }
       }
     },
+    "integrationComponent": {
+      "description": "contains all info related that integration works or not for some component",
+      "type": "object",
+      "properties": {
+        "componentName": {
+          "description": "component integration name",
+          "type": "string"
+        },
+        "status": {
+          "description": "shows overall validation status for component",
+          "type": "string",
+          "enum": [
+            "OK",
+            "IN_PROGRESS",
+            "FAILED"
+          ]
+        },
+        "validationTargets": {
+          "description": "contains performed validations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/validationTarget"
+          }
+        },
+        "validations": {
+          "description": "contains performed validations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/validation"
+          }
+        }
+      }
+    },
+    "integrationInfo": {
+      "description": "IntegrationInfo contains all info needed to reach prometheus instance inside k8s cluster",
+      "type": "object",
+      "properties": {
+        "integrationName": {
+          "description": "name of service which is integrated, e. g. Prometheus",
+          "type": "string"
+        },
+        "reachabilityStatus": {
+          "description": "shows whether service is reachable",
+          "type": "string",
+          "enum": [
+            "REACHABLE",
+            "UNREACHABLE"
+          ]
+        },
+        "serviceName": {
+          "description": "name of k8s service which resides in front of app which is integrated",
+          "type": "string"
+        },
+        "serviceNamespace": {
+          "description": "name of k8s namespace where app and its service is deployed",
+          "type": "string"
+        },
+        "servicePort": {
+          "description": "port of k8s service which resides in front of app which is integrated",
+          "type": "string"
+        }
+      }
+    },
     "plugin": {
       "description": "plugin represents the installed recommendation plugin",
       "type": "object",
       "properties": {
+        "checkComponentEntryPoint": {
+          "description": "path to the bundle to load check plugin ui component",
+          "type": "string"
+        },
         "description": {
           "description": "detailed plugin description",
           "type": "string"
@@ -166,6 +493,20 @@ func init() {
           "description": "name is the name of the plugin.",
           "type": "string"
         },
+        "serviceEndpoint": {
+          "description": "name and port of k8s service which is front of plugin deployment",
+          "type": "string"
+        },
+        "serviceLabels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "settingsComponentEntryPoint": {
+          "description": "path to the bundle to load settings plugin ui component",
+          "type": "string"
+        },
         "status": {
           "description": "plugin status",
           "type": "string"
@@ -176,21 +517,53 @@ func init() {
         }
       }
     },
-    "pluginAction": {
-      "description": "CheckResult represents the single result of Check function invocation of specific plugin.",
+    "pluginConfig": {
+      "description": "pluginConfig represents plugin configuration",
       "type": "object",
       "properties": {
-        "description": {
-          "description": "detailed action description",
-          "type": "string"
+        "executionInterval": {
+          "description": "plugin check function invocation interval in seconds",
+          "type": "integer"
         },
-        "id": {
-          "description": "unique UUID of plugin action",
-          "type": "string"
-        },
+        "pluginSpecificConfig": {
+          "description": "object with plugin specific settings properties",
+          "type": "object"
+        }
+      }
+    },
+    "validation": {
+      "description": "single integration validation for component",
+      "type": "object",
+      "properties": {
         "name": {
-          "description": "name of plugin action",
+          "description": "name of validation, e. g. node_exporter deamonSet is OK",
           "type": "string"
+        },
+        "status": {
+          "description": "shows validation status",
+          "type": "string",
+          "enum": [
+            "OK",
+            "FAILED"
+          ]
+        }
+      }
+    },
+    "validationTarget": {
+      "description": "validation target is specific node pr service or something else where we check that some integration is configured",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "name of validation target, it can be hostname or service name, or container name",
+          "type": "string"
+        },
+        "status": {
+          "description": "shows validation status",
+          "type": "string",
+          "enum": [
+            "OK",
+            "FAILED"
+          ]
         }
       }
     }
@@ -206,11 +579,11 @@ func init() {
   "swagger": "2.0",
   "info": {
     "title": "Analyze service API",
-    "version": "v0.0.1"
+    "version": "v2.0.0"
   },
   "basePath": "/api/v1",
   "paths": {
-    "/check": {
+    "/checks": {
       "get": {
         "produces": [
           "application/json"
@@ -237,12 +610,97 @@ func init() {
         }
       }
     },
-    "/plugin": {
+    "/integration/prometheus": {
       "get": {
         "produces": [
           "application/json"
         ],
-        "summary": "Returns list of the installed recommendation plugins",
+        "summary": "returns prometheus instance info and name of cluster",
+        "operationId": "getPromethiusIntegrationInfo",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/integrationInfo"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "updates prometheus instance info and name of cluster",
+        "operationId": "patchPromethiusIntegrationInfo",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/integrationInfo"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/integration/prometheus/validations": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns list of integration validations",
+        "operationId": "getPromethiusIntegrationValidations",
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/integrationComponent"
+              }
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "This will trigger integration validations of all prometheus components",
+        "operationId": "triggerValidations",
+        "responses": {
+          "204": {
+            "description": "validation has been triggered"
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/plugins": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns list of the registered plugins",
         "operationId": "getPlugins",
         "responses": {
           "200": {
@@ -253,6 +711,188 @@ func init() {
               "items": {
                 "$ref": "#/definitions/plugin"
               }
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "registers plugin",
+        "operationId": "registerPlugin",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/plugins/{pluginId}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns registered plugin",
+        "operationId": "getPlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/plugin"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "unregisters plugin",
+        "operationId": "unregisterPlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "plugin is removed from registry"
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/plugins/{pluginId}/config": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "returns plugins specific settings object",
+        "operationId": "getPluginConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "no error",
+            "schema": {
+              "$ref": "#/definitions/pluginConfig"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "produces": [
+          "application/json"
+        ],
+        "summary": "substitutes whole plugin config",
+        "operationId": "replacePluginConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the plugin to retrieve",
+            "name": "pluginId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "plugin is removed from registry"
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error"
             }
           },
           "default": {
@@ -285,8 +925,8 @@ func init() {
           "format": "date-time"
         },
         "description": {
-          "description": "detailed check result description",
-          "type": "string"
+          "description": "detailed check result description, it basically contains plugin specific check result info",
+          "type": "object"
         },
         "executionStatus": {
           "description": "shows check execution errors",
@@ -299,13 +939,6 @@ func init() {
         "name": {
           "description": "check name",
           "type": "string"
-        },
-        "possibleActions": {
-          "description": "list of possible actions to fix caveats check was found",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/pluginAction"
-          }
         }
       }
     },
@@ -324,10 +957,77 @@ func init() {
         }
       }
     },
+    "integrationComponent": {
+      "description": "contains all info related that integration works or not for some component",
+      "type": "object",
+      "properties": {
+        "componentName": {
+          "description": "component integration name",
+          "type": "string"
+        },
+        "status": {
+          "description": "shows overall validation status for component",
+          "type": "string",
+          "enum": [
+            "OK",
+            "IN_PROGRESS",
+            "FAILED"
+          ]
+        },
+        "validationTargets": {
+          "description": "contains performed validations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/validationTarget"
+          }
+        },
+        "validations": {
+          "description": "contains performed validations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/validation"
+          }
+        }
+      }
+    },
+    "integrationInfo": {
+      "description": "IntegrationInfo contains all info needed to reach prometheus instance inside k8s cluster",
+      "type": "object",
+      "properties": {
+        "integrationName": {
+          "description": "name of service which is integrated, e. g. Prometheus",
+          "type": "string"
+        },
+        "reachabilityStatus": {
+          "description": "shows whether service is reachable",
+          "type": "string",
+          "enum": [
+            "REACHABLE",
+            "UNREACHABLE"
+          ]
+        },
+        "serviceName": {
+          "description": "name of k8s service which resides in front of app which is integrated",
+          "type": "string"
+        },
+        "serviceNamespace": {
+          "description": "name of k8s namespace where app and its service is deployed",
+          "type": "string"
+        },
+        "servicePort": {
+          "description": "port of k8s service which resides in front of app which is integrated",
+          "type": "string"
+        }
+      }
+    },
     "plugin": {
       "description": "plugin represents the installed recommendation plugin",
       "type": "object",
       "properties": {
+        "checkComponentEntryPoint": {
+          "description": "path to the bundle to load check plugin ui component",
+          "type": "string"
+        },
         "description": {
           "description": "detailed plugin description",
           "type": "string"
@@ -345,6 +1045,20 @@ func init() {
           "description": "name is the name of the plugin.",
           "type": "string"
         },
+        "serviceEndpoint": {
+          "description": "name and port of k8s service which is front of plugin deployment",
+          "type": "string"
+        },
+        "serviceLabels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "settingsComponentEntryPoint": {
+          "description": "path to the bundle to load settings plugin ui component",
+          "type": "string"
+        },
         "status": {
           "description": "plugin status",
           "type": "string"
@@ -355,21 +1069,53 @@ func init() {
         }
       }
     },
-    "pluginAction": {
-      "description": "CheckResult represents the single result of Check function invocation of specific plugin.",
+    "pluginConfig": {
+      "description": "pluginConfig represents plugin configuration",
       "type": "object",
       "properties": {
-        "description": {
-          "description": "detailed action description",
-          "type": "string"
+        "executionInterval": {
+          "description": "plugin check function invocation interval in seconds",
+          "type": "integer"
         },
-        "id": {
-          "description": "unique UUID of plugin action",
-          "type": "string"
-        },
+        "pluginSpecificConfig": {
+          "description": "object with plugin specific settings properties",
+          "type": "object"
+        }
+      }
+    },
+    "validation": {
+      "description": "single integration validation for component",
+      "type": "object",
+      "properties": {
         "name": {
-          "description": "name of plugin action",
+          "description": "name of validation, e. g. node_exporter deamonSet is OK",
           "type": "string"
+        },
+        "status": {
+          "description": "shows validation status",
+          "type": "string",
+          "enum": [
+            "OK",
+            "FAILED"
+          ]
+        }
+      }
+    },
+    "validationTarget": {
+      "description": "validation target is specific node pr service or something else where we check that some integration is configured",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "name of validation target, it can be hostname or service name, or container name",
+          "type": "string"
+        },
+        "status": {
+          "description": "shows validation status",
+          "type": "string",
+          "enum": [
+            "OK",
+            "FAILED"
+          ]
         }
       }
     }

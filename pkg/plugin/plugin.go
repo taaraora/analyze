@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/grpc/keepalive"
 
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 
 	"github.com/supergiant/analyze/pkg/plugin/proto"
 )
@@ -21,7 +22,7 @@ type Config struct {
 	CheckTimeout       time.Duration `mapstructure:"check_timeout"`
 }
 
-type PluginsSet map[string]proto.PluginClient
+type PluginsSet map[string]*Client
 
 type CloudProviderType string
 
@@ -30,25 +31,43 @@ const (
 	DOCloudProviderType  CloudProviderType = "do"
 )
 
-// TODO: refactor and implement real pluggability
-func (ps PluginsSet) Load(plugin proto.PluginClient, cfg *proto.PluginConfig) error {
-	ctx, configureCancel := context.WithTimeout(context.Background(), time.Second*1)
-	defer configureCancel()
-	_, err := plugin.Configure(ctx, cfg)
-	if err != nil {
-		return errors.Wrap(err, "unable to configure plugin")
+type Client struct {
+	conn *grpc.ClientConn
+	proto.PluginClient
+}
+
+func NewClient(pluginServerAddress string) (*Client, error) {
+	keepaliveCfg := keepalive.ClientParameters{
+		Time:                60 * time.Minute,
+		Timeout:             60 * time.Second,
+		PermitWithoutStream: false,
 	}
 
-	ctx, infoCancel := context.WithTimeout(context.Background(), time.Second*1)
-	defer infoCancel()
-	info, err := plugin.Info(ctx, &empty.Empty{})
-	if err != nil {
-		return errors.Wrap(err, "unable to get plugin info")
+	opts := []grpc.DialOption{
+		grpc.WithInsecure(),
+		grpc.WithKeepaliveParams(keepaliveCfg),
 	}
 
-	ps[info.Id] = plugin
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	conn, err := grpc.DialContext(ctx, pluginServerAddress, opts...)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to dial plugin server side: %s ", pluginServerAddress)
+	}
+	c := proto.NewPluginClient(conn)
 
-	return nil
+	return &Client{
+		conn:         conn,
+		PluginClient: c,
+	}, nil
+}
+
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+
+func (c *Client) GetConnTarget() string {
+	return c.conn.Target()
 }
 
 func (c Config) Validate() error {

@@ -1,57 +1,55 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+
+	"github.com/supergiant/analyze/pkg/logger"
 
 	"github.com/aws/aws-sdk-go-v2/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
+)
+
+var (
+	port      = flag.Int("api-port", 9292, "tcp port where node agent API is serving")
+	logLevel  = flag.String("log-level", "debug", "logging level, e.g. info, warning, debug, error, fatal")
+	logFormat = flag.String("log-format", "TXT", "logging format [TXT JSON]")
 )
 
 func main() {
-	command := &cobra.Command{
-		Use:          "analyze-nodeagent",
-		Short:        "analyze-nodeagent deployed on each node to collect node related info for analyze",
-		RunE:         runCommand,
-		SilenceUsage: true,
+	flag.Parse()
+
+	loggerConf := logger.Config{
+		Level:     *logLevel,
+		Formatter: logger.Formatter(*logFormat),
 	}
 
-	command.PersistentFlags().StringP(
-		"api-port",
-		"p",
-		"9292",
-		"tcp port where node agent API is serving")
-
-	if err := command.Execute(); err != nil {
+	if err := loggerConf.Validate(); err != nil {
 		log.Fatalf("\n%v\n", err)
 	}
-}
 
-func runCommand(cmd *cobra.Command, _ []string) error {
-
-	apiPort, err := cmd.Flags().GetString("api-port")
-	if err != nil {
-		return errors.Wrap(err, "unable to get config flag api-port")
+	if *port < 1 {
+		log.Fatalf("api-port is %v, it need to be greater than 0", *port)
 	}
 
-	logger := logrus.New()
+	logger := logger.NewLogger(loggerConf).WithField("app", "analyze-nodeagent")
 
 	cfg, err := external.LoadDefaultAWSConfig()
 	if err != nil {
-		logger.Fatal("unable to load SDK config, " + err.Error())
+		logger.Fatalf("unable to load SDK config, %v", err)
 	}
 
 	var ec2MetadataService = ec2metadata.New(cfg)
 
 	if strings.ToLower(os.Getenv("AWS_EC2_METADATA_DISABLED")) == "true" {
-		logger.Error("metadata is available")
+		logger.Error("AWS_EC2_METADATA_DISABLED is true, we are not able to interact with EC2 metadata API")
 	}
 
 	if available := ec2MetadataService.Available(); !available {
@@ -63,7 +61,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		logger.Error(err)
 	}
 
-	logger.Errorf("metadata is available, instance-id: %s", result)
+	logger.Infof("metadata is available, at instance-id: %s", result)
 
 	var httpServer = &http.Server{}
 	var router = mux.NewRouter()
@@ -106,22 +104,16 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}(ec2MetadataService, logger)).Methods(http.MethodGet)
 
-	listener, err := net.Listen("tcp", ":"+apiPort)
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(*port))
 	if err != nil {
-		return err
+		logger.Fatalf("unable to start api listener: %v", err)
 	}
 
 	var addr = listener.Addr().String()
-	var addrParts = strings.Split(addr, ":")
-	if len(addrParts) == 0 {
-		return errors.Errorf("can't get non occupied port, addr %v", addr)
+	logger.Infof("listener has started, address: %s", addr)
+
+	if err := httpServer.Serve(listener); err != nil && err != http.ErrServerClosed {
+		logger.Fatalf("unable to start api listener: %v", err)
 	}
 
-	if err := httpServer.Serve(listener); err != nil {
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

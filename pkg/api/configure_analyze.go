@@ -4,19 +4,12 @@ package api
 
 import (
 	"crypto/tls"
-
 	"net/http"
-	"strings"
 
-	"github.com/dre1080/recover"
-	"github.com/sirupsen/logrus"
-
-	"github.com/supergiant/analyze/asset"
 	"github.com/supergiant/analyze/pkg/api/operations"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
-	"github.com/rs/cors"
 )
 
 //go:generate swagger generate server --target ../pkg --name Analyze --spec ../swagger/api-spec.yml --server-package api --exclude-main
@@ -38,8 +31,6 @@ func configureAPI(api *operations.AnalyzeAPI) http.Handler {
 	api.JSONConsumer = runtime.JSONConsumer()
 
 	api.JSONProducer = runtime.JSONProducer()
-
-	api.Logger = logrus.Infof
 
 	api.ServerShutdown = func() {}
 
@@ -67,56 +58,5 @@ func setupMiddlewares(handler http.Handler) http.Handler {
 // The middleware configuration happens before anything, this middleware also applies to serving the swagger.json document.
 // So this is a good place to plug in a panic handling middleware, logging and metrics
 func setupGlobalMiddleware(handler http.Handler) http.Handler {
-	handlerWithRecovery := recover.New(&recover.Options{
-		Log: logrus.Error,
-	})(handler)
-
-	//TODO fix CORS till release
-	corsHandler := cors.New(cors.Options{
-		Debug:          false,
-		AllowedHeaders: []string{"*"},
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{},
-		MaxAge:         1000,
-	}).Handler(handlerWithRecovery)
-
-	handlerWithSwagger := swaggerMiddleware(corsHandler)
-	handlerWithUi := uiMiddleware(handlerWithSwagger)
-
-	return handlerWithUi
-}
-
-func swaggerMiddleware(handler http.Handler) http.Handler {
-	var staticServer = http.FileServer(asset.Assets)
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		// Shortcut helpers for swagger-ui
-		if r.URL.Path == "/api/v1/swagger-ui" || r.URL.Path == "/api/v1/help" {
-			http.Redirect(w, r, "/api/v1/swagger-ui/", http.StatusFound)
-			return
-		}
-		// Serving ./swagger-ui/
-		if strings.HasPrefix(r.URL.Path, "/api/v1/swagger-ui/") {
-			url := strings.TrimPrefix(r.URL.Path, "/api/v1/swagger-ui/")
-			r.URL.Path = "/swagger/" + url
-			staticServer.ServeHTTP(w, r)
-			return
-		}
-		handler.ServeHTTP(w, r)
-	})
-}
-
-func uiMiddleware(handler http.Handler) http.Handler {
-	var staticServer = http.FileServer(asset.Assets)
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		if !strings.HasPrefix(r.URL.Path, "/api/v1") {
-			r.URL.Path = "/ui" + r.URL.Path
-			staticServer.ServeHTTP(w, r)
-			return
-		}
-		handler.ServeHTTP(w, r)
-	})
+	return handler
 }

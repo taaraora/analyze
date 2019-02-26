@@ -51,7 +51,7 @@ var PluginsRoutingModule = /** @class */ (function () {
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = "<div *ngFor=\"let plugin of (plugins | async)\">\n\n  <mat-card class=\"plugin transparent\">\n    <mat-card-title>\n      {{ plugin.name }}\n    </mat-card-title>\n    <mat-card-content>\n      {{ plugin.description }}\n    </mat-card-content>\n  </mat-card>\n</div>\n"
+module.exports = "<div *ngFor=\"let plugin of (pluginsStatuses | async)\">\n\n  <mat-card class=\"plugin transparent\">\n    <mat-card-title>\n      {{ plugin.name }}\n    </mat-card-title>\n    <mat-card-content>\n      {{ plugin.description }}\n    </mat-card-content>\n  </mat-card>\n</div>\n"
 
 /***/ }),
 
@@ -94,7 +94,10 @@ var PluginsComponent = /** @class */ (function () {
         this.pluginsService = pluginsService;
     }
     PluginsComponent.prototype.ngOnInit = function () {
-        this.plugins = this.pluginsService.all();
+        this.pluginsStatuses = this.pluginsService.all();
+    };
+    PluginsComponent.prototype.ngAfterViewInit = function () {
+        this.pluginsService.loadExternal();
     };
     PluginsComponent = __decorate([
         Object(_angular_core__WEBPACK_IMPORTED_MODULE_0__["Component"])({
@@ -193,7 +196,26 @@ var PluginsService = /** @class */ (function () {
         this.http = http;
     }
     PluginsService.prototype.all = function () {
-        return this.http.get('/api/v1//plugin');
+        return this.http.get('/api/v1/plugins');
+    };
+    PluginsService.prototype.loadExternal = function () {
+        console.log('test1');
+        var header = document.querySelector('head');
+        header.addEventListener('loadingNotifier', function (msg) {
+            //get event that it was loaded
+            var element = document.createElement(msg.detail.selector);
+            element.addEventListener('actionSubmit', function (msg) { return console.debug('plugin actionSubmit says: ', msg); });
+            var pluginsContainer = document.querySelector('app-plugins');
+            pluginsContainer.appendChild(element);
+            console.log('test2');
+            setTimeout(function () {
+                element.setAttribute('checkResult', 'init');
+                console.log('checkResult was sent');
+            }, 2000);
+        });
+        var script = document.createElement('script');
+        script.src = 'http://127.0.0.1:8080/main.js';
+        header.appendChild(script);
     };
     PluginsService = __decorate([
         Object(_angular_core__WEBPACK_IMPORTED_MODULE_0__["Injectable"])(),

@@ -41,5 +41,9 @@ func NewLogger(config Config) logrus.FieldLogger {
 		logger.Formatter = &logrus.TextFormatter{}
 	}
 
+	// error checked on validation step
+	lvl, _ := logrus.ParseLevel(config.Level)
+	logger.SetLevel(lvl)
+
 	return logger
 }

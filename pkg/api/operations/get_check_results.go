@@ -29,7 +29,7 @@ func NewGetCheckResults(ctx *middleware.Context, handler GetCheckResultsHandler)
 	return &GetCheckResults{Context: ctx, Handler: handler}
 }
 
-/*GetCheckResults swagger:route GET /check getCheckResults
+/*GetCheckResults swagger:route GET /checks getCheckResults
 
 Returns list of check results produced by installed plugins
 

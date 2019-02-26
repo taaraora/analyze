@@ -1,17 +1,17 @@
 swagger: "2.0"
 basePath: "/api/v1"
 info:
-  version: v0.0.1
+  version: v2.0.0
   title: Analyze service API
 consumes:
-- application/json
+  - application/json
 produces:
-- application/json
+  - application/json
 definitions:
   error:
     type: object
     required:
-    - message
+      - message
     properties:
       code:
         type: integer
@@ -43,6 +43,29 @@ definitions:
         type: "string"
         format: "date-time"
         description: "date/Time the plugin was installed"
+      serviceEndpoint:
+        description: "name and port of k8s service which is front of plugin deployment"
+        type: "string"
+      serviceLabels:
+        type: "object"
+        additionalProperties:
+          type: "object"
+      settingsComponentEntryPoint:
+        description: "path to the bundle to load settings plugin ui component"
+        type: "string"
+      checkComponentEntryPoint:
+        description: "path to the bundle to load check plugin ui component"
+        type: "string"
+  pluginConfig:
+    type: "object"
+    description: "pluginConfig represents plugin configuration"
+    properties:
+      executionInterval:
+        description: "plugin check function invocation interval in seconds"
+        type: "integer"
+      pluginSpecificConfig:
+        description: "object with plugin specific settings properties"
+        type: "object"
   checkResult:
     type: "object"
     description: "CheckResult represents the single result of Check function invocation of specific plugin."
@@ -65,32 +88,78 @@ definitions:
         type: "string"
         enum: [RED, YELLOW, GREEN]
       description:
-        description: "detailed check result description"
+        description: "detailed check result description, it basically contains plugin specific check result info"
+        type: "object"
+  integrationInfo:
+    type: "object"
+    description: "IntegrationInfo contains all info needed to reach prometheus instance inside k8s cluster"
+    properties:
+      integrationName:
+        description: "name of service which is integrated, e. g. Prometheus"
         type: "string"
-      possibleActions:
-        description: "list of possible actions to fix caveats check was found"
+      serviceName:
+        description: "name of k8s service which resides in front of app which is integrated"
+        type: "string"
+      serviceNamespace:
+        description: "name of k8s namespace where app and its service is deployed"
+        type: "string"
+      servicePort:
+        description: "port of k8s service which resides in front of app which is integrated"
+        type: "string"
+      reachabilityStatus:
+        description: "shows whether service is reachable"
+        type: "string"
+        enum: [REACHABLE, UNREACHABLE]
+  integrationComponent:
+    type: "object"
+    description: "contains all info related that integration works or not for some component"
+    properties:
+      componentName:
+        description: "component integration name"
+        type: "string"
+      validations:
+        description: "contains performed validations"
         type: "array"
         items:
-          $ref: "#/definitions/pluginAction"
-  pluginAction:
+          $ref: "#/definitions/validation"
+      validationTargets:
+        description: "contains performed validations"
+        type: "array"
+        items:
+          $ref: "#/definitions/validationTarget"
+      status:
+        description: "shows overall validation status for component"
+        type: "string"
+        enum: [OK, IN_PROGRESS, FAILED]
+  validation:
     type: "object"
-    description: "CheckResult represents the single result of Check function invocation of specific plugin."
+    description: "single integration validation for component"
     properties:
-      id:
-        description: "unique UUID of plugin action"
-        type: "string"
       name:
-        description: "name of plugin action"
+        description: "name of validation, e. g. node_exporter deamonSet is OK"
         type: "string"
-      description:
-        description: "detailed action description"
+      status:
+        description: "shows validation status"
         type: "string"
+        enum: [OK, FAILED]
+  validationTarget:
+    type: "object"
+    description: "validation target is specific node pr service or something else where we check that some integration is configured"
+    properties:
+      name:
+        description: "name of validation target, it can be hostname or service name, or container name"
+        type: "string"
+      status:
+        description: "shows validation status"
+        type: "string"
+        enum: [OK, FAILED]
+
 paths:
-  /plugin:
+  /plugins:
     get:
-      summary: "Returns list of the installed recommendation plugins"
+      summary: "returns list of the registered plugins"
       produces:
-      - application/json
+        - application/json
       operationId: getPlugins
       responses:
         200:
@@ -104,11 +173,134 @@ paths:
           description: error
           schema:
             $ref: "#/definitions/error"
-  /check:
+    post:
+      summary: "registers plugin"
+      produces:
+        - application/json
+      operationId: registerPlugin
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/plugin"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/plugin"
+        201:
+          description: Created
+          schema:
+            $ref: "#/definitions/plugin"
+        401:
+          description: Unauthorized
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+
+  /plugins/{pluginId}:
+    get:
+      summary: "returns registered plugin"
+      produces:
+        - application/json
+      operationId: getPlugin
+      parameters:
+        - name: pluginId
+          in: path
+          required: true
+          description: The id of the plugin to retrieve
+          type: string
+      responses:
+        200:
+          description: no error
+          schema:
+            $ref: "#/definitions/plugin"
+        404:
+          description: Not Found
+          schema:
+            $ref: "#/definitions/error"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    delete:
+      summary: "unregisters plugin"
+      produces:
+        - application/json
+      operationId: unregisterPlugin
+      parameters:
+        - name: pluginId
+          in: path
+          required: true
+          description: The id of the plugin to retrieve
+          type: string
+      responses:
+        204:
+          description: plugin is removed from registry
+        404:
+          description: Not Found
+          schema:
+            $ref: "#/definitions/error"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+
+  /plugins/{pluginId}/config:
+    get:
+      summary: "returns plugins specific settings object"
+      produces:
+        - application/json
+      operationId: getPluginConfig
+      parameters:
+        - name: pluginId
+          in: path
+          required: true
+          description: The id of the plugin to retrieve
+          type: string
+      responses:
+        200:
+          description: no error
+          schema:
+            $ref: "#/definitions/pluginConfig"
+        404:
+          description: Not Found
+          schema:
+            $ref: "#/definitions/error"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    patch:
+      summary: "substitutes whole plugin config"
+      produces:
+        - application/json
+      operationId: replacePluginConfig
+      parameters:
+        - name: pluginId
+          in: path
+          required: true
+          description: The id of the plugin to retrieve
+          type: string
+      responses:
+        200:
+          description: plugin is removed from registry
+        404:
+          description: Not Found
+          schema:
+            $ref: "#/definitions/error"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+
+  /checks:
     get:
       summary: "Returns list of check results produced by installed plugins"
       produces:
-      - application/json
+        - application/json
       operationId: getCheckResults
       responses:
         200:
@@ -118,6 +310,64 @@ paths:
             description: "existing checks"
             items:
               $ref: "#/definitions/checkResult"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+
+  /integration/prometheus:
+    get:
+      summary: "returns prometheus instance info and name of cluster"
+      produces:
+        - application/json
+      operationId: getPromethiusIntegrationInfo
+      responses:
+        200:
+          description: no error
+          schema:
+            $ref: "#/definitions/integrationInfo"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    patch:
+      summary: "updates prometheus instance info and name of cluster"
+      produces:
+        - application/json
+      operationId: patchPromethiusIntegrationInfo
+      responses:
+        200:
+          description: no error
+          schema:
+            $ref: "#/definitions/integrationInfo"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+
+  /integration/prometheus/validations:
+    post:
+      summary: "This will trigger integration validations of all prometheus components"
+      operationId: triggerValidations
+      responses:
+        204:
+          description: validation has been triggered
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    get:
+      summary: "returns list of integration validations"
+      produces:
+        - application/json
+      operationId: getPromethiusIntegrationValidations
+      responses:
+        200:
+          description: no error
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/integrationComponent"
         default:
           description: error
           schema:

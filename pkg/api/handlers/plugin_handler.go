@@ -13,26 +13,38 @@ import (
 	"github.com/supergiant/analyze/pkg/storage"
 )
 
-type pluginsHandler struct {
+type pluginHandler struct {
 	storage storage.Interface
 	log     logrus.FieldLogger
 }
 
-func NewPluginsHandler(storage storage.Interface, logger logrus.FieldLogger) operations.GetPluginsHandler {
-	return &pluginsHandler{
+func NewPluginHandler(storage storage.Interface, logger logrus.FieldLogger) operations.GetPluginHandler {
+	return &pluginHandler{
 		storage: storage,
 		log:     logger,
 	}
 }
 
-func (h *pluginsHandler) Handle(params operations.GetPluginsParams) middleware.Responder {
+func (h *pluginHandler) Handle(params operations.GetPluginParams) middleware.Responder {
 	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
+	defer h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	pluginRaw, err := h.storage.GetAll(ctx, models.PluginPrefix)
+	pluginRaw, err := h.storage.Get(ctx, models.PluginPrefix, params.PluginID)
+
+	if err == storage.ErrNotFound {
+		r := operations.NewGetPluginDefault(http.StatusNotFound)
+		msg := err.Error()
+		r.Payload = &models.Error{
+			Code:    http.StatusNotFound,
+			Message: &msg,
+		}
+		return r
+	}
 
 	if err != nil {
-		r := operations.NewGetPluginsDefault(http.StatusInternalServerError)
+		r := operations.NewGetPluginDefault(http.StatusInternalServerError)
 		msg := err.Error()
 		r.Payload = &models.Error{
 			Code:    http.StatusInternalServerError,
@@ -41,23 +53,17 @@ func (h *pluginsHandler) Handle(params operations.GetPluginsParams) middleware.R
 		return r
 	}
 
-	result := []*models.Plugin{}
-
-	for _, rawPlugin := range pluginRaw {
-		p := &models.Plugin{}
-		err := p.UnmarshalBinary(rawPlugin)
-		if err != nil {
-			r := operations.NewGetPluginsDefault(http.StatusInternalServerError)
-			msg := err.Error()
-			r.Payload = &models.Error{
-				Code:    http.StatusInternalServerError,
-				Message: &msg,
-			}
-			return r
+	p := &models.Plugin{}
+	err = p.UnmarshalBinary(pluginRaw.Payload())
+	if err != nil {
+		r := operations.NewGetPluginDefault(http.StatusInternalServerError)
+		msg := err.Error()
+		r.Payload = &models.Error{
+			Code:    http.StatusInternalServerError,
+			Message: &msg,
 		}
-		result = append(result, p)
+		return r
 	}
-	h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
 
-	return operations.NewGetPluginsOK().WithPayload(result)
+	return operations.NewGetPluginOK().WithPayload(p)
 }

@@ -21,7 +21,7 @@ export class ChecksComponent implements OnInit {
   }
 
   ngOnInit() {
-    const apiV1Check = '/api/v1/check';
+    const apiV1Check = '/api/v1/checks';
     const mapJson = map((checks: any[]) => checks.map(check => {
       try {
         const description = JSON.parse(check.description);

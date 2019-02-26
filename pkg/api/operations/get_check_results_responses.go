@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	models "github.com/supergiant/analyze/pkg/models"
+	"github.com/supergiant/analyze/pkg/models"
 )
 
 // GetCheckResultsOKCode is the HTTP code returned for type GetCheckResultsOK
@@ -51,13 +51,13 @@ func (o *GetCheckResultsOK) WriteResponse(rw http.ResponseWriter, producer runti
 	rw.WriteHeader(200)
 	payload := o.Payload
 	if payload == nil {
+		// return empty array
 		payload = make([]*models.CheckResult, 0, 50)
 	}
 
 	if err := producer.Produce(rw, payload); err != nil {
 		panic(err) // let the recovery middleware deal with this
 	}
-
 }
 
 /*GetCheckResultsDefault error

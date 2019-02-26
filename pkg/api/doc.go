@@ -7,7 +7,7 @@ Package api Analyze service API
       http
     Host: localhost
     BasePath: /api/v1
-    Version: v0.0.1
+    Version: v2.0.0
 
     Consumes:
     - application/json

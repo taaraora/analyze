@@ -17,6 +17,9 @@ import (
 // swagger:model plugin
 type Plugin struct {
 
+	// path to the bundle to load check plugin ui component
+	CheckComponentEntryPoint string `json:"checkComponentEntryPoint,omitempty"`
+
 	// detailed plugin description
 	Description string `json:"description,omitempty"`
 
@@ -31,6 +34,15 @@ type Plugin struct {
 
 	// name is the name of the plugin.
 	Name string `json:"name,omitempty"`
+
+	// name and port of k8s service which is front of plugin deployment
+	ServiceEndpoint string `json:"serviceEndpoint,omitempty"`
+
+	// service labels
+	ServiceLabels map[string]string `json:"serviceLabels,omitempty"`
+
+	// path to the bundle to load settings plugin ui component
+	SettingsComponentEntryPoint string `json:"settingsComponentEntryPoint,omitempty"`
 
 	// plugin status
 	Status string `json:"status,omitempty"`
