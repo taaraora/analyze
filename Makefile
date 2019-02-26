@@ -65,7 +65,7 @@ gen-swagger: validate
 
 .PHONY: test
 test:
-	go test -count=1 -tags=dev -race ./...
+	go test -mod=vendor -count=1 -tags=dev -race ./...
 
 .PHONY: tools
 tools:
