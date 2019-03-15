@@ -38,7 +38,7 @@ func (o *GetPluginURL) SetBasePath(bp string) {
 
 // Build a url path and query string
 func (o *GetPluginURL) Build() (*url.URL, error) {
-	var result url.URL
+	var _result url.URL
 
 	var _path = "/plugins/{pluginId}"
 
@@ -46,16 +46,16 @@ func (o *GetPluginURL) Build() (*url.URL, error) {
 	if pluginID != "" {
 		_path = strings.Replace(_path, "{pluginId}", pluginID, -1)
 	} else {
-		return nil, errors.New("PluginID is required on GetPluginURL")
+		return nil, errors.New("pluginId is required on GetPluginURL")
 	}
 
 	_basePath := o._basePath
 	if _basePath == "" {
 		_basePath = "/api/v1"
 	}
-	result.Path = golangswaggerpaths.Join(_basePath, _path)
+	_result.Path = golangswaggerpaths.Join(_basePath, _path)
 
-	return &result, nil
+	return &_result, nil
 }
 
 // Must is a helper function to panic when the url builder returns an error

@@ -247,18 +247,18 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) func() error {
 	return func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
+		defer cancel()
 		checkResponse, err := pluginClient.Check(ctx, &proto.CheckRequest{})
 		if err != nil {
-			cancel()
+
 			return errors.Errorf("unable to execute check for pluginClient: %s, error: %v", pluginID, err)
 		}
 		if checkResponse.Error != "" {
-			cancel()
+
 			return errors.Errorf("pluginClient: %s, returned error: %s", pluginID, checkResponse.Error)
 		}
-
 		if checkResponse.Result == nil {
-			cancel()
+
 			return errors.Errorf("pluginClient: %s, returned nil Result", pluginID)
 		}
 
@@ -276,16 +276,16 @@ func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) 
 
 		bytes, err := checkResult.MarshalBinary()
 		if err != nil {
-			cancel()
+
 			return errors.Errorf("unable to marshal check result, pluginClient: %s, returned error: %s", pluginID, err)
 		}
 
 		err = pc.stor.Put(ctx, models.CheckResultPrefix, pluginID, msg(bytes))
 		if err != nil {
-			cancel()
+
 			return errors.Errorf("unable to store check result, pluginClient: %s, returned error: %s", pluginID, err)
 		}
-		cancel()
+
 		return nil
 	}
 }
