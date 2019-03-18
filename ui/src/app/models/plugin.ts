@@ -1,4 +1,4 @@
-export interface IPlugin {
+export interface Plugin {
   checkComponentEntryPoint: string;
   description: string;
   id: string;
