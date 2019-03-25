@@ -196,38 +196,26 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 	if err == storage.ErrNotFound {
 		pluginConfig = pluginInfo.DefaultConfig
 		pc.logger.Infof("plugin %s config not found, default config %+v", pluginInfo.Id, pluginInfo.DefaultConfig)
-		pc.logger.Infof(
-			"plugin %s specific config %s",
-			pluginInfo.Id,
-			pluginInfo.DefaultConfig.PluginSpecificConfig,
-			)
 
-		////TODO: it is hack some grpc libraries additionally encode value of Any type in base64
-		//var specificConfig = []byte("")
-		//if value := pluginInfo.DefaultConfig.PluginSpecificConfig; value != nil {
-		//	specificConfig = value
-		//	b, decodeErr := base64.StdEncoding.DecodeString(string(value))
-		//	if decodeErr == nil {
-		//		specificConfig = b
-		//	}
-		//}
-
-		var temp = make(map[string]interface{})
-		json.Unmarshal(pluginInfo.DefaultConfig.PluginSpecificConfig, &temp)
+		var pluginSpecificConfig = make(map[string]interface{})
+		marshalErr := json.Unmarshal(pluginInfo.DefaultConfig.PluginSpecificConfig, &pluginSpecificConfig)
+		if marshalErr != nil {
+			return errors.Errorf("unable to marshal plugin default config, id: %v, error %v", pluginEntry.ID, marshalErr)
+		}
 		pc.logger.Infof(
 			"plugin %s specific config unmarshalled %+v",
 			pluginInfo.Id,
-			temp,
+			pluginSpecificConfig,
 		)
 
 		pluginConfigEntry := &models.PluginConfig{
 			ExecutionInterval:    pluginConfig.ExecutionInterval.Seconds,
-			PluginSpecificConfig: &temp,
+			PluginSpecificConfig: &pluginSpecificConfig,
 		}
 
-		b, marshalError := pluginConfigEntry.MarshalBinary()
-		if marshalError != nil {
-			return errors.Errorf("unable to marshal plugin default config, id: %v, error %v", pluginEntry.ID, marshalError)
+		b, marshalErr := pluginConfigEntry.MarshalBinary()
+		if marshalErr != nil {
+			return errors.Errorf("unable to marshal plugin default config, id: %v, error %v", pluginEntry.ID, marshalErr)
 		}
 		putError := pc.stor.Put(ctx, models.PluginConfigPrefix, pluginInfo.Id, msg(b))
 		if putError != nil {
