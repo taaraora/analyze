@@ -238,7 +238,7 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 
 		// TODO: populate other properties
 		pluginConfig = &proto.PluginConfig{
-			ExecutionInterval: ptypes.DurationProto(time.Second * time.Duration(pluginConfigEntry.ExecutionInterval)),
+			ExecutionInterval:    ptypes.DurationProto(time.Second * time.Duration(pluginConfigEntry.ExecutionInterval)),
 			PluginSpecificConfig: bytes,
 		}
 	}

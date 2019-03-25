@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/go-openapi/runtime/middleware"
@@ -27,36 +28,11 @@ func (h *replacePluginConfigHandler) Handle(params operations.ReplacePluginConfi
 	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
 	defer h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
 
-
-
-	//ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	//defer cancel()
-	//rawConfig, err := h.storage.Get(ctx, models.PluginConfigPrefix, params.PluginID)
-	//if err != nil && err != storage.ErrNotFound {
-	//	return operations.NewGetPluginConfigNotFound()
-	//}
-	//
-	//if err != nil {
-	//	r := operations.NewGetPluginConfigDefault(http.StatusInternalServerError)
-	//	msg := err.Error()
-	//	r.Payload = &models.Error{
-	//		Code:    http.StatusInternalServerError,
-	//		Message: &msg,
-	//	}
-	//	return r
-	//}
-	//
-	pluginConfigEntry := &models.PluginConfig{}
-	//err = pluginConfigEntry.UnmarshalBinary(rawConfig.Payload())
-	//if err != nil {
-	//	r := operations.NewGetPluginConfigDefault(http.StatusInternalServerError)
-	//	msg := err.Error()
-	//	r.Payload = &models.Error{
-	//		Code:    http.StatusInternalServerError,
-	//		Message: &msg,
-	//	}
-	//	return r
-	//}
-
-	return operations.NewGetPluginConfigOK().WithPayload(pluginConfigEntry)
+	r := operations.NewGetPluginConfigDefault(http.StatusInternalServerError)
+	msg := "not implemented"
+	r.Payload = &models.Error{
+		Code:    http.StatusInternalServerError,
+		Message: &msg,
+	}
+	return r
 }

@@ -29,12 +29,10 @@ func (h *pluginConfigHandler) Handle(params operations.GetPluginConfigParams) mi
 	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
 	defer h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
 
-
-
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	rawConfig, err := h.storage.Get(ctx, models.PluginConfigPrefix, params.PluginID)
-	if err != nil && err != storage.ErrNotFound {
+	if err == storage.ErrNotFound {
 		return operations.NewGetPluginConfigNotFound()
 	}
 

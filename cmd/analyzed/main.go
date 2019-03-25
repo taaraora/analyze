@@ -144,7 +144,7 @@ func main() {
 	analyzeAPI.ReplacePluginConfigHandler = handlers.NewReplacePluginConfigHandler(
 		etcdStorage,
 		log.WithField("handler", "ReplacePluginConfigHandler"),
-		)
+	)
 
 	err = analyzeAPI.Validate()
 	if err != nil {
