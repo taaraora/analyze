@@ -1,6 +1,6 @@
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {Plugin} from 'src/app/models/plugin';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Plugin } from 'src/app/models/plugin';
 
 @Injectable()
 export class PluginsService {
@@ -10,7 +10,6 @@ export class PluginsService {
     private http: HttpClient,
   ) {
   }
-
 
   //TODO rewrite
   public async refreshAll() {

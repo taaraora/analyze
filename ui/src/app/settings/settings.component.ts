@@ -1,9 +1,11 @@
-import {Component, OnInit} from '@angular/core';
-import {PluginsService} from 'src/app/shared/services/plugins.service';
-import {Plugin} from 'src/app/models/plugin';
-import {CeRegisterService} from "../shared/services/ce-register.service";
-import {CELoadedEvent, EventType} from "../models/events";
-import {Observable} from "rxjs";
+import { Component, OnInit, ElementRef } from '@angular/core';
+import { Observable } from "rxjs";
+import { Plugin } from 'src/app/models/plugin';
+import { CELoadedEvent, EventType } from "../models/events";
+import { PluginsService } from 'src/app/shared/services/plugins.service';
+import { CeRegisterService } from "../shared/services/ce-register.service";
+import { CustomElementsService } from "../shared/services/custom-elements.service";
+import { CeCacheService } from "../shared/services/ce-cache.service";
 
 @Component({
   selector: 'app-settings',
@@ -12,35 +14,29 @@ import {Observable} from "rxjs";
 })
 export class SettingsComponent {
 
-  private plugins :Observable<CELoadedEvent>;
+  private ceLoadedEvents$: Observable<CustomEvent>;
+  private registeredCEs: Map<string, string>;
 
   constructor(
     private pluginsService: PluginsService,
     private ceRegisterService: CeRegisterService,
-  ){}
+    private customElService: CustomElementsService,
+    private elRef: ElementRef,
+    private ceCache: CeCacheService
+  ){ this.registeredCEs = ceCache.getAllRegisteredCEs(); }
 
   ngAfterViewInit() {
+    const container = this.elRef.nativeElement.tagName.toLowerCase()
+
     this.pluginsService.getAll().map((plugin: Plugin) => {
-      console.log(plugin);
-      this.plugins = this.ceRegisterService.registerCe(plugin.checkComponentEntryPoint);
+      const entrypoint = plugin.settingsComponentEntryPoint;
 
-      this.plugins.subscribe((event: CELoadedEvent) => {
-        const pluginCustomEl: HTMLElement = document.createElement(event.selector);
-
-        pluginCustomEl.addEventListener(EventType.ACTION_SUBMIT_EVENT, msg => console.debug('plugin actionSubmit says: ', msg));
-
-        const pluginsContainer = document.querySelector('app-settings');
-        pluginsContainer.appendChild(pluginCustomEl);
-
-        setTimeout(function () {
-          pluginCustomEl.setAttribute('checkResult', 'init');
-          console.log('checkResult was sent');
-        }, 2000);
-        });
+      if (!this.registeredCEs.has(entrypoint)) {
+        this.ceRegisterService.registerAndMountCe(entrypoint, container)
+      } else {
+        this.customElService.mountCustomElement(container, this.registeredCEs.get(entrypoint));
+      }
 
     });
-
-
-
   }
 }

@@ -4,12 +4,11 @@ import { CommonModule } from '@angular/common';
 import { AppRoutingModule }        from './app-routing.module';
 import { AppComponent }            from './app.component';
 import { CoreModule }              from './core/core.module';
-import { SharedModule }            from './shared/shared.module';
+import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
-import {PluginsService} from "./shared/services/plugins.service";
-import {HttpClientModule} from '@angular/common/http';
-import {CeRegisterService} from "./shared/services/ce-register.service";
-import {BrowserModule} from "@angular/platform-browser";
+import { PluginsService } from "./shared/services/plugins.service";
+import { CeRegisterService } from "./shared/services/ce-register.service";
+import { BrowserModule } from "@angular/platform-browser";
 
 
 export function startupServiceFactory(pluginsService: PluginsService): Function {
@@ -36,7 +35,6 @@ export function startupServiceFactory(pluginsService: PluginsService): Function 
     CommonModule,
     AppRoutingModule,
     CoreModule,
-    SharedModule,
     BrowserAnimationsModule,
     HttpClientModule,
     BrowserModule,
