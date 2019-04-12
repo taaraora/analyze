@@ -6,10 +6,12 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-var NodeAgentLabelsSet = labels.Set{
-	"app.kubernetes.io/part-of":   "analyze",
-	"app.kubernetes.io/name":      "analyze-nodeagent",
-	"app.kubernetes.io/component": "nodeagent",
+func NodeAgentLabelsSet()labels.Set {
+	return labels.Set{
+		"app.kubernetes.io/part-of":   "analyze",
+		"app.kubernetes.io/name":      "analyze-nodeagent",
+		"app.kubernetes.io/component": "nodeagent",
+	}
 }
 
 type NodeResourceRequirements struct {

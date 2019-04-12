@@ -1,5 +1,8 @@
 #!/bin/bash
-set -e
+# Exit script when command fails
+set -o errexit
+# if any of the commands in pipeline fails, script will exit
+set -o pipefail
 
 # log into docker
 echo "Log into docker"
@@ -9,12 +12,4 @@ echo "Pushing to Docker"
 docker push "$TRAVIS_REPO_SLUG":"$TAG"
 if [[ "$TRAVIS_TAG" =~ ^v[0-9]. ]]; then
     docker push "$TRAVIS_REPO_SLUG":"latest"
-fi
-
-# Check for errors
-if [ $? -eq 0 ]; then
-	echo "Push Complete"
-else
-	echo "Push Failed"
-	exit 1
 fi

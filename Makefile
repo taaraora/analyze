@@ -9,23 +9,24 @@ JOB_DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG}-registry-j
 DOCKER_IMAGE_TAG := $(if ${TAG},${TAG},$(shell git describe --tags --always | tr -d v || echo 'latest'))
 GO111MODULE=on
 
+GO_FILES := $(shell find . -type f -name '*.go' -not -path "./vendor/*")
+
 
 define LINT
 	@echo "Running code linters..."
-	revive
-	@echo "Running code linters finished."
+	golangci-lint run
 endef
 
 define GOIMPORTS
-	goimports -v -w -local github.com/supergiant/analyze ${CURRENT_DIR}
+	goimports -v -w -local github.com/supergiant/analyze -l $(GO_FILES)
 endef
 
 define TOOLS
-		if [ ! -x "`which revive 2>/dev/null`" ]; \
+		if [ ! -x "`which golangci-lint 2>/dev/null`" ]; \
         then \
-        	echo "revive linter not found."; \
+        	echo "golangci-lint linter not found."; \
         	echo "Installing linter... into ${GOPATH}/bin"; \
-        	GO111MODULE=off go get -u github.com/mgechev/revive ; \
+        	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b ${GOPATH}/bin  v1.16.0 ; \
         fi
 
         if [ ! -x "`which swagger 2>/dev/null`" ]; \
@@ -76,7 +77,7 @@ goimports:
 	@$(call GOIMPORTS)
 
 .PHONY: build-image
-build-image:
+build-image: gen-assets
 	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) .
 	docker tag $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKER_IMAGE_NAME):latest
 
@@ -113,3 +114,7 @@ gen-assets:
 		-w /usr/src/app node:10-alpine \
 		sh -c "cp -a /tmp/ui/. /usr/src/app && ls -la && npm i && npm run build && cp -a /usr/src/app/dist/. /tmp/asset/ui"
 	cd ${CURRENT_DIR}/asset && go generate -mod=vendor
+
+.PHONY: push-release
+push-release:
+	./scripts/push_release.sh

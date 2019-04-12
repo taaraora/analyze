@@ -1,16 +1,11 @@
 #!/bin/bash
-set -ex
+# Exit script when command fails
+set -o errexit
+# if any of the commands in pipeline fails, script will exit
+set -o pipefail
+
 export TAG=${TRAVIS_BRANCH:-unstable}
 
-# checks for success of the previous task
-check_status () {
-	if [ $? -eq 0 ]; then
-		echo "Success"
-	else
-		echo "Something failed"
-		exit 1
-	fi
-}
 
 ### Main
 echo "Tag Name: ${TAG}"
@@ -19,56 +14,47 @@ echo "Tag Name: ${TAG}"
 if [[ "$TRAVIS_TAG" =~ ^v[0-9]. ]]; then
 	echo "release"
 	# run linters
-	./run_linters.sh
-	check_status
+	make lint
 	# run tests
-	./run_tests.sh
-	check_status
+	make test
 	# Build Docker container
-	./docker_build.sh
-	check_status
+	make build-image
 	# Push to Dockerhub
-	./docker_push.sh
-	check_status
+	make push
+	# Push to releases page
+	make push-release
 # on an unstable branch, tests are run and the docker container is built and pushed.
 elif [[ "$TRAVIS_BRANCH" == *release-* ]]; then
 	echo "unstable branch"
 	export TAG="${TAG}-unstable"
 	echo "Tag Name: ${TAG}"
 	# run linters
-	./run_linters.sh
-	check_status
+	make lint
 	# run tests
-	./run_tests.sh
-	check_status
+	make test
 	# Build docker container
-	./docker_build.sh
-	check_status
+	make build-image
 	# Push to Dockerhub
-	./docker_push.sh
-	check_status
+	make push
 # if a push to master happens, tests are only run
 elif [[ "$TRAVIS_BRANCH" == "master" ]]; then
 	echo "master branch - test will only be run"
 	echo "Tag Name: ${TAG}"
 	# run linters
-	./run_linters.sh
-	check_status
+	make lint
 	# run tests
-	./run_tests.sh
-	check_status
+	make test
+	# Build docker container
+	make build-image
 else
 # any other branch is considered a testing branch and will only run tests and build the container.
 	echo "testing branch - run tests and docker build"
 	export TAG="${TAG}-testing"
 	echo "Tag Name: ${TAG}"
 	# run linters
-	./run_linters.sh
-	check_status
+	make lint
 	# run tests
-	./run_tests.sh
-	check_status
+	make test
 	# Build docker container
-	./docker_build.sh
-	check_status
+	make build-image
 fi

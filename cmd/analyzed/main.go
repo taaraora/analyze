@@ -179,6 +179,7 @@ func main() {
 
 	server.SetHandler(handler)
 
+	//nolint
 	defer server.Shutdown()
 
 	if servingError := server.Serve(); servingError != nil {

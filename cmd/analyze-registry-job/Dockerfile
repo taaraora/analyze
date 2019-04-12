@@ -1,4 +1,4 @@
-FROM golang:1.11.5 as job_builder
+FROM golang:1.11.8 as job_builder
 
 ARG ARCH=amd64
 ARG GO111MODULE=on
