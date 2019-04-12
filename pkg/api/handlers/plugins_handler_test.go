@@ -67,7 +67,7 @@ func toPlugin(t *testing.T, body *bytes.Buffer) *models.Plugin {
 func toPlugins(t *testing.T, body *bytes.Buffer) []models.Plugin {
 	t.Helper()
 
-	p := make([]models.Plugin, 0, 0)
+	p := make([]models.Plugin, 0)
 	b, err := ioutil.ReadAll(body)
 
 	if err != nil {
@@ -81,16 +81,16 @@ func toPlugins(t *testing.T, body *bytes.Buffer) []models.Plugin {
 }
 
 func TestPluginsHandler_ReturnResultsSuccessfully(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	fixturePlugins1 := newPluginFixture("123456798")
 	fixturePlugins2 := newPluginFixture("1234567980")
 
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeApi.GetPluginsHandler = handlers.NewPluginsHandler(storage.GetMockStorage(t, map[string]string{
+	analyzeAPI.GetPluginsHandler = handlers.NewPluginsHandler(storage.GetMockStorage(t, map[string]string{
 		models.PluginPrefix + "123456798":  fixturePlugins1.string(),
 		models.PluginPrefix + "1234567980": fixturePlugins2.string(),
 	}), logrus.New())
-	server := api.NewServer(analyzeApi)
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -114,10 +114,10 @@ func TestPluginsHandler_ReturnResultsSuccessfully(t *testing.T) {
 }
 
 func TestPluginsHandler_ReturnInternalError(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeApi.GetPluginsHandler = handlers.NewPluginsHandler(storage.GetMockBrokenStorage(t), logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.GetPluginsHandler = handlers.NewPluginsHandler(storage.GetMockBrokenStorage(t), logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -130,6 +130,11 @@ func TestPluginsHandler_ReturnInternalError(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusInternalServerError, rr.Body.String())
+		t.Fatalf(
+			"handler returned wrong status code: got %v want %v, body: %v",
+			status,
+			http.StatusInternalServerError,
+			rr.Body.String(),
+		)
 	}
 }

@@ -17,7 +17,10 @@ type replacePluginConfigHandler struct {
 	log     logrus.FieldLogger
 }
 
-func NewReplacePluginConfigHandler(storage storage.Interface, logger logrus.FieldLogger) operations.ReplacePluginConfigHandler {
+func NewReplacePluginConfigHandler(
+	storage storage.Interface,
+	logger logrus.FieldLogger,
+) operations.ReplacePluginConfigHandler {
 	return &replacePluginConfigHandler{
 		storage: storage,
 		log:     logger,

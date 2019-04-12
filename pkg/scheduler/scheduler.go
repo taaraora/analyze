@@ -41,7 +41,7 @@ func NewScheduler(logger logrus.FieldLogger) Interface {
 		defer s.m.Unlock()
 		// TODO: shall I make it synchronous?
 		for _, wi := range s.workItems {
-			go func() { wi.done <- struct{}{} }()
+			go func(w *workItem) { w.done <- struct{}{} }(wi)
 		}
 		s.isClosed = true
 	}()

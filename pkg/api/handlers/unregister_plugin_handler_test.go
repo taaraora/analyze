@@ -14,11 +14,11 @@ import (
 )
 
 func TestUnregisterPluginHandler_ReturnBadRequest(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockStorage(t, nil)
-	analyzeApi.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -32,16 +32,21 @@ func TestUnregisterPluginHandler_ReturnBadRequest(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusBadRequest {
-		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusBadRequest, rr.Body.String())
+		t.Fatalf(
+			"handler returned wrong status code: got %v want %v, body: %v",
+			status,
+			http.StatusBadRequest,
+			rr.Body.String(),
+		)
 	}
 }
 
 func TestUnregisterPluginHandler_ReturnNotFound(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockStorage(t, nil)
-	analyzeApi.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -55,16 +60,21 @@ func TestUnregisterPluginHandler_ReturnNotFound(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusNotFound {
-		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusNotFound, rr.Body.String())
+		t.Fatalf(
+			"handler returned wrong status code: got %v want %v, body: %v",
+			status,
+			http.StatusNotFound,
+			rr.Body.String(),
+		)
 	}
 }
 
 func TestUnregisterPluginHandler_ReturnInternalServerError(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockBrokenStorage(t)
-	analyzeApi.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -78,19 +88,24 @@ func TestUnregisterPluginHandler_ReturnInternalServerError(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusInternalServerError, rr.Body.String())
+		t.Fatalf(
+			"handler returned wrong status code: got %v want %v, body: %v",
+			status,
+			http.StatusInternalServerError,
+			rr.Body.String(),
+		)
 	}
 }
 
 func TestUnregisterPluginHandler_ReturnNoContent(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockStorage(t, map[string]string{
 		models.PluginPrefix + "123456798": fixturePlugins1.string(),
 	})
-	analyzeApi.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -104,6 +119,11 @@ func TestUnregisterPluginHandler_ReturnNoContent(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusNoContent {
-		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusNoContent, rr.Body.String())
+		t.Fatalf(
+			"handler returned wrong status code: got %v want %v, body: %v",
+			status,
+			http.StatusNoContent,
+			rr.Body.String(),
+		)
 	}
 }

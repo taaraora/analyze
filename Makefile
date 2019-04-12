@@ -101,8 +101,6 @@ gofmt:
 fmt: gofmt goimports
 
 
-#all dependencies are "go get"-able for general dev environment usability.
-# To compile all protobuf files in this repository, run "make protobuf"
 .PHONY: gen-protobuf
 gen-protobuf:
 	docker run --rm -v ${CURRENT_DIR}/pkg/plugin:/defs namely/protoc-all:latest -i proto -l go -d /defs -o .

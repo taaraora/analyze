@@ -18,12 +18,12 @@ import (
 )
 
 func TestRegisterPluginHandler_ReturnCreated(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockStorage(t, nil)
-	analyzeApi.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -57,21 +57,21 @@ func TestRegisterPluginHandler_ReturnCreated(t *testing.T) {
 }
 
 func TestRegisterPluginHandler_ReturnUpdated(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
-	fixturePlugins1 := newPluginFixture("123456798")
+	analyzeAPI := api.GetTestAPI(t)
+	fixturePlugins := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockStorage(t, map[string]string{
-		models.PluginPrefix + "123456798": fixturePlugins1.string(),
+		models.PluginPrefix + "123456798": fixturePlugins.string(),
 	})
-	analyzeApi.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
 
-	fixturePlugins1.Name = "new super name of the plugin"
+	fixturePlugins.Name = "new super name of the plugin"
 
-	req, err := http.NewRequest("POST", "/api/v1/plugins", strings.NewReader(fixturePlugins1.string()))
+	req, err := http.NewRequest("POST", "/api/v1/plugins", strings.NewReader(fixturePlugins.string()))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,8 +85,8 @@ func TestRegisterPluginHandler_ReturnUpdated(t *testing.T) {
 
 	p := toPlugin(t, rr.Body)
 
-	if !reflect.DeepEqual(*p, fixturePlugins1.getPlugin()) {
-		t.Fatalf("handler returned unexpected body: got %+v want %+v", *p, fixturePlugins1.getPlugin())
+	if !reflect.DeepEqual(*p, fixturePlugins.getPlugin()) {
+		t.Fatalf("handler returned unexpected body: got %+v want %+v", *p, fixturePlugins.getPlugin())
 	}
 
 	b2, _ := strg.Get(context.TODO(), models.PluginPrefix, "123456798")
@@ -98,18 +98,18 @@ func TestRegisterPluginHandler_ReturnUpdated(t *testing.T) {
 	}
 	p2 := toPlugin(t, &buffer)
 
-	if !reflect.DeepEqual(*p2, fixturePlugins1.getPlugin()) {
-		t.Fatalf("storage returned unexpected content: got %+v want %+v", *p2, fixturePlugins1.getPlugin())
+	if !reflect.DeepEqual(*p2, fixturePlugins.getPlugin()) {
+		t.Fatalf("storage returned unexpected content: got %+v want %+v", *p2, fixturePlugins.getPlugin())
 	}
 }
 
 func TestRegisterPluginHandler_ReturnInternalError(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockBrokenStorage(t)
-	analyzeApi.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -123,17 +123,22 @@ func TestRegisterPluginHandler_ReturnInternalError(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusInternalServerError, rr.Body.String())
+		t.Fatalf(
+			"handler returned wrong status code: got %v want %v, body: %v",
+			status,
+			http.StatusInternalServerError,
+			rr.Body.String(),
+		)
 	}
 }
 
 func TestRegisterPluginHandler_ReturnBadRequest(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := storage.GetMockStorage(t, nil)
-	analyzeApi.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -148,6 +153,11 @@ func TestRegisterPluginHandler_ReturnBadRequest(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusBadRequest {
-		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusBadRequest, rr.Body.String())
+		t.Fatalf(
+			"handler returned wrong status code: got %v want %v, body: %v",
+			status,
+			http.StatusBadRequest,
+			rr.Body.String(),
+		)
 	}
 }

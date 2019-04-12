@@ -12,7 +12,7 @@ import (
 	"github.com/supergiant/analyze/pkg/storage"
 )
 
-type ETCDStorage struct {
+type Storage struct {
 	cfg    clientv3.Config
 	client *clientv3.Client
 	logger logrus.FieldLogger
@@ -38,7 +38,7 @@ func (we *watchEvent) Type() storage.WatchEventType {
 	return we.eventType
 }
 
-func (e *ETCDStorage) Get(ctx context.Context, prefix string, key string) (storage.Message, error) {
+func (e *Storage) Get(ctx context.Context, prefix string, key string) (storage.Message, error) {
 	res, err := e.client.Get(ctx, prefix+key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read from the etcd")
@@ -49,17 +49,17 @@ func (e *ETCDStorage) Get(ctx context.Context, prefix string, key string) (stora
 	return msg(res.Kvs[0].Value), nil
 }
 
-func (e *ETCDStorage) Put(ctx context.Context, prefix string, key string, value storage.Message) error {
+func (e *Storage) Put(ctx context.Context, prefix string, key string, value storage.Message) error {
 	_, err := e.client.Put(ctx, prefix+key, string(value.Payload()))
 	return errors.Wrap(err, "failed to write to the etcd")
 }
 
-func (e *ETCDStorage) Delete(ctx context.Context, prefix string, key string) error {
+func (e *Storage) Delete(ctx context.Context, prefix string, key string) error {
 	_, err := e.client.Delete(ctx, prefix+key, clientv3.WithPrefix())
 	return errors.Wrap(err, "failed to delete kv from the etcd")
 }
 
-func (e *ETCDStorage) GetAll(ctx context.Context, prefix string) ([]storage.Message, error) {
+func (e *Storage) GetAll(ctx context.Context, prefix string) ([]storage.Message, error) {
 	result := make([]storage.Message, 0)
 
 	r, err := e.client.Get(ctx, prefix, clientv3.WithPrefix())
@@ -78,19 +78,19 @@ func NewETCDStorage(cfg clientv3.Config, logger logrus.FieldLogger) (storage.Int
 		return nil, errors.Wrap(err, "failed to connect to the etcd")
 	}
 
-	return &ETCDStorage{
+	return &Storage{
 		cfg:    cfg,
 		client: client,
 		logger: logger,
 	}, nil
 }
 
-func (e *ETCDStorage) Close() error {
+func (e *Storage) Close() error {
 	return e.client.Close()
 }
 
 // TODO: etcd does not ensure linearizability for watch operations. revisit this logic in future
-func (e *ETCDStorage) WatchRange(ctx context.Context, key string) <-chan storage.WatchEvent {
+func (e *Storage) WatchRange(ctx context.Context, key string) <-chan storage.WatchEvent {
 	w := clientv3.NewWatcher(e.client)
 	watchChan := w.Watch(ctx, key, clientv3.WithPrefix() /*clientv3.WithProgressNotify()*/)
 	results := make(chan storage.WatchEvent)

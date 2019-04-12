@@ -80,7 +80,7 @@ func (c Config) Validate() error {
 	}
 
 	if c.ProviderType != AWSCloudProviderType {
-		return errors.New("Currently only AWS is implemented")
+		return errors.New("only AWS is implemented сurrently")
 	}
 
 	return nil

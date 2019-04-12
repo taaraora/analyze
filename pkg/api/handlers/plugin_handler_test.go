@@ -15,13 +15,13 @@ import (
 )
 
 func TestPluginHandler_ReturnResultsSuccessfully(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeApi.GetPluginHandler = handlers.NewPluginHandler(storage.GetMockStorage(t, map[string]string{
+	analyzeAPI.GetPluginHandler = handlers.NewPluginHandler(storage.GetMockStorage(t, map[string]string{
 		models.PluginPrefix + "123456798": fixturePlugins1.string(),
 	}), logrus.New())
-	server := api.NewServer(analyzeApi)
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -34,7 +34,12 @@ func TestPluginHandler_ReturnResultsSuccessfully(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
-		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusOK, rr.Body.String())
+		t.Fatalf(
+			"handler returned wrong status code: got %v want %v, body: %v",
+			status,
+			http.StatusOK,
+			rr.Body.String(),
+		)
 	}
 
 	p := toPlugin(t, rr.Body)
@@ -44,10 +49,10 @@ func TestPluginHandler_ReturnResultsSuccessfully(t *testing.T) {
 }
 
 func TestPluginHandler_ReturnInternalError(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeApi.GetPluginHandler = handlers.NewPluginHandler(storage.GetMockBrokenStorage(t), logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.GetPluginHandler = handlers.NewPluginHandler(storage.GetMockBrokenStorage(t), logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -60,15 +65,20 @@ func TestPluginHandler_ReturnInternalError(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusOK, rr.Body.String())
+		t.Fatalf(
+			"handler returned wrong status code: got %v want %v, body: %v",
+			status,
+			http.StatusOK,
+			rr.Body.String(),
+		)
 	}
 }
 
 func TestPluginHandler_ReturnNotFound(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeApi.GetPluginHandler = handlers.NewPluginHandler(storage.GetMockStorage(t, nil), logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.GetPluginHandler = handlers.NewPluginHandler(storage.GetMockStorage(t, nil), logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -81,6 +91,11 @@ func TestPluginHandler_ReturnNotFound(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusNotFound {
-		t.Fatalf("handler returned wrong status code: got %v want %v, body: %v", status, http.StatusOK, rr.Body.String())
+		t.Fatalf(
+			"handler returned wrong status code: got %v want %v, body: %v",
+			status,
+			http.StatusOK,
+			rr.Body.String(),
+		)
 	}
 }

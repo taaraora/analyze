@@ -1,4 +1,9 @@
 run:
+    skip-files:
+        - pkg/api/configure_analyze.go
+        - pkg/api/doc.go
+        - pkg/api/embedded_spec.go
+        - pkg/api/server.go
     skip-dirs:
         - vendor
         - swagger

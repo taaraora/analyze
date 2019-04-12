@@ -61,14 +61,14 @@ func toPluginConfig(t *testing.T, body *bytes.Buffer) *models.PluginConfig {
 }
 
 func TestPluginConfigHandler_ReturnResultsSuccessfully(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	fixturePluginConfig := newPluginConfigFixture()
 
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeApi.GetPluginConfigHandler = handlers.NewPluginConfigHandler(storage.GetMockStorage(t, map[string]string{
+	analyzeAPI.GetPluginConfigHandler = handlers.NewPluginConfigHandler(storage.GetMockStorage(t, map[string]string{
 		models.PluginConfigPrefix + fixturePluginID: fixturePluginConfig.string(),
 	}), logrus.New())
-	server := api.NewServer(analyzeApi)
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -91,10 +91,10 @@ func TestPluginConfigHandler_ReturnResultsSuccessfully(t *testing.T) {
 }
 
 func TestPluginConfigHandler_ReturnInternalError(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeApi.GetPluginConfigHandler = handlers.NewPluginConfigHandler(storage.GetMockBrokenStorage(t), logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.GetPluginConfigHandler = handlers.NewPluginConfigHandler(storage.GetMockBrokenStorage(t), logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()
@@ -112,10 +112,10 @@ func TestPluginConfigHandler_ReturnInternalError(t *testing.T) {
 }
 
 func TestPluginConfigHandler_ReturnNotFound(t *testing.T) {
-	analyzeApi := api.GetTestAPI(t)
+	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeApi.GetPluginConfigHandler = handlers.NewPluginConfigHandler(storage.GetMockStorage(t, nil), logrus.New())
-	server := api.NewServer(analyzeApi)
+	analyzeAPI.GetPluginConfigHandler = handlers.NewPluginConfigHandler(storage.GetMockStorage(t, nil), logrus.New())
+	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
 	h := server.GetHandler()

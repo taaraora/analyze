@@ -13,8 +13,8 @@ import (
 func ReadFromFiles(config interface{}, configPaths []string) error {
 	setDefaultValuesForViperProperties(config)
 
-	for _, configPath := range configPaths {
-		configPath, configName, ext := splitPath(configPath)
+	for _, fullConfigPath := range configPaths {
+		configPath, configName, ext := splitPath(fullConfigPath)
 		viper.AddConfigPath(configPath)
 		viper.SetConfigName(configName)
 		viper.SetConfigType(ext)
@@ -42,8 +42,8 @@ func setDefaultValuesForViperProperties(config interface{}) {
 }
 
 // MergeEnv Merges config properties from env variables. for simple types it replaces values.
-// For slices if initial value was []string{"pod0", "pod1", "pod2"} and env variable contains only "pod33", merge result will be equal to
-// []string{"pod33", "pod1", "pod2"}
+// For slices if initial value was []string{"pod0", "pod1", "pod2"} and env variable contains only "pod33",
+// merge result will be equal to []string{"pod33", "pod1", "pod2"}
 func MergeEnv(envPrefix string, config interface{}) error {
 	setDefaultValuesForViperProperties(config)
 	replacer := strings.NewReplacer(".", "_")
