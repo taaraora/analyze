@@ -23,7 +23,7 @@ install:
 - make tools
 
 script:
-- source travis_build.sh
+- source ./scripts/travis_build.sh
 
 #before_cache:
 #  - 'sudo rm -Rf /tmp/cache ||:'
