@@ -59,22 +59,26 @@ type PluginInfo struct {
 	GoVersion string `json:"goVersion,omitempty"`
 }
 
-var analyzeLabelSet = labels.Set{
-	"app.kubernetes.io/name": "analyze",
+func analyzeLabelSet() labels.Set {
+	return labels.Set{
+		"app.kubernetes.io/name": "analyze",
+	}
 }
 
-var pluginLabelSet = labels.Set{
-	"app.kubernetes.io/part-of":   "analyze",
-	"app.kubernetes.io/component": "analyze-plugin",
+func pluginLabelSet() labels.Set {
+	return labels.Set{
+		"app.kubernetes.io/part-of":   "analyze",
+		"app.kubernetes.io/component": "analyze-plugin",
+	}
 }
-
-var (
-	remove    = flag.Bool("remove", false, "if true job will try to remove plugin from analyze registry")
-	logLevel  = flag.String("log-level", "debug", "logging level, e.g. info, warning, debug, error, fatal")
-	logFormat = flag.String("log-format", "TXT", "logging format [TXT JSON]")
-)
 
 func main() {
+	var (
+		remove    = flag.Bool("remove", false, "if true job will try to remove plugin from analyze registry")
+		logLevel  = flag.String("log-level", "debug", "logging level, e.g. info, warning, debug, error, fatal")
+		logFormat = flag.String("log-format", "TXT", "logging format [TXT JSON]")
+	)
+
 	var rawPluginInfo []byte
 	flag.Parse()
 
@@ -101,27 +105,27 @@ func main() {
 		logger.Fatalf("unable to create kube client, err: %v", err)
 	}
 
-	pluginService, err := kubeClient.GetService(pluginServiceName, pluginLabelSet)
+	pluginService, err := kubeClient.GetService(pluginServiceName, pluginLabelSet())
 	if err != nil {
 		logger.Fatalf("failed to find analyze service, err: %v", err)
 	}
 
-	var pluginApiPort string
+	var pluginAPIPort string
 	for _, port := range pluginService.Spec.Ports {
 		if port.Name == "http" {
-			pluginApiPort = strconv.Itoa(int(port.Port))
+			pluginAPIPort = strconv.Itoa(int(port.Port))
 			break
 		}
 	}
 
-	if pluginApiPort == "" {
+	if pluginAPIPort == "" {
 		logger.Debugf("pluginService spec: %+v", pluginService.Spec)
 		logger.Fatalf("failed to find http port for analyze plugin")
 	}
 
 	// TODO: make it configurable
 	for i := 0; i < 10; i++ {
-		resp, err := http.Get("http://" + pluginServiceName + ":" + pluginApiPort + "/api/v1/info")
+		resp, err := http.Get("http://" + pluginServiceName + ":" + pluginAPIPort + "/api/v1/info")
 		if err != nil || (resp != nil && resp.StatusCode != http.StatusOK) {
 			logger.Debugf("unable to get plugin info: %v, statusCode: %v try in 1 sec", err, resp)
 			continue
@@ -142,37 +146,38 @@ func main() {
 
 	logger.Debugf("plugin info: %v", string(rawPluginInfo))
 
-	analyzeService, err := kubeClient.GetServiceByLabels(analyzeLabelSet)
+	analyzeService, err := kubeClient.GetServiceByLabels(analyzeLabelSet())
 	if err != nil {
 		logger.Fatalf("failed to find analyze service")
 	}
 
-	var analyzeApiPort, analyzeServiceName = "", ""
+	var analyzeAPIPort, analyzeServiceName string
 
 	for _, port := range analyzeService.Spec.Ports {
 		if port.Name == "http" {
-			analyzeApiPort = strconv.Itoa(int(port.Port))
+			analyzeAPIPort = strconv.Itoa(int(port.Port))
 			break
 		}
 	}
 
-	if analyzeApiPort == "" {
+	if analyzeAPIPort == "" {
 		logger.Fatalf("failed to find http port for analyze service")
 	}
 
 	analyzeServiceName = analyzeService.Name
 
-	logger.Debugf("analyze service name %v, service port %v", analyzeServiceName, analyzeApiPort)
+	logger.Debugf("analyze service name %v, service port %v", analyzeServiceName, analyzeAPIPort)
 
-	pi.ServiceEndpoint = pluginServiceName + ":" + pluginApiPort
+	pi.ServiceEndpoint = pluginServiceName + ":" + pluginAPIPort
 	pi.ServiceLabels = pluginService.Labels
 	bytes, err := json.Marshal(pi)
 	if err != nil {
 		logger.Fatalf("failed to marshal plugin info, err: %v", err)
 	}
 
-	pluginsEndpointUri := "http://" + analyzeServiceName + ":" + analyzeApiPort + "/api/v1/plugins"
-	resp, err := http.Post(pluginsEndpointUri, "application/json", strings.NewReader(string(bytes)))
+	pluginsEndpointURI := "http://" + analyzeServiceName + ":" + analyzeAPIPort + "/api/v1/plugins"
+	//nolint
+	resp, err := http.Post(pluginsEndpointURI, "application/json", strings.NewReader(string(bytes)))
 	if err != nil {
 		logger.Fatalf("failed to register plugin, err: %v", err)
 	}
@@ -181,7 +186,8 @@ func main() {
 		logger.Fatalf("failed to register plugin, status code %v", resp.StatusCode)
 	}
 
-	resp, err = http.Get(pluginsEndpointUri)
+	//nolint
+	resp, err = http.Get(pluginsEndpointURI)
 	if err != nil {
 		logger.Fatalf("unable to check registered plugin, err: %v", err)
 	}
@@ -213,9 +219,10 @@ func main() {
 }
 
 func discoverPluginServiceName() (string, error) {
-	address, exists := os.LookupEnv("PLUGIN_SERVICE_NAME")
+	envKey := "PLUGIN_SERVICE_NAME"
+	address, exists := os.LookupEnv(envKey)
 	if !exists {
-		return "", errors.New("Environment variable PLUGIN_SERVICE_NAME is not set")
+		return "", errors.Errorf("environment variable %s is not set", envKey)
 	}
 	return address, nil
 }

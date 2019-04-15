@@ -47,7 +47,7 @@ func (s *mockStorage) GetAll(ctx context.Context, prefix string) ([]Message, err
 		return nil, errBroken
 	}
 	result := []Message{}
-	for key, _ := range s.data {
+	for key := range s.data {
 		if strings.Contains(key, prefix) {
 			result = append(result, mockMsg(s.data[key]))
 		}

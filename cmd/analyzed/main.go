@@ -31,13 +31,13 @@ import (
 	"github.com/supergiant/analyze/pkg/storage/etcd"
 )
 
-var configFilePaths = flag.StringArrayP(
-	"config",
-	"c",
-	[]string{"./config.yaml", "/etc/analyzed/config.yaml", "$HOME/.analyzed/config.yaml"},
-	"config file path")
-
 func main() {
+	var configFilePaths = flag.StringArrayP(
+		"config",
+		"c",
+		[]string{"./config.yaml", "/etc/analyzed/config.yaml", "$HOME/.analyzed/config.yaml"},
+		"config file path")
+
 	flag.Parse()
 
 	cfg := &analyze.Config{}
@@ -179,6 +179,7 @@ func main() {
 
 	server.SetHandler(handler)
 
+	//nolint
 	defer server.Shutdown()
 
 	if servingError := server.Serve(); servingError != nil {

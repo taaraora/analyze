@@ -19,7 +19,10 @@ type unregisterPluginHandler struct {
 	log     logrus.FieldLogger
 }
 
-func NewUnregisterPluginHandler(storage storage.Interface, logger logrus.FieldLogger) operations.UnregisterPluginHandler {
+func NewUnregisterPluginHandler(
+	storage storage.Interface,
+	logger logrus.FieldLogger,
+) operations.UnregisterPluginHandler {
 	return &unregisterPluginHandler{
 		storage: storage,
 		log:     logger,

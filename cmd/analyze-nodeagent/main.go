@@ -17,13 +17,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	port      = flag.Int("api-port", 9292, "tcp port where node agent API is serving")
-	logLevel  = flag.String("log-level", "debug", "logging level, e.g. info, warning, debug, error, fatal")
-	logFormat = flag.String("log-format", "TXT", "logging format [TXT JSON]")
-)
-
 func main() {
+	var (
+		port      = flag.Int("api-port", 9292, "tcp port where node agent API is serving")
+		logLevel  = flag.String("log-level", "debug", "logging level, e.g. info, warning, debug, error, fatal")
+		logFormat = flag.String("log-format", "TXT", "logging format [TXT JSON]")
+	)
+
 	flag.Parse()
 
 	loggerConf := logger.Config{
@@ -68,39 +68,57 @@ func main() {
 	awsAPI := router.PathPrefix("/aws").Subrouter()
 	httpServer.Handler = awsAPI
 
-	awsAPI.HandleFunc("/meta-data/{path}", func(ec2MetadataService *ec2metadata.EC2Metadata, logger logrus.FieldLogger) func(http.ResponseWriter, *http.Request) {
+	awsAPI.HandleFunc("/meta-data/{path}", func(
+		ec2MetadataService *ec2metadata.EC2Metadata,
+		logger logrus.FieldLogger,
+	) func(http.ResponseWriter, *http.Request) {
 		return func(res http.ResponseWriter, req *http.Request) {
 			vars := mux.Vars(req)
 
 			path := vars["path"]
 			result, err := ec2MetadataService.GetMetadata(path)
 			if err != nil {
-				logger.Error(err)
+				logger.Errorf("can't make GetMetadata request to ec2 metadata api, %+v", err)
 			}
-			res.Write([]byte(result))
+			_, err = res.Write([]byte(result))
+			if err != nil {
+				logger.Errorf("can't write ec2 metadata content, %+v", err)
+			}
 		}
 	}(ec2MetadataService, logger)).Methods(http.MethodGet)
 
-	awsAPI.HandleFunc("/dynamic/{path}", func(ec2MetadataService *ec2metadata.EC2Metadata, logger logrus.FieldLogger) func(http.ResponseWriter, *http.Request) {
+	awsAPI.HandleFunc("/dynamic/{path}", func(
+		ec2MetadataService *ec2metadata.EC2Metadata,
+		logger logrus.FieldLogger,
+	) func(http.ResponseWriter, *http.Request) {
 		return func(res http.ResponseWriter, req *http.Request) {
 			vars := mux.Vars(req)
 
 			path := vars["path"]
 			result, err := ec2MetadataService.GetDynamicData(path)
 			if err != nil {
-				logger.Error(err)
+				logger.Errorf("can't make GetDynamicData request to ec2 metadata api, %+v", err)
 			}
-			res.Write([]byte(result))
+			_, err = res.Write([]byte(result))
+			if err != nil {
+				logger.Errorf("can't write ec2 metadata content, $+v", err)
+			}
 		}
 	}(ec2MetadataService, logger)).Methods(http.MethodGet)
 
-	awsAPI.HandleFunc("/user-data", func(ec2MetadataService *ec2metadata.EC2Metadata, logger logrus.FieldLogger) func(http.ResponseWriter, *http.Request) {
+	awsAPI.HandleFunc("/user-data", func(
+		ec2MetadataService *ec2metadata.EC2Metadata,
+		logger logrus.FieldLogger,
+	) func(http.ResponseWriter, *http.Request) {
 		return func(res http.ResponseWriter, req *http.Request) {
 			result, err := ec2MetadataService.GetUserData()
 			if err != nil {
-				logger.Error(err)
+				logger.Errorf("can't make GetUserData request to ec2 metadata api %+v", err)
 			}
-			res.Write([]byte(result))
+			_, err = res.Write([]byte(result))
+			if err != nil {
+				logger.Errorf("can't write ec2 metadata content, %+v", err)
+			}
 		}
 	}(ec2MetadataService, logger)).Methods(http.MethodGet)
 
