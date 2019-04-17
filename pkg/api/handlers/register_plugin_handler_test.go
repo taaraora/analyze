@@ -9,19 +9,20 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/supergiant/analyze/pkg/storage/mock"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/api/handlers"
 	"github.com/supergiant/analyze/pkg/models"
-	"github.com/supergiant/analyze/pkg/storage"
 )
 
 func TestRegisterPluginHandler_ReturnCreated(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
-	strg := storage.GetMockStorage(t, nil)
+	strg := mock.GetMockStorage(t, nil)
 	analyzeAPI.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
@@ -60,7 +61,7 @@ func TestRegisterPluginHandler_ReturnUpdated(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	fixturePlugins := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
-	strg := storage.GetMockStorage(t, map[string]string{
+	strg := mock.GetMockStorage(t, map[string]string{
 		models.PluginPrefix + "123456798": fixturePlugins.string(),
 	})
 	analyzeAPI.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
@@ -107,7 +108,7 @@ func TestRegisterPluginHandler_ReturnInternalError(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
-	strg := storage.GetMockBrokenStorage(t)
+	strg := mock.GetMockBrokenStorage(t)
 	analyzeAPI.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
@@ -136,7 +137,7 @@ func TestRegisterPluginHandler_ReturnBadRequest(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
-	strg := storage.GetMockStorage(t, nil)
+	strg := mock.GetMockStorage(t, nil)
 	analyzeAPI.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()

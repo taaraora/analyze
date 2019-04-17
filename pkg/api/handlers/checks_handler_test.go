@@ -6,12 +6,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/supergiant/analyze/pkg/storage/mock"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/api/handlers"
 	"github.com/supergiant/analyze/pkg/models"
-	"github.com/supergiant/analyze/pkg/storage"
 )
 
 //nolint
@@ -20,7 +21,7 @@ const fixtureCheckResult = `{"checkStatus":"GREEN","completedAt":"1970-01-01T00:
 func TestChecksResultsHandler_ReturnResultsSuccessfully(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeAPI.GetCheckResultsHandler = handlers.NewChecksResultsHandler(storage.GetMockStorage(t, map[string]string{
+	analyzeAPI.GetCheckResultsHandler = handlers.NewChecksResultsHandler(mock.GetMockStorage(t, map[string]string{
 		models.CheckResultPrefix + "uniqueUUID": fixtureCheckResult,
 	}), logrus.New())
 	server := api.NewServer(analyzeAPI)
@@ -48,7 +49,7 @@ func TestChecksResultsHandler_ReturnResultsSuccessfully(t *testing.T) {
 func TestChecksResultsHandler_ReturnInternalError(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeAPI.GetCheckResultsHandler = handlers.NewChecksResultsHandler(storage.GetMockBrokenStorage(t), logrus.New())
+	analyzeAPI.GetCheckResultsHandler = handlers.NewChecksResultsHandler(mock.GetMockBrokenStorage(t), logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 

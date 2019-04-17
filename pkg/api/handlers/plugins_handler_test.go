@@ -9,13 +9,14 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/supergiant/analyze/pkg/storage/mock"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/sirupsen/logrus"
 
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/api/handlers"
 	"github.com/supergiant/analyze/pkg/models"
-	"github.com/supergiant/analyze/pkg/storage"
 )
 
 type pluginFixture models.Plugin
@@ -86,7 +87,7 @@ func TestPluginsHandler_ReturnResultsSuccessfully(t *testing.T) {
 	fixturePlugins2 := newPluginFixture("1234567980")
 
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeAPI.GetPluginsHandler = handlers.NewPluginsHandler(storage.GetMockStorage(t, map[string]string{
+	analyzeAPI.GetPluginsHandler = handlers.NewPluginsHandler(mock.GetMockStorage(t, map[string]string{
 		models.PluginPrefix + "123456798":  fixturePlugins1.string(),
 		models.PluginPrefix + "1234567980": fixturePlugins2.string(),
 	}), logrus.New())
@@ -116,7 +117,7 @@ func TestPluginsHandler_ReturnResultsSuccessfully(t *testing.T) {
 func TestPluginsHandler_ReturnInternalError(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeAPI.GetPluginsHandler = handlers.NewPluginsHandler(storage.GetMockBrokenStorage(t), logrus.New())
+	analyzeAPI.GetPluginsHandler = handlers.NewPluginsHandler(mock.GetMockBrokenStorage(t), logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 

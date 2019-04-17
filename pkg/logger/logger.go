@@ -31,7 +31,7 @@ func (c Config) Validate() error {
 	return nil
 }
 
-func NewLogger(config Config) logrus.FieldLogger {
+func NewLogger(config Config) (logrus.FieldLogger, error) {
 	logger := logrus.New()
 
 	switch config.Formatter {
@@ -42,8 +42,11 @@ func NewLogger(config Config) logrus.FieldLogger {
 	}
 
 	// error checked on validation step
-	lvl, _ := logrus.ParseLevel(config.Level)
+	lvl, err := logrus.ParseLevel(config.Level)
+	if err != nil {
+		return nil, err
+	}
 	logger.SetLevel(lvl)
 
-	return logger
+	return logger, nil
 }

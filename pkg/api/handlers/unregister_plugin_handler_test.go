@@ -5,18 +5,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/supergiant/analyze/pkg/storage/mock"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/api/handlers"
 	"github.com/supergiant/analyze/pkg/models"
-	"github.com/supergiant/analyze/pkg/storage"
 )
 
 func TestUnregisterPluginHandler_ReturnBadRequest(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	strg := storage.GetMockStorage(t, nil)
+	strg := mock.GetMockStorage(t, nil)
 	analyzeAPI.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
@@ -44,7 +45,7 @@ func TestUnregisterPluginHandler_ReturnBadRequest(t *testing.T) {
 func TestUnregisterPluginHandler_ReturnNotFound(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	strg := storage.GetMockStorage(t, nil)
+	strg := mock.GetMockStorage(t, nil)
 	analyzeAPI.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
@@ -72,7 +73,7 @@ func TestUnregisterPluginHandler_ReturnNotFound(t *testing.T) {
 func TestUnregisterPluginHandler_ReturnInternalServerError(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	strg := storage.GetMockBrokenStorage(t)
+	strg := mock.GetMockBrokenStorage(t)
 	analyzeAPI.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
@@ -101,7 +102,7 @@ func TestUnregisterPluginHandler_ReturnNoContent(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
-	strg := storage.GetMockStorage(t, map[string]string{
+	strg := mock.GetMockStorage(t, map[string]string{
 		models.PluginPrefix + "123456798": fixturePlugins1.string(),
 	})
 	analyzeAPI.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())

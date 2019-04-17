@@ -90,7 +90,13 @@ func main() {
 	if err := loggerConf.Validate(); err != nil {
 		log.Fatalf("\n%v\n", err)
 	}
-	logger := logger.NewLogger(loggerConf).WithField("app", "analyze-registry-job")
+
+	mainLog, err := logger.NewLogger(loggerConf)
+	if err != nil {
+		log.Fatalf("cant initialize logger, %+v", loggerConf)
+	}
+
+	logger := mainLog.WithField("app", "analyze-registry-job")
 
 	pluginServiceName, err := discoverPluginServiceName()
 	if err != nil {

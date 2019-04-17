@@ -7,7 +7,7 @@ type Interface interface {
 	Get(ctx context.Context, prefix string, key string) (Message, error)
 	Put(ctx context.Context, prefix string, key string, value Message) error
 	Delete(ctx context.Context, prefix string, key string) error
-	WatchRange(ctx context.Context, key string) <-chan WatchEvent
+	WatchPrefix(ctx context.Context, prefix string) <-chan WatchEvent
 	Close() error
 }
 

@@ -1,10 +1,12 @@
-package storage
+package mock
 
 import (
 	"context"
 	"errors"
 	"strings"
 	"testing"
+
+	"github.com/supergiant/analyze/pkg/storage"
 )
 
 type mockStorage struct {
@@ -20,17 +22,17 @@ func (m mockMsg) Payload() []byte {
 
 var errBroken = errors.New("internal storage error")
 
-func GetMockStorage(t *testing.T, data map[string]string) Interface {
+func GetMockStorage(t *testing.T, data map[string]string) storage.Interface {
 	t.Helper()
 	return NewMockStorage(data, false)
 }
 
-func GetMockBrokenStorage(t *testing.T) Interface {
+func GetMockBrokenStorage(t *testing.T) storage.Interface {
 	t.Helper()
 	return NewMockStorage(nil, true)
 }
 
-func NewMockStorage(data map[string]string, isBroken bool) Interface {
+func NewMockStorage(data map[string]string, isBroken bool) storage.Interface {
 	result := map[string][]byte{}
 	for key, value := range data {
 		result[key] = []byte(value)
@@ -42,11 +44,11 @@ func NewMockStorage(data map[string]string, isBroken bool) Interface {
 	}
 }
 
-func (s *mockStorage) GetAll(ctx context.Context, prefix string) ([]Message, error) {
+func (s *mockStorage) GetAll(ctx context.Context, prefix string) ([]storage.Message, error) {
 	if s.isBroken {
 		return nil, errBroken
 	}
-	result := []Message{}
+	result := []storage.Message{}
 	for key := range s.data {
 		if strings.Contains(key, prefix) {
 			result = append(result, mockMsg(s.data[key]))
@@ -56,19 +58,19 @@ func (s *mockStorage) GetAll(ctx context.Context, prefix string) ([]Message, err
 	return result, nil
 }
 
-func (s *mockStorage) Get(ctx context.Context, prefix string, key string) (Message, error) {
+func (s *mockStorage) Get(ctx context.Context, prefix string, key string) (storage.Message, error) {
 	if s.isBroken {
 		return nil, errBroken
 	}
 	v, ok := s.data[prefix+key]
 	if !ok {
-		return nil, ErrNotFound
+		return nil, storage.ErrNotFound
 	}
 
 	return mockMsg(v), nil
 }
 
-func (s *mockStorage) Put(ctx context.Context, prefix string, key string, value Message) error {
+func (s *mockStorage) Put(ctx context.Context, prefix string, key string, value storage.Message) error {
 	if s.isBroken {
 		return errBroken
 	}
@@ -92,6 +94,6 @@ func (s *mockStorage) Close() error {
 	return nil
 }
 
-func (s *mockStorage) WatchRange(ctx context.Context, key string) <-chan WatchEvent {
+func (s *mockStorage) WatchPrefix(ctx context.Context, key string) <-chan storage.WatchEvent {
 	panic("not implemented")
 }
