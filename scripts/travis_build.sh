@@ -18,7 +18,7 @@ if [[ "$TRAVIS_TAG" =~ ^v[0-9]. ]]; then
 	# run tests
 	make test
 	# Build Docker container
-	make build-image
+	make build
 	# Push to Dockerhub
 	make push
 	# Push to releases page
@@ -33,7 +33,7 @@ elif [[ "$TRAVIS_BRANCH" == *release-* ]]; then
 	# run tests
 	make test
 	# Build docker container
-	make build-image
+	make build
 	# Push to Dockerhub
 	make push
 # if a push to master happens, tests are only run
@@ -45,7 +45,7 @@ elif [[ "$TRAVIS_BRANCH" == "master" ]]; then
 	# run tests
 	make test
 	# Build docker container
-	make build-image
+	make build
 else
 # any other branch is considered a testing branch and will only run tests and build the container.
 	echo "testing branch - run tests and docker build"
@@ -56,5 +56,5 @@ else
 	# run tests
 	make test
 	# Build docker container
-	make build-image
+	make build
 fi
