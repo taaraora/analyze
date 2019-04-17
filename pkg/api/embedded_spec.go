@@ -521,6 +521,13 @@ func init() {
       "description": "pluginConfig represents plugin configuration",
       "type": "object",
       "properties": {
+        "etcdEndpoints": {
+          "description": "list of etcd endpoints which plugin can use to store data",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "executionInterval": {
           "description": "plugin check function invocation interval in seconds",
           "type": "integer"
@@ -1073,6 +1080,13 @@ func init() {
       "description": "pluginConfig represents plugin configuration",
       "type": "object",
       "properties": {
+        "etcdEndpoints": {
+          "description": "list of etcd endpoints which plugin can use to store data",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "executionInterval": {
           "description": "plugin check function invocation interval in seconds",
           "type": "integer"
