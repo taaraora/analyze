@@ -90,7 +90,7 @@ build: gen-assets build-image
 
 .PHONY: build-image
 build-image:
-	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) .
+	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f ./Dockerfile .
 	docker tag $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKER_IMAGE_NAME):latest
 
 	docker build -t $(NODEAGENT_DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f cmd/analyze-nodeagent/Dockerfile .
