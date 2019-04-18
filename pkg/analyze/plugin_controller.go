@@ -23,6 +23,7 @@ import (
 )
 
 type PluginController struct {
+	cfg                *Config
 	pluginChangeEvents <-chan storage.WatchEvent
 	stor               storage.Interface
 	kubeClient         kube.Interface
@@ -34,6 +35,7 @@ type PluginController struct {
 }
 
 func NewPluginController(
+	cfg *Config,
 	events <-chan storage.WatchEvent,
 	stor storage.Interface,
 	kubeClient kube.Interface,
@@ -42,6 +44,7 @@ func NewPluginController(
 	logger logrus.FieldLogger,
 ) *PluginController {
 	pc := &PluginController{
+		cfg:                cfg,
 		pluginChangeEvents: events,
 		stor:               stor,
 		kubeClient:         kubeClient,
@@ -71,6 +74,9 @@ func (pc *PluginController) handlePluginChange() {
 
 // TODO: maybe split config and plugin updates?
 func (pc *PluginController) handleEvent(we storage.WatchEvent) error {
+	if we == nil {
+		return errors.New("plugin watchEvent is nil")
+	}
 	if we.Type() == storage.Error {
 		return errors.Wrap(we.Err(), "plugin watchEvent returned error")
 	}
@@ -110,7 +116,7 @@ func (pc *PluginController) newPluginClient(pluginEntry *models.Plugin) (*plugin
 	if len(ss) < 2 {
 		return nil, errors.Errorf("unable get service name, %+v", pluginEntry.ServiceEndpoint)
 	}
-	service, err := pc.kubeClient.GetService(ss[0], pluginEntry.ServiceLabels)
+	service, err := pc.kubeClient.GetService(ss[0], "", pluginEntry.ServiceLabels)
 	if err != nil {
 		return nil, errors.Errorf("unable to find service for registered plugin, %+v", pluginEntry)
 	}
@@ -195,21 +201,30 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 	// when plugin is just installed we need to take default config from plugin and save it
 	if err == storage.ErrNotFound {
 		pluginConfig = pluginInfo.DefaultConfig
-		pc.logger.Infof("plugin %s config not found, default config %+v", pluginInfo.Id, pluginInfo.DefaultConfig)
-
-		var pluginSpecificConfig = make(map[string]interface{})
-		marshalErr := json.Unmarshal(pluginInfo.DefaultConfig.PluginSpecificConfig, &pluginSpecificConfig)
-		if marshalErr != nil {
-			return errors.Errorf("unable to marshal plugin default config, id: %v, error %v", pluginEntry.ID, marshalErr)
-		}
+		pluginConfig.EtcdEndpoints = pc.cfg.ETCD.Endpoints
 		pc.logger.Infof(
-			"plugin %s specific config unmarshalled %+v",
+			"plugin %s config not found, etcd endpoints: %+v, default config %+v",
 			pluginInfo.Id,
-			pluginSpecificConfig,
+			pluginConfig.EtcdEndpoints,
+			pluginInfo.DefaultConfig,
 		)
 
+		var pluginSpecificConfig = make(map[string]interface{})
+		if pluginInfo.DefaultConfig.PluginSpecificConfig != nil {
+			marshalErr := json.Unmarshal(pluginInfo.DefaultConfig.PluginSpecificConfig, &pluginSpecificConfig)
+			if marshalErr != nil {
+				return errors.Errorf("unable to marshal plugin default config, id: %v, error %v", pluginEntry.ID, marshalErr)
+			}
+			pc.logger.Infof(
+				"plugin %s specific config unmarshalled %+v",
+				pluginInfo.Id,
+				pluginSpecificConfig,
+			)
+		}
+
 		pluginConfigEntry := &models.PluginConfig{
-			ExecutionInterval:    pluginConfig.ExecutionInterval.Seconds,
+			ExecutionInterval:    pluginInfo.DefaultConfig.ExecutionInterval.Seconds,
+			EtcdEndpoints:        pc.cfg.ETCD.Endpoints,
 			PluginSpecificConfig: &pluginSpecificConfig,
 		}
 
@@ -239,6 +254,7 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 		// TODO: populate other properties
 		pluginConfig = &proto.PluginConfig{
 			ExecutionInterval:    ptypes.DurationProto(time.Second * time.Duration(pluginConfigEntry.ExecutionInterval)),
+			EtcdEndpoints:        pc.cfg.ETCD.Endpoints,
 			PluginSpecificConfig: bytes,
 		}
 	}

@@ -95,13 +95,16 @@ func main() {
 	}
 
 	defer etcdStorage.Close()
+	mainLogger.Info("storage client was created")
 
 	scheduler := scheduler.NewScheduler(log.WithField("component", "scheduler"))
 	defer scheduler.Stop()
+	mainLogger.Info("scheduler was created")
 
 	watchChan := etcdStorage.WatchPrefix(context.Background(), models.PluginPrefix)
 	mainLogger.Debug("etcd watch is started")
 	pluginController := analyze.NewPluginController(
+		cfg,
 		watchChan,
 		etcdStorage,
 		kubeClient,
@@ -110,6 +113,7 @@ func main() {
 		log.WithField("component", "pluginController"),
 	)
 	defer pluginController.Stop()
+	mainLogger.Info("plugin controller was created")
 
 	swaggerSpec, err := loads.Analyzed(api.SwaggerJSON, "2.0")
 	if err != nil {
@@ -186,7 +190,7 @@ func main() {
 
 	//nolint
 	defer server.Shutdown()
-
+	mainLogger.Info("start API server")
 	if servingError := server.Serve(); servingError != nil {
 		mainLogger.Fatalf("unable to serve HTTP API, err: %v", servingError)
 	}
