@@ -8,12 +8,13 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/supergiant/analyze/pkg/storage/mock"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/api/handlers"
 	"github.com/supergiant/analyze/pkg/models"
-	"github.com/supergiant/analyze/pkg/storage"
 )
 
 type pluginConfigFixture models.PluginConfig
@@ -65,7 +66,7 @@ func TestPluginConfigHandler_ReturnResultsSuccessfully(t *testing.T) {
 	fixturePluginConfig := newPluginConfigFixture()
 
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeAPI.GetPluginConfigHandler = handlers.NewPluginConfigHandler(storage.GetMockStorage(t, map[string]string{
+	analyzeAPI.GetPluginConfigHandler = handlers.NewPluginConfigHandler(mock.GetMockStorage(t, map[string]string{
 		models.PluginConfigPrefix + fixturePluginID: fixturePluginConfig.string(),
 	}), logrus.New())
 	server := api.NewServer(analyzeAPI)
@@ -93,7 +94,7 @@ func TestPluginConfigHandler_ReturnResultsSuccessfully(t *testing.T) {
 func TestPluginConfigHandler_ReturnInternalError(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeAPI.GetPluginConfigHandler = handlers.NewPluginConfigHandler(storage.GetMockBrokenStorage(t), logrus.New())
+	analyzeAPI.GetPluginConfigHandler = handlers.NewPluginConfigHandler(mock.GetMockBrokenStorage(t), logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 
@@ -114,7 +115,7 @@ func TestPluginConfigHandler_ReturnInternalError(t *testing.T) {
 func TestPluginConfigHandler_ReturnNotFound(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
-	analyzeAPI.GetPluginConfigHandler = handlers.NewPluginConfigHandler(storage.GetMockStorage(t, nil), logrus.New())
+	analyzeAPI.GetPluginConfigHandler = handlers.NewPluginConfigHandler(mock.GetMockStorage(t, nil), logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
 

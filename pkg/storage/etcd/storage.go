@@ -3,13 +3,13 @@ package etcd
 import (
 	"context"
 
+	"github.com/supergiant/analyze/pkg/storage"
+
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sirupsen/logrus"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/pkg/errors"
-
-	"github.com/supergiant/analyze/pkg/storage"
+	"go.etcd.io/etcd/clientv3"
 )
 
 type Storage struct {
@@ -55,17 +55,23 @@ func (e *Storage) Put(ctx context.Context, prefix string, key string, value stor
 }
 
 func (e *Storage) Delete(ctx context.Context, prefix string, key string) error {
-	_, err := e.client.Delete(ctx, prefix+key, clientv3.WithPrefix())
-	return errors.Wrap(err, "failed to delete kv from the etcd")
+	d, err := e.client.Delete(ctx, prefix+key, clientv3.WithPrefix())
+	if err != nil {
+		return errors.Wrap(err, "failed to delete kv from the etcd")
+	}
+	if d != nil && d.Deleted < 1 {
+		return storage.ErrNotFound
+	}
+	return nil
 }
 
 func (e *Storage) GetAll(ctx context.Context, prefix string) ([]storage.Message, error) {
-	result := make([]storage.Message, 0)
-
 	r, err := e.client.Get(ctx, prefix, clientv3.WithPrefix())
 	if err != nil {
-		return result, errors.Wrap(err, "failed to read from the etcd")
+		return nil, errors.Wrap(err, "failed to read from the etcd")
 	}
+
+	result := make([]storage.Message, 0)
 	for _, v := range r.Kvs {
 		result = append(result, msg(v.Value))
 	}
@@ -90,21 +96,27 @@ func (e *Storage) Close() error {
 }
 
 // TODO: etcd does not ensure linearizability for watch operations. revisit this logic in future
-func (e *Storage) WatchRange(ctx context.Context, key string) <-chan storage.WatchEvent {
-	w := clientv3.NewWatcher(e.client)
-	watchChan := w.Watch(ctx, key, clientv3.WithPrefix() /*clientv3.WithProgressNotify()*/)
+func (e *Storage) WatchPrefix(ctx context.Context, prefix string) <-chan storage.WatchEvent {
+	watchChan := e.client.Watch(ctx, prefix, clientv3.WithPrefix())
 	results := make(chan storage.WatchEvent)
-	values, err := e.GetAll(ctx, key)
+	initialSyncDone := make(chan struct{})
+	errorSent := make(chan struct{})
+	values, err := e.GetAll(ctx, prefix)
 	if err != nil {
-		e.logger.Errorf("got error at loading initial values, for k: %v, error: %v", key, err)
-		results <- &watchEvent{
-			eventType: storage.Error,
-			err:       errors.Errorf("got error at loading initial values, for k: %v, error: %v", key, err),
-		}
+		e.logger.Errorf("got error at loading initial values, for k: %v, error: %v", prefix, err)
+		go func() {
+			results <- &watchEvent{
+				eventType: storage.Error,
+				err:       errors.Errorf("got error at loading initial values, for k: %v, error: %v", prefix, err),
+			}
+			errorSent <- struct{}{}
+		}()
 	}
 
-	initialSyncDone := make(chan struct{})
 	go func() {
+		if err != nil {
+			<-errorSent
+		}
 		for _, v := range values {
 			results <- &watchEvent{
 				msg:       v.Payload(),
@@ -123,16 +135,20 @@ func (e *Storage) WatchRange(ctx context.Context, key string) <-chan storage.Wat
 				eventType: storage.Unknown,
 			}
 
-			if err := v.Err(); err != nil {
+			if v.Canceled {
+				e.logger.Error("got watch canceled")
+				we.eventType = storage.Error
+				we.err = err
+				results <- we
+				break
+			}
+
+			if err = v.Err(); err != nil {
 				e.logger.Errorf("got watch error: %v", err)
 				we.eventType = storage.Error
 				we.err = err
 				results <- we
 				continue
-			}
-			if v.Canceled {
-				results <- we
-				break
 			}
 
 			for _, event := range v.Events {
@@ -154,7 +170,7 @@ func (e *Storage) WatchRange(ctx context.Context, key string) <-chan storage.Wat
 					continue
 				}
 				if len(event.Kv.Key) == 0 {
-					e.logger.Errorf("got empty key, for kv: %v", event)
+					e.logger.Errorf("got empty prefix, for kv: %v", event)
 					continue
 				}
 				we.msg = event.Kv.Value

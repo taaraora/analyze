@@ -90,24 +90,36 @@ func main() {
 	if err := loggerConf.Validate(); err != nil {
 		log.Fatalf("\n%v\n", err)
 	}
-	logger := logger.NewLogger(loggerConf).WithField("app", "analyze-registry-job")
+
+	mainLog, err := logger.NewLogger(loggerConf)
+	if err != nil {
+		log.Fatalf("cant initialize logger, %+v", loggerConf)
+	}
+
+	logger := mainLog.WithField("app", "analyze-registry-job")
 
 	pluginServiceName, err := discoverPluginServiceName()
 	if err != nil {
 		logger.Fatalf("unable to get plugin service name, err: %v", err)
 	}
 
+	pluginNamespace, err := discoverPluginNamespace()
+	if err != nil {
+		logger.Fatalf("unable to get plugin pluginNamespace, err: %v", err)
+	}
+
 	logger.Debugf("remove: %v", *remove)
 	logger.Debugf("pluginServiceName: %v", pluginServiceName)
+	logger.Debugf("pluginNamespace: %v", pluginNamespace)
 
 	kubeClient, err := kube.NewKubeClient(logger.WithField("component", "kubeClient"))
 	if err != nil {
 		logger.Fatalf("unable to create kube client, err: %v", err)
 	}
 
-	pluginService, err := kubeClient.GetService(pluginServiceName, pluginLabelSet())
+	pluginService, err := kubeClient.GetService(pluginServiceName, pluginNamespace, pluginLabelSet())
 	if err != nil {
-		logger.Fatalf("failed to find analyze service, err: %v", err)
+		logger.Fatalf("failed to find plugin service, err: %v", err)
 	}
 
 	var pluginAPIPort string
@@ -220,6 +232,15 @@ func main() {
 
 func discoverPluginServiceName() (string, error) {
 	envKey := "PLUGIN_SERVICE_NAME"
+	address, exists := os.LookupEnv(envKey)
+	if !exists {
+		return "", errors.Errorf("environment variable %s is not set", envKey)
+	}
+	return address, nil
+}
+
+func discoverPluginNamespace() (string, error) {
+	envKey := "PLUGIN_NAMESPACE"
 	address, exists := os.LookupEnv(envKey)
 	if !exists {
 		return "", errors.Errorf("environment variable %s is not set", envKey)

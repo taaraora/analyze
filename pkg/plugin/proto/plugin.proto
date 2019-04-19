@@ -44,6 +44,9 @@ message PluginConfig {
         AwsConfig aws_config = 5;
     }
     string metrics_server_uri = 6;
+
+    // e.g. etcd-cluster-svc:2379
+    repeated string etcd_endpoints = 7;
 }
 
 message Stop {

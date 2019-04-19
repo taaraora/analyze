@@ -13,7 +13,7 @@ import (
 )
 
 type Interface interface {
-	GetService(serviceName string, labelsSet map[string]string) (corev1.Service, error)
+	GetService(serviceName, namespace string, labelsSet map[string]string) (corev1.Service, error)
 	GetServiceByLabels(labelsSet map[string]string) (corev1.Service, error)
 }
 
@@ -34,20 +34,22 @@ func NewKubeClient(logger logrus.FieldLogger) (Interface, error) {
 		return nil, err
 	}
 
+	logger.Infof("kube config %+v", *config)
+
 	return &Client{
 		clientSet: clientSet,
 		logger:    logger,
 	}, nil
 }
 
-func (c *Client) GetService(serviceName string, labelsSet map[string]string) (corev1.Service, error) {
+func (c *Client) GetService(serviceName, namespace string, labelsSet map[string]string) (corev1.Service, error) {
 	var labelsSelector = labels.SelectorFromSet(labels.Set(labelsSet))
 	var options = metav1.ListOptions{
 		LabelSelector: labelsSelector.String(),
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", serviceName).String(),
 	}
 
-	serviceList, err := c.clientSet.CoreV1().Services("").List(options)
+	serviceList, err := c.clientSet.CoreV1().Services(namespace).List(options)
 	if err != nil {
 		return corev1.Service{}, errors.Wrap(err, "can't list services")
 	}

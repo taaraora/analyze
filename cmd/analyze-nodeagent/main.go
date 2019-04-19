@@ -39,7 +39,12 @@ func main() {
 		log.Fatalf("api-port is %v, it need to be greater than 0", *port)
 	}
 
-	logger := logger.NewLogger(loggerConf).WithField("app", "analyze-nodeagent")
+	mainLog, err := logger.NewLogger(loggerConf)
+	if err != nil {
+		log.Fatalf("cant initialize logger, %+v", loggerConf)
+	}
+
+	logger := mainLog.WithField("app", "analyze-nodeagent")
 
 	cfg, err := external.LoadDefaultAWSConfig()
 	if err != nil {

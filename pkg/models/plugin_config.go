@@ -15,6 +15,9 @@ import (
 // swagger:model pluginConfig
 type PluginConfig struct {
 
+	// list of etcd endpoints which plugin can use to store data
+	EtcdEndpoints []string `json:"etcdEndpoints"`
+
 	// plugin check function invocation interval in seconds
 	ExecutionInterval int64 `json:"executionInterval,omitempty"`
 

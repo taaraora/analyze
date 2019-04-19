@@ -63,6 +63,11 @@ definitions:
       executionInterval:
         description: "plugin check function invocation interval in seconds"
         type: "integer"
+      etcdEndpoints:
+        description: "list of etcd endpoints which plugin can use to store data"
+        type: "array"
+        items:
+          type: "string"
       pluginSpecificConfig:
         description: "object with plugin specific settings properties"
         type: "object"

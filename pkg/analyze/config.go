@@ -1,8 +1,8 @@
 package analyze
 
 import (
-	"github.com/coreos/etcd/clientv3"
 	"github.com/pkg/errors"
+	"go.etcd.io/etcd/clientv3"
 
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/logger"

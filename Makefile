@@ -68,6 +68,15 @@ gen-swagger: validate
 test:
 	go test -mod=vendor -count=1 -tags=dev -race ./...
 
+.PHONY: test-windows
+test-windows:
+	docker run --rm -it --name analyze_core_test \
+    		--mount type=bind,src=${CURRENT_DIR},dst=/go/src/github.com/supergiant/analyze/ \
+    		--env GO111MODULE=on \
+    		--workdir /go/src/github.com/supergiant/analyze/ \
+    		golang:1.11.8 \
+    		sh -c "go test -mod=vendor -count=1 -tags=dev -race ./..."
+
 .PHONY: tools
 tools:
 	@$(call TOOLS)
@@ -76,9 +85,12 @@ tools:
 goimports:
 	@$(call GOIMPORTS)
 
+.PHONY: build
+build: gen-assets build-image
+
 .PHONY: build-image
-build-image: gen-assets
-	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) .
+build-image:
+	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f ./Dockerfile .
 	docker tag $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKER_IMAGE_NAME):latest
 
 	docker build -t $(NODEAGENT_DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f cmd/analyze-nodeagent/Dockerfile .
@@ -116,3 +128,9 @@ gen-assets:
 .PHONY: push-release
 push-release:
 	./scripts/push_release.sh
+
+.PHONY: dev-build
+dev-build:
+	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f ./Dockerfile .
+	docker tag $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKER_IMAGE_NAME):latest
+	docker push $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)

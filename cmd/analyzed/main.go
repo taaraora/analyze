@@ -32,13 +32,17 @@ import (
 )
 
 func main() {
-	var configFilePaths = flag.StringArrayP(
+	flagSet := flag.NewFlagSet(os.Args[0], flag.PanicOnError)
+	var configFilePaths = flagSet.StringSliceP(
 		"config",
 		"c",
 		[]string{"./config.yaml", "/etc/analyzed/config.yaml", "$HOME/.analyzed/config.yaml"},
 		"config file path")
 
-	flag.Parse()
+	err := flagSet.Parse(os.Args[1:])
+	if err != nil {
+		log.Fatalf("unable to parse flags %v\n", err)
+	}
 
 	cfg := &analyze.Config{}
 
@@ -49,54 +53,58 @@ func main() {
 		log.Fatalf("unable to merge env variables %v\n", err)
 	}
 
-	//TODO: try to unify APIs discovery which are hosted in k8s
-	//TODO: and rewrite config population logic
-	if etcdEndpoint := discoverETCDEndpoint(); etcdEndpoint != "" {
-		cfg.ETCD.Endpoints = append(cfg.ETCD.Endpoints, discoverETCDEndpoint())
+	appLogger, err := logger.NewLogger(cfg.Logging)
+	if err != nil {
+		log.Printf("config: %+v", cfg)
+		log.Printf("config file name: %s", config.UsedFileName())
+		log.Fatalf("logger config is wrong %v\n", err)
 	}
 
-	log := logger.NewLogger(cfg.Logging).WithField("app", "analyze-core")
+	log := appLogger.WithField("app", "analyze-core")
 	mainLogger := log.WithField("component", "main")
 
 	mainLogger.Infof("config: %+v", cfg)
 	mainLogger.Infof("config file name: %s", config.UsedFileName())
 	if configFileReadError != nil {
-		log.Warnf("unable to read config file, %v", configFileReadError)
+		mainLogger.Warnf("unable to read config file, %v", configFileReadError)
 	}
 
 	if err := cfg.Validate(); err != nil {
-		log.Fatalf("config validation error, err: %v", err)
+		mainLogger.Fatalf("config validation error, err: %v", err)
 	}
 
 	kubeClient, err := kube.NewKubeClient(log.WithField("component", "kubeClient"))
 	if err != nil {
-		log.Fatalf("unable to create kube client, err: %v", err)
+		mainLogger.Fatalf("unable to create kube client, err: %v", err)
 	}
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		log.Fatalf("can't get kube config, err: %v", err)
+		mainLogger.Fatalf("can't get kube config, err: %v", err)
 	}
 
 	tr, err := rest.TransportFor(config)
 	if err != nil {
-		log.Fatalf("can't get kube client transport, err: %v", err)
+		mainLogger.Fatalf("can't get kube client transport, err: %v", err)
 	}
 	proxySet := proxy.NewProxySet(tr, log.WithField("component", "proxySet"))
 
 	etcdStorage, err := etcd.NewETCDStorage(cfg.ETCD, log.WithField("component", "etcdClient"))
 	if err != nil {
-		log.Fatalf("unable to create ETCD client, err: %v", err)
+		mainLogger.Fatalf("unable to create ETCD client, err: %v", err)
 	}
 
 	defer etcdStorage.Close()
+	mainLogger.Info("storage client was created")
 
 	scheduler := scheduler.NewScheduler(log.WithField("component", "scheduler"))
 	defer scheduler.Stop()
+	mainLogger.Info("scheduler was created")
 
-	watchChan := etcdStorage.WatchRange(context.Background(), models.PluginPrefix)
-	log.Debug("etcd watch is started")
+	watchChan := etcdStorage.WatchPrefix(context.Background(), models.PluginPrefix)
+	mainLogger.Debug("etcd watch is started")
 	pluginController := analyze.NewPluginController(
+		cfg,
 		watchChan,
 		etcdStorage,
 		kubeClient,
@@ -105,10 +113,11 @@ func main() {
 		log.WithField("component", "pluginController"),
 	)
 	defer pluginController.Stop()
+	mainLogger.Info("plugin controller was created")
 
 	swaggerSpec, err := loads.Analyzed(api.SwaggerJSON, "2.0")
 	if err != nil {
-		log.Fatalf("unable to create spec analyzed document, err: %v", err)
+		mainLogger.Fatalf("unable to create spec analyzed document, err: %v", err)
 	}
 
 	//TODO: add request logging middleware
@@ -181,19 +190,10 @@ func main() {
 
 	//nolint
 	defer server.Shutdown()
-
+	mainLogger.Info("start API server")
 	if servingError := server.Serve(); servingError != nil {
-		log.Fatalf("unable to serve HTTP API, err: %v", servingError)
+		mainLogger.Fatalf("unable to serve HTTP API, err: %v", servingError)
 	}
-}
-
-func discoverETCDEndpoint() string {
-	etcdHost, hostExists := os.LookupEnv("ETCD_SERVICE_HOST")
-	etcdPort, portExists := os.LookupEnv("ETCD_SERVICE_PORT")
-	if !hostExists || !portExists {
-		return ""
-	}
-	return etcdHost + ":" + etcdPort
 }
 
 func swaggerMiddleware(handler http.Handler) http.Handler {
