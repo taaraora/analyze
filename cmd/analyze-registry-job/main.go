@@ -173,6 +173,7 @@ func main() {
 	}
 
 	if analyzeAPIPort == "" {
+		logger.Infof("ports: %+v", analyzeService.Spec.Ports)
 		logger.Fatalf("failed to find http port for analyze service")
 	}
 

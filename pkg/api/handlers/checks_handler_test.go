@@ -6,13 +6,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/supergiant/analyze/pkg/storage"
+
 	"github.com/supergiant/analyze/pkg/storage/mock"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/api/handlers"
-	"github.com/supergiant/analyze/pkg/models"
 )
 
 //nolint
@@ -22,7 +23,7 @@ func TestChecksResultsHandler_ReturnResultsSuccessfully(t *testing.T) {
 	analyzeAPI := api.GetTestAPI(t)
 	//TODO: create interface for logger, and use dummy logger for tests
 	analyzeAPI.GetCheckResultsHandler = handlers.NewChecksResultsHandler(mock.GetMockStorage(t, map[string]string{
-		models.CheckResultPrefix + "uniqueUUID": fixtureCheckResult,
+		storage.CheckResultPrefix + "uniqueUUID": fixtureCheckResult,
 	}), logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()

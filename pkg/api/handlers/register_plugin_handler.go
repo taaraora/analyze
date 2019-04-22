@@ -72,10 +72,10 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 	}
 
 	//just replace all entity content
-	_, err = h.storage.Get(ctx, models.PluginPrefix, p.ID)
+	_, err = h.storage.Get(ctx, storage.PluginPrefix, p.ID)
 
 	if err == storage.ErrNotFound {
-		err = h.storage.Put(ctx, models.PluginPrefix, p.ID, storageMessage(rawPlugin))
+		err = h.storage.Put(ctx, storage.PluginPrefix, p.ID, storageMessage(rawPlugin))
 		if err != nil {
 			r := operations.NewRegisterPluginDefault(http.StatusInternalServerError)
 			msg := err.Error()
@@ -99,7 +99,7 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 		return r
 	}
 
-	err = h.storage.Put(ctx, models.PluginPrefix, p.ID, storageMessage(rawPlugin))
+	err = h.storage.Put(ctx, storage.PluginPrefix, p.ID, storageMessage(rawPlugin))
 	if err != nil {
 		r := operations.NewRegisterPluginDefault(http.StatusInternalServerError)
 		msg := err.Error()

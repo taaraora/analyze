@@ -5,13 +5,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/supergiant/analyze/pkg/storage"
+
 	"github.com/supergiant/analyze/pkg/storage/mock"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/api/handlers"
-	"github.com/supergiant/analyze/pkg/models"
 )
 
 func TestUnregisterPluginHandler_ReturnBadRequest(t *testing.T) {
@@ -103,7 +104,7 @@ func TestUnregisterPluginHandler_ReturnNoContent(t *testing.T) {
 	fixturePlugins1 := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := mock.GetMockStorage(t, map[string]string{
-		models.PluginPrefix + "123456798": fixturePlugins1.string(),
+		storage.PluginPrefix + "123456798": fixturePlugins1.string(),
 	})
 	analyzeAPI.UnregisterPluginHandler = handlers.NewUnregisterPluginHandler(strg, logrus.New())
 	server := api.NewServer(analyzeAPI)

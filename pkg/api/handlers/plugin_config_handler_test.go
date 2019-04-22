@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/supergiant/analyze/pkg/storage"
+
 	"github.com/supergiant/analyze/pkg/storage/mock"
 
 	"github.com/sirupsen/logrus"
@@ -67,7 +69,7 @@ func TestPluginConfigHandler_ReturnResultsSuccessfully(t *testing.T) {
 
 	//TODO: create interface for logger, and use dummy logger for tests
 	analyzeAPI.GetPluginConfigHandler = handlers.NewPluginConfigHandler(mock.GetMockStorage(t, map[string]string{
-		models.PluginConfigPrefix + fixturePluginID: fixturePluginConfig.string(),
+		storage.PluginConfigPrefix + fixturePluginID: fixturePluginConfig.string(),
 	}), logrus.New())
 	server := api.NewServer(analyzeAPI)
 	server.ConfigureAPI()
