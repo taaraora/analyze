@@ -45,7 +45,7 @@ func (h *unregisterPluginHandler) Handle(params operations.UnregisterPluginParam
 		return r
 	}
 
-	_, err := h.storage.Get(ctx, models.PluginPrefix, params.PluginID)
+	_, err := h.storage.Get(ctx, storage.PluginPrefix, params.PluginID)
 
 	if err == storage.ErrNotFound {
 		return operations.NewUnregisterPluginNotFound()
@@ -62,7 +62,7 @@ func (h *unregisterPluginHandler) Handle(params operations.UnregisterPluginParam
 	}
 
 	// TODO: need transaction or deleted flag
-	err = h.storage.Delete(ctx, models.PluginPrefix, params.PluginID)
+	err = h.storage.Delete(ctx, storage.PluginPrefix, params.PluginID)
 	if err != nil {
 		r := operations.NewUnregisterPluginDefault(http.StatusInternalServerError)
 		msg := err.Error()

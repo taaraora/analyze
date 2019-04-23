@@ -31,7 +31,7 @@ func (h *pluginHandler) Handle(params operations.GetPluginParams) middleware.Res
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	pluginRaw, err := h.storage.Get(ctx, models.PluginPrefix, params.PluginID)
+	pluginRaw, err := h.storage.Get(ctx, storage.PluginPrefix, params.PluginID)
 
 	if err == storage.ErrNotFound {
 		r := operations.NewGetPluginDefault(http.StatusNotFound)

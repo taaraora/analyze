@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/supergiant/analyze/pkg/storage"
+
 	"github.com/supergiant/analyze/pkg/storage/mock"
 
 	"github.com/sirupsen/logrus"
@@ -46,7 +48,7 @@ func TestRegisterPluginHandler_ReturnCreated(t *testing.T) {
 		t.Fatalf("handler returned unexpected body: got %v want %v", rr.Body.String(), fixturePlugins1.string())
 	}
 
-	b, _ := strg.Get(context.TODO(), models.PluginPrefix, "123456798")
+	b, _ := strg.Get(context.TODO(), storage.PluginPrefix, "123456798")
 	p := &models.Plugin{}
 	if err := (p).UnmarshalBinary(b.Payload()); err != nil {
 		t.Fatalf("handler put in storage something broken")
@@ -62,7 +64,7 @@ func TestRegisterPluginHandler_ReturnUpdated(t *testing.T) {
 	fixturePlugins := newPluginFixture("123456798")
 	//TODO: create interface for logger, and use dummy logger for tests
 	strg := mock.GetMockStorage(t, map[string]string{
-		models.PluginPrefix + "123456798": fixturePlugins.string(),
+		storage.PluginPrefix + "123456798": fixturePlugins.string(),
 	})
 	analyzeAPI.RegisterPluginHandler = handlers.NewRegisterPluginHandler(strg, logrus.New())
 	server := api.NewServer(analyzeAPI)
@@ -90,7 +92,7 @@ func TestRegisterPluginHandler_ReturnUpdated(t *testing.T) {
 		t.Fatalf("handler returned unexpected body: got %+v want %+v", *p, fixturePlugins.getPlugin())
 	}
 
-	b2, _ := strg.Get(context.TODO(), models.PluginPrefix, "123456798")
+	b2, _ := strg.Get(context.TODO(), storage.PluginPrefix, "123456798")
 
 	var buffer bytes.Buffer
 	_, err = buffer.Write(b2.Payload())

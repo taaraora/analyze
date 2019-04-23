@@ -9,6 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/supergiant/analyze/pkg/plugin"
+	"github.com/supergiant/analyze/pkg/storage"
+
 	"github.com/dre1080/recover"
 	"github.com/go-openapi/loads"
 	"github.com/justinas/alice"
@@ -25,7 +28,6 @@ import (
 	"github.com/supergiant/analyze/pkg/config"
 	"github.com/supergiant/analyze/pkg/kube"
 	"github.com/supergiant/analyze/pkg/logger"
-	"github.com/supergiant/analyze/pkg/models"
 	"github.com/supergiant/analyze/pkg/proxy"
 	"github.com/supergiant/analyze/pkg/scheduler"
 	"github.com/supergiant/analyze/pkg/storage/etcd"
@@ -97,18 +99,19 @@ func main() {
 	defer etcdStorage.Close()
 	mainLogger.Info("storage client was created")
 
-	scheduler := scheduler.NewScheduler(log.WithField("component", "scheduler"))
-	defer scheduler.Stop()
+	sched := scheduler.NewScheduler(log.WithField("component", "scheduler"))
+	defer sched.Stop()
 	mainLogger.Info("scheduler was created")
 
-	watchChan := etcdStorage.WatchPrefix(context.Background(), models.PluginPrefix)
+	watchChan := etcdStorage.WatchPrefix(context.Background(), storage.PluginPrefix)
 	mainLogger.Debug("etcd watch is started")
-	pluginController := analyze.NewPluginController(
-		cfg,
+	pluginController := plugin.NewPluginController(
+		&cfg.ETCD,
+		analyze.CheckJob,
 		watchChan,
 		etcdStorage,
 		kubeClient,
-		scheduler,
+		sched,
 		proxySet,
 		log.WithField("component", "pluginController"),
 	)

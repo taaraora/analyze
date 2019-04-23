@@ -17,7 +17,6 @@ import (
 	"github.com/coreos/etcd/embed"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/clientv3"
 )
 
 type msg []byte
@@ -28,8 +27,8 @@ func (m msg) Payload() []byte {
 
 const msg1, msg2 = "ololo1", "ololo2"
 
-func getTestClientConfig() clientv3.Config {
-	return clientv3.Config{
+func getTestClientConfig() etcd.Config {
+	return etcd.Config{
 		Endpoints: []string{embed.DefaultAdvertiseClientURLs},
 	}
 }
@@ -86,7 +85,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewETCDStorage_WithoutEndpoint(t *testing.T) {
-	_, err := etcd.NewETCDStorage(clientv3.Config{}, logrus.New())
+	_, err := etcd.NewETCDStorage(etcd.Config{}, logrus.New())
 	if err == nil {
 		t.Fatal("how we can connect to etcd server without uri")
 	}
@@ -96,7 +95,7 @@ func TestNewETCDStorage_IncorrectEndpoint(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testsTimeout)
 	defer cancel()
 
-	_, err := etcd.NewETCDStorage(clientv3.Config{
+	_, err := etcd.NewETCDStorage(etcd.Config{
 		Endpoints:   []string{"http://wrong_host:9000"},
 		DialOptions: []grpc.DialOption{grpc.WithBlock() /*grpc.WithTimeout(time.Second)*/},
 		Context:     ctx,
@@ -166,7 +165,7 @@ func TestETCDStorage_Get_NotFound(t *testing.T) {
 }
 
 func TestETCDStorage_Get_ClientError(t *testing.T) {
-	stor, err := etcd.NewETCDStorage(clientv3.Config{
+	stor, err := etcd.NewETCDStorage(etcd.Config{
 		Endpoints: []string{"http://wrong_host:9000"},
 	}, logrus.New())
 	if err != nil {
@@ -182,7 +181,7 @@ func TestETCDStorage_Get_ClientError(t *testing.T) {
 }
 
 func TestNewETCDStorage_GetAll_ClientError(t *testing.T) {
-	stor, err := etcd.NewETCDStorage(clientv3.Config{
+	stor, err := etcd.NewETCDStorage(etcd.Config{
 		Endpoints: []string{"http://wrong_host:9000"},
 	}, logrus.New())
 	if err != nil {
@@ -262,7 +261,7 @@ func TestETCDStorage_Put_Successfully(t *testing.T) {
 }
 
 func TestETCDStorage_Put_ClientError(t *testing.T) {
-	stor, err := etcd.NewETCDStorage(clientv3.Config{
+	stor, err := etcd.NewETCDStorage(etcd.Config{
 		Endpoints: []string{"http://wrong_host:9000"},
 	}, logrus.New())
 	if err != nil {
@@ -323,7 +322,7 @@ func TestETCDStorage_Delete_ErrNotFound(t *testing.T) {
 }
 
 func TestETCDStorage_Delete_ClientError(t *testing.T) {
-	stor, err := etcd.NewETCDStorage(clientv3.Config{
+	stor, err := etcd.NewETCDStorage(etcd.Config{
 		Endpoints: []string{"http://wrong_host:9000"},
 	}, logrus.New())
 	if err != nil {
@@ -386,7 +385,7 @@ func TestETCDStorage_WatchPrefix_ReturnsExistingKVs(t *testing.T) {
 }
 
 func TestETCDStorage_WatchPrefix_ClientError(t *testing.T) {
-	stor, err := etcd.NewETCDStorage(clientv3.Config{
+	stor, err := etcd.NewETCDStorage(etcd.Config{
 		Endpoints: []string{"http://wrong_host:9000"},
 	}, logrus.New())
 	if err != nil {

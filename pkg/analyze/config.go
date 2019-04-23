@@ -2,7 +2,8 @@ package analyze
 
 import (
 	"github.com/pkg/errors"
-	"go.etcd.io/etcd/clientv3"
+
+	"github.com/supergiant/analyze/pkg/storage/etcd"
 
 	"github.com/supergiant/analyze/pkg/api"
 	"github.com/supergiant/analyze/pkg/logger"
@@ -11,10 +12,10 @@ import (
 
 // Config  struct represents configuration of robot service
 type Config struct {
-	Logging logger.Config   `mapstructure:"logging"`
-	API     api.Config      `mapstructure:"api"`
-	Plugin  plugin.Config   `mapstructure:"plugin"`
-	ETCD    clientv3.Config `mapstructure:"etcd"`
+	Logging logger.Config `mapstructure:"logging"`
+	API     api.Config    `mapstructure:"api"`
+	Plugin  plugin.Config `mapstructure:"plugin"`
+	ETCD    etcd.Config   `mapstructure:"etcd"`
 }
 
 // Validate checks configuration instance for correctness

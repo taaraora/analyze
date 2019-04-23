@@ -31,7 +31,7 @@ func (h *pluginConfigHandler) Handle(params operations.GetPluginConfigParams) mi
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	rawConfig, err := h.storage.Get(ctx, models.PluginConfigPrefix, params.PluginID)
+	rawConfig, err := h.storage.Get(ctx, storage.PluginConfigPrefix, params.PluginID)
 	if err == storage.ErrNotFound {
 		return operations.NewGetPluginConfigNotFound()
 	}

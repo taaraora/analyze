@@ -1,4 +1,4 @@
-package analyze
+package plugin
 
 import (
 	"context"
@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-openapi/strfmt"
+	"github.com/supergiant/analyze/pkg/storage/etcd"
+
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
@@ -15,42 +16,44 @@ import (
 
 	"github.com/supergiant/analyze/pkg/kube"
 	"github.com/supergiant/analyze/pkg/models"
-	"github.com/supergiant/analyze/pkg/plugin"
 	"github.com/supergiant/analyze/pkg/plugin/proto"
 	"github.com/supergiant/analyze/pkg/proxy"
 	"github.com/supergiant/analyze/pkg/scheduler"
 	"github.com/supergiant/analyze/pkg/storage"
 )
 
-type PluginController struct {
-	cfg                *Config
+type Controller struct {
+	storeConfig        *etcd.Config
+	checkJob           func(string, *Client, storage.Interface) func() error
 	pluginChangeEvents <-chan storage.WatchEvent
 	stor               storage.Interface
 	kubeClient         kube.Interface
 	logger             logrus.FieldLogger
 	scheduler          scheduler.Interface
 	proxySet           *proxy.Set
-	pluginClients      map[string]*plugin.Client
+	pluginClients      map[string]*Client
 	stop               chan struct{}
 }
 
 func NewPluginController(
-	cfg *Config,
+	cfg *etcd.Config,
+	checkJob func(string, *Client, storage.Interface) func() error,
 	events <-chan storage.WatchEvent,
 	stor storage.Interface,
 	kubeClient kube.Interface,
 	scheduler scheduler.Interface,
 	set *proxy.Set,
 	logger logrus.FieldLogger,
-) *PluginController {
-	pc := &PluginController{
-		cfg:                cfg,
+) *Controller {
+	pc := &Controller{
+		storeConfig:        cfg,
+		checkJob:           checkJob,
 		pluginChangeEvents: events,
 		stor:               stor,
 		kubeClient:         kubeClient,
 		scheduler:          scheduler,
 		proxySet:           set,
-		pluginClients:      make(map[string]*plugin.Client),
+		pluginClients:      make(map[string]*Client),
 		logger:             logger,
 		stop:               make(chan struct{}),
 	}
@@ -59,7 +62,7 @@ func NewPluginController(
 	return pc
 }
 
-func (pc *PluginController) handlePluginChange() {
+func (pc *Controller) handlePluginChange() {
 	for {
 		select {
 		case <-pc.stop:
@@ -73,7 +76,7 @@ func (pc *PluginController) handlePluginChange() {
 }
 
 // TODO: maybe split config and plugin updates?
-func (pc *PluginController) handleEvent(we storage.WatchEvent) error {
+func (pc *Controller) handleEvent(we storage.WatchEvent) error {
 	if we == nil {
 		return errors.New("plugin watchEvent is nil")
 	}
@@ -109,13 +112,15 @@ func (pc *PluginController) handleEvent(we storage.WatchEvent) error {
 }
 
 // newPluginClient returns plugin client instance which is configured and ready for work
-func (pc *PluginController) newPluginClient(pluginEntry *models.Plugin) (*plugin.Client, error) {
+func (pc *Controller) newPluginClient(pluginEntry *models.Plugin) (*Client, error) {
 
 	// pluginEntry.ServiceLabels
 	ss := strings.Split(pluginEntry.ServiceEndpoint, ":")
 	if len(ss) < 2 {
 		return nil, errors.Errorf("unable get service name, %+v", pluginEntry.ServiceEndpoint)
 	}
+	// TODO: empty namespace means that serviceaccount of analyze pod
+	//  need to have access to all namespaces to list services?
 	service, err := pc.kubeClient.GetService(ss[0], "", pluginEntry.ServiceLabels)
 	if err != nil {
 		return nil, errors.Errorf("unable to find service for registered plugin, %+v", pluginEntry)
@@ -136,7 +141,7 @@ func (pc *PluginController) newPluginClient(pluginEntry *models.Plugin) (*plugin
 		)
 	}
 
-	pluginClient, err := plugin.NewClient(service.Spec.ClusterIP + ":" + servicePort)
+	pluginClient, err := NewClient(service.Spec.ClusterIP + ":" + servicePort)
 	if err != nil {
 		return nil, errors.Errorf("unable to instantiate pluginClient client for entity, %+v", pluginEntry)
 	}
@@ -144,7 +149,7 @@ func (pc *PluginController) newPluginClient(pluginEntry *models.Plugin) (*plugin
 	return pluginClient, nil
 }
 
-func (pc *PluginController) unregisterPlugin(pluginEntry *models.Plugin) error {
+func (pc *Controller) unregisterPlugin(pluginEntry *models.Plugin) error {
 	pluginClient, exists := pc.pluginClients[pluginEntry.ID]
 	if !exists {
 		return errors.Errorf("unable to find pluginClient, name: %v", pluginEntry.ID)
@@ -167,7 +172,7 @@ func (pc *PluginController) unregisterPlugin(pluginEntry *models.Plugin) error {
 	return nil
 }
 
-func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
+func (pc *Controller) registerPlugin(pluginEntry *models.Plugin) error {
 	var pluginConfig *proto.PluginConfig
 	pluginClient, err := pc.newPluginClient(pluginEntry)
 	if err != nil {
@@ -188,7 +193,7 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 	}
 	pc.logger.Infof("plugin info loaded %+v", *pluginInfo)
 
-	rawConfig, err := pc.stor.Get(ctx, models.PluginConfigPrefix, pluginInfo.Id)
+	rawConfig, err := pc.stor.Get(ctx, storage.PluginConfigPrefix, pluginInfo.Id)
 	pc.logger.Infof("plugin raw config %s, error: %+v", rawConfig, err)
 	if err != nil && err != storage.ErrNotFound {
 		return errors.Errorf("unable to load plugin config, id: %v, error %v", pluginEntry.ID, err)
@@ -201,7 +206,7 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 	// when plugin is just installed we need to take default config from plugin and save it
 	if err == storage.ErrNotFound {
 		pluginConfig = pluginInfo.DefaultConfig
-		pluginConfig.EtcdEndpoints = pc.cfg.ETCD.Endpoints
+		pluginConfig.EtcdEndpoints = pc.storeConfig.Endpoints
 		pc.logger.Infof(
 			"plugin %s config not found, etcd endpoints: %+v, default config %+v",
 			pluginInfo.Id,
@@ -224,7 +229,7 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 
 		pluginConfigEntry := &models.PluginConfig{
 			ExecutionInterval:    pluginInfo.DefaultConfig.ExecutionInterval.Seconds,
-			EtcdEndpoints:        pc.cfg.ETCD.Endpoints,
+			EtcdEndpoints:        pc.storeConfig.Endpoints,
 			PluginSpecificConfig: &pluginSpecificConfig,
 		}
 
@@ -232,7 +237,7 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 		if marshalErr != nil {
 			return errors.Errorf("unable to marshal plugin default config, id: %v, error %v", pluginEntry.ID, marshalErr)
 		}
-		putError := pc.stor.Put(ctx, models.PluginConfigPrefix, pluginInfo.Id, msg(b))
+		putError := pc.stor.Put(ctx, storage.PluginConfigPrefix, pluginInfo.Id, msg(b))
 		if putError != nil {
 			return errors.Errorf("unable to store plugin default config, id: %v, error %v", pluginEntry.ID, putError)
 		}
@@ -254,7 +259,7 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 		// TODO: populate other properties
 		pluginConfig = &proto.PluginConfig{
 			ExecutionInterval:    ptypes.DurationProto(time.Second * time.Duration(pluginConfigEntry.ExecutionInterval)),
-			EtcdEndpoints:        pc.cfg.ETCD.Endpoints,
+			EtcdEndpoints:        pc.storeConfig.Endpoints,
 			PluginSpecificConfig: bytes,
 		}
 	}
@@ -271,7 +276,7 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 		return errors.Wrap(err, "unable to parse execution interval for plugin")
 	}
 
-	err = pc.scheduler.ScheduleJob(pluginInfo.Id, interval, pc.check(pluginInfo.Id, pluginClient))
+	err = pc.scheduler.ScheduleJob(pluginInfo.Id, interval, pc.checkJob(pluginInfo.Id, pluginClient, pc.stor))
 	if err != nil {
 		return errors.Wrap(err, "unable to schedule job for plugin")
 	}
@@ -284,53 +289,7 @@ func (pc *PluginController) registerPlugin(pluginEntry *models.Plugin) error {
 	return nil
 }
 
-func (pc *PluginController) check(pluginID string, pluginClient *plugin.Client) func() error {
-	return func() error {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
-		defer cancel()
-		checkResponse, err := pluginClient.Check(ctx, &proto.CheckRequest{})
-		if err != nil {
-
-			return errors.Errorf("unable to execute check for pluginClient: %s, error: %v", pluginID, err)
-		}
-		if checkResponse.Error != "" {
-
-			return errors.Errorf("pluginClient: %s, returned error: %s", pluginID, checkResponse.Error)
-		}
-		if checkResponse.Result == nil {
-
-			return errors.Errorf("pluginClient: %s, returned nil Result", pluginID)
-		}
-
-		r := checkResponse.Result
-
-		var currentTime = time.Now()
-		checkResult := models.CheckResult{
-			CheckStatus:     r.GetStatus().String(),
-			CompletedAt:     strfmt.DateTime(currentTime),
-			Description:     string(r.GetDescription().Value),
-			ExecutionStatus: r.GetExecutionStatus(),
-			ID:              r.GetName(),
-			Name:            r.GetName(),
-		}
-
-		bytes, err := checkResult.MarshalBinary()
-		if err != nil {
-
-			return errors.Errorf("unable to marshal check result, pluginClient: %s, returned error: %s", pluginID, err)
-		}
-
-		err = pc.stor.Put(ctx, models.CheckResultPrefix, pluginID, msg(bytes))
-		if err != nil {
-
-			return errors.Errorf("unable to store check result, pluginClient: %s, returned error: %s", pluginID, err)
-		}
-
-		return nil
-	}
-}
-
-func (pc *PluginController) Stop() {
+func (pc *Controller) Stop() {
 	pc.stop <- struct{}{}
 }
 

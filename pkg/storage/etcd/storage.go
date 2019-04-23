@@ -78,14 +78,15 @@ func (e *Storage) GetAll(ctx context.Context, prefix string) ([]storage.Message,
 	return result, nil
 }
 
-func NewETCDStorage(cfg clientv3.Config, logger logrus.FieldLogger) (storage.Interface, error) {
-	client, err := clientv3.New(cfg)
+func NewETCDStorage(cfg Config, logger logrus.FieldLogger) (storage.Interface, error) {
+	c := clientv3.Config(cfg)
+	client, err := clientv3.New(c)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect to the etcd")
 	}
 
 	return &Storage{
-		cfg:    cfg,
+		cfg:    c,
 		client: client,
 		logger: logger,
 	}, nil

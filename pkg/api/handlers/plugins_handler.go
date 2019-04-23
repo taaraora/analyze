@@ -31,7 +31,7 @@ func (h *pluginsHandler) Handle(params operations.GetPluginsParams) middleware.R
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	pluginRaw, err := h.storage.GetAll(ctx, models.PluginPrefix)
+	pluginRaw, err := h.storage.GetAll(ctx, storage.PluginPrefix)
 
 	if err != nil {
 		r := operations.NewGetPluginsDefault(http.StatusInternalServerError)

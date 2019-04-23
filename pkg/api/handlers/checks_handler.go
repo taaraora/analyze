@@ -30,7 +30,7 @@ func (h *checksResultsHandler) Handle(params operations.GetCheckResultsParams) m
 	defer h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	resultsRaw, err := h.storage.GetAll(ctx, models.CheckResultPrefix)
+	resultsRaw, err := h.storage.GetAll(ctx, storage.CheckResultPrefix)
 
 	if err != nil {
 		r := operations.NewGetCheckResultsDefault(http.StatusInternalServerError)
