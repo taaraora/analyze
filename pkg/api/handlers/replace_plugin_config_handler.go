@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-openapi/runtime/middleware"
@@ -31,11 +33,83 @@ func (h *replacePluginConfigHandler) Handle(params operations.ReplacePluginConfi
 	h.log.Debugf("got request at: %v, request: %+v", time.Now(), params)
 	defer h.log.Debugf("request processing finished at: %v, request: %+v", time.Now(), params)
 
-	r := operations.NewGetPluginConfigDefault(http.StatusInternalServerError)
-	msg := "not implemented"
-	r.Payload = &models.Error{
-		Code:    http.StatusInternalServerError,
-		Message: &msg,
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	if  "" == strings.TrimSpace(params.PluginID) {
+		r := operations.NewReplacePluginConfigDefault(http.StatusBadRequest)
+		message := "plugin id can't be empty"
+		r.Payload = &models.Error{
+			Code:    http.StatusBadRequest,
+			Message: &message,
+		}
+		return r
 	}
-	return r
+
+	if  0 == params.Body.ExecutionInterval {
+		r := operations.NewReplacePluginConfigDefault(http.StatusBadRequest)
+		message := "execution interval can't be 0"
+		r.Payload = &models.Error{
+			Code:    http.StatusBadRequest,
+			Message: &message,
+		}
+		return r
+	}
+
+	pc := &models.PluginConfig{
+		EtcdEndpoints:        params.Body.EtcdEndpoints,
+		ExecutionInterval:    params.Body.ExecutionInterval,
+		PluginSpecificConfig: params.Body.PluginSpecificConfig,
+	}
+
+	rawPluginConfig, err := pc.MarshalBinary()
+	if err != nil {
+		r := operations.NewReplacePluginConfigDefault(http.StatusInternalServerError)
+		msg := err.Error()
+		r.Payload = &models.Error{
+			Code:    http.StatusInternalServerError,
+			Message: &msg,
+		}
+		return r
+	}
+
+	//just replace all entity content
+	_, err = h.storage.Get(ctx, storage.PluginConfigPrefix, params.PluginID)
+
+	if err == storage.ErrNotFound {
+		err = h.storage.Put(ctx, storage.PluginConfigPrefix, params.PluginID, storageMessage(rawPluginConfig))
+		if err != nil {
+			r := operations.NewReplacePluginConfigDefault(http.StatusInternalServerError)
+			msg := err.Error()
+			r.Payload = &models.Error{
+				Code:    http.StatusInternalServerError,
+				Message: &msg,
+			}
+			return r
+		}
+
+		return operations.NewReplacePluginConfigOK()
+	}
+
+	if err != nil {
+		r := operations.NewReplacePluginConfigDefault(http.StatusInternalServerError)
+		msg := err.Error()
+		r.Payload = &models.Error{
+			Code:    http.StatusInternalServerError,
+			Message: &msg,
+		}
+		return r
+	}
+
+	err = h.storage.Put(ctx, storage.PluginConfigPrefix, params.PluginID, storageMessage(rawPluginConfig))
+	if err != nil {
+		r := operations.NewReplacePluginConfigDefault(http.StatusInternalServerError)
+		msg := err.Error()
+		r.Payload = &models.Error{
+			Code:    http.StatusInternalServerError,
+			Message: &msg,
+		}
+		return r
+	}
+
+	return operations.NewReplacePluginConfigOK()
 }

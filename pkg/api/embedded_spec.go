@@ -331,6 +331,14 @@ func init() {
             "name": "pluginId",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pluginConfig"
+            }
           }
         ],
         "responses": {
@@ -890,6 +898,14 @@ func init() {
             "name": "pluginId",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pluginConfig"
+            }
           }
         ],
         "responses": {

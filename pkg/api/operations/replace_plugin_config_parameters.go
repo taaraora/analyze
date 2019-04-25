@@ -6,12 +6,16 @@ package operations
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
 	strfmt "github.com/go-openapi/strfmt"
+
+	"github.com/supergiant/analyze/pkg/models"
 )
 
 // NewReplacePluginConfigParams creates a new ReplacePluginConfigParams object
@@ -30,6 +34,11 @@ type ReplacePluginConfigParams struct {
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
 
+	/*
+	  Required: true
+	  In: body
+	*/
+	Body *models.PluginConfig
 	/*The id of the plugin to retrieve
 	  Required: true
 	  In: path
@@ -46,6 +55,28 @@ func (o *ReplacePluginConfigParams) BindRequest(r *http.Request, route *middlewa
 
 	o.HTTPRequest = r
 
+	if runtime.HasBody(r) {
+		defer r.Body.Close()
+		var body models.PluginConfig
+		if err := route.Consumer.Consume(r.Body, &body); err != nil {
+			if err == io.EOF {
+				res = append(res, errors.Required("body", "body"))
+			} else {
+				res = append(res, errors.NewParseError("body", "body", "", err))
+			}
+		} else {
+			// validate body object
+			if err := body.Validate(route.Formats); err != nil {
+				res = append(res, err)
+			}
+
+			if len(res) == 0 {
+				o.Body = &body
+			}
+		}
+	} else {
+		res = append(res, errors.Required("body", "body"))
+	}
 	rPluginID, rhkPluginID, _ := route.Params.GetOK("pluginId")
 	if err := o.bindPluginID(rPluginID, rhkPluginID, route.Formats); err != nil {
 		res = append(res, err)
