@@ -40,7 +40,7 @@ func (h *registerPluginHandler) Handle(params operations.RegisterPluginParams) m
 	defer cancel()
 	if params.Body == nil || "" == strings.TrimSpace(params.Body.ID) {
 		r := operations.NewRegisterPluginDefault(http.StatusBadRequest)
-		message := "plugin id can't be empty"
+		message := pluginIDValidationErrorMessage
 		r.Payload = &models.Error{
 			Code:    http.StatusBadRequest,
 			Message: &message,

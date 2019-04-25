@@ -35,9 +35,9 @@ func (h *replacePluginConfigHandler) Handle(params operations.ReplacePluginConfi
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	if  "" == strings.TrimSpace(params.PluginID) {
+	if "" == strings.TrimSpace(params.PluginID) {
 		r := operations.NewReplacePluginConfigDefault(http.StatusBadRequest)
-		message := "plugin id can't be empty"
+		message := pluginIDValidationErrorMessage
 		r.Payload = &models.Error{
 			Code:    http.StatusBadRequest,
 			Message: &message,
@@ -45,7 +45,7 @@ func (h *replacePluginConfigHandler) Handle(params operations.ReplacePluginConfi
 		return r
 	}
 
-	if  0 == params.Body.ExecutionInterval {
+	if 0 == params.Body.ExecutionInterval {
 		r := operations.NewReplacePluginConfigDefault(http.StatusBadRequest)
 		message := "execution interval can't be 0"
 		r.Payload = &models.Error{
