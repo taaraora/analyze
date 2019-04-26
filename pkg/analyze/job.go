@@ -39,7 +39,7 @@ func CheckJob(pluginID string, pluginClient *plugin.Client, stor storage.Interfa
 			CompletedAt:     strfmt.DateTime(currentTime),
 			Description:     string(r.GetDescription().Value),
 			ExecutionStatus: r.GetExecutionStatus(),
-			ID:              r.GetName(),
+			ID:              pluginID,
 			Name:            r.GetName(),
 		}
 

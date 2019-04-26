@@ -37,7 +37,7 @@ func (h *unregisterPluginHandler) Handle(params operations.UnregisterPluginParam
 	defer cancel()
 	if "" == strings.TrimSpace(params.PluginID) {
 		r := operations.NewUnregisterPluginDefault(http.StatusBadRequest)
-		message := "plugin id can't be empty"
+		message := pluginIDValidationErrorMessage
 		r.Payload = &models.Error{
 			Code:    http.StatusBadRequest,
 			Message: &message,
