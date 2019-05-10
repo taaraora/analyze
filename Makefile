@@ -1,12 +1,12 @@
-SHELL := /bin/sh
+SHELL := /bin/bash
 
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(patsubst %/,%,$(dir $(MAKEFILE_PATH)))
 
-DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG},supergiant/analyze)
-NODEAGENT_DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG}-nodeagent,supergiant/analyze-nodeagent)
-JOB_DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG}-registry-job,supergiant/analyze-registry-job)
-DOCKER_IMAGE_TAG := $(if ${TAG},${TAG},$(shell git describe --tags --always | tr -d v || echo 'latest'))
+export DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG},supergiant/analyze)
+export NODEAGENT_DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG}-nodeagent,supergiant/analyze-nodeagent)
+export JOB_DOCKER_IMAGE_NAME := $(if ${TRAVIS_REPO_SLUG},${TRAVIS_REPO_SLUG}-registry-job,supergiant/analyze-registry-job)
+export DOCKER_IMAGE_TAG := $(if ${TAG},${TAG},$(shell git describe --tags --always | tr -d v || echo 'latest'))
 GO111MODULE=on
 
 GO_FILES := $(shell find . -type f -name '*.go' -not -path "./vendor/*")
