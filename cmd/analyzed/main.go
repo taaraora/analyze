@@ -186,7 +186,8 @@ func main() {
 		corsHandler,
 		swaggerMiddleware,
 		newProxyMiddleware(proxySet, log.WithField("middleware", "proxy")),
-		uiMiddleware,
+		uiStubMiddleware(asset.Assets, log.WithField("middleware", "ui_stub")),
+		uiMiddleware(asset.Assets, log.WithField("middleware", "ui")),
 	).Then(analyzeAPI.Serve(nil))
 
 	server.SetHandler(handler)
@@ -221,18 +222,45 @@ func swaggerMiddleware(handler http.Handler) http.Handler {
 
 }
 
-func uiMiddleware(handler http.Handler) http.Handler {
-	var staticServer = http.FileServer(asset.Assets)
+func uiMiddleware(assets http.FileSystem, logger logrus.FieldLogger) func(handler http.Handler) http.Handler {
+	return func(handler http.Handler) http.Handler {
+		var staticServer = http.FileServer(assets)
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !strings.HasPrefix(r.URL.Path, "/api/v1") {
+				r.URL.Path = "/ui" + r.URL.Path
+				staticServer.ServeHTTP(w, r)
+				logger.Debugf("uiMiddleware: got request path: %s", r.URL.Path)
+				return
+			}
+			handler.ServeHTTP(w, r)
+		})
+	}
+}
 
-		if !strings.HasPrefix(r.URL.Path, "/api/v1") {
-			r.URL.Path = "/ui" + r.URL.Path
-			staticServer.ServeHTTP(w, r)
-			return
+func uiStubMiddleware(assets http.FileSystem, logger logrus.FieldLogger) func(handler http.Handler) http.Handler {
+	return func(handler http.Handler) http.Handler {
+		indexFile, err := assets.Open("/ui/index.html")
+		if err != nil {
+			logger.Fatal("/ui/index.html doesn't exists")
 		}
-		handler.ServeHTTP(w, r)
-	})
+
+		stat, err := indexFile.Stat()
+		if err != nil {
+			logger.Fatal("/ui/index.html has no FileStat")
+		}
+
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasPrefix(r.URL.Path, "/checks") ||
+				strings.HasPrefix(r.URL.Path, "/settings") {
+				r.URL.Path = "/ui" + r.URL.Path
+				http.ServeContent(w, r, "/ui/index.html", stat.ModTime(), indexFile)
+				logger.Debugf("uiStubMiddleware: got request path: %s", r.URL.Path)
+				return
+			}
+			handler.ServeHTTP(w, r)
+		})
+	}
 }
 
 func newProxyMiddleware(proxySet *proxy.Set, logger logrus.FieldLogger) func(handler http.Handler) http.Handler {
