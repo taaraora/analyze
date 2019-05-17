@@ -19,7 +19,7 @@ if [[ "$TRAVIS_TAG" =~ ^v[0-9]. ]]; then
 	# run linters
 	make lint
 	# run tests
-	make test
+	make test-cover
 	# Build Docker container
 	make build
 	# Push to Dockerhub
@@ -34,7 +34,7 @@ elif [[ "$TRAVIS_BRANCH" == *release-* ]]; then
 	# run linters
 	make lint
 	# run tests
-	make test
+	make test-cover
 	# Build docker container
 	make build
 	# Push to Dockerhub
@@ -46,7 +46,7 @@ elif [[ "$TRAVIS_BRANCH" == "master" ]]; then
 	# run linters
 	make lint
 	# run tests
-	make test
+	make test-cover
 	# Build docker container
 	make build
 else
@@ -57,7 +57,7 @@ else
 	# run linters
 	make lint
 	# run tests
-	make test
+	make test-cover
 	# Build docker container
 	make build
 fi
