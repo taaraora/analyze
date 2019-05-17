@@ -35,6 +35,20 @@ define TOOLS
         	echo "Installing swagger... into ${GOPATH}/bin"; \
         	GO111MODULE=off go get -u github.com/go-swagger/go-swagger/cmd/swagger ; \
         fi
+
+        if [ ! -x "`which goveralls 2>/dev/null`" ]; \
+        then \
+        	echo "goveralls not found."; \
+        	echo "Installing goveralls... into ${GOPATH}/bin"; \
+        	GO111MODULE=off go get -u github.com/mattn/goveralls ; \
+        fi
+
+        if [ ! -x "`which cover 2>/dev/null`" ]; \
+        then \
+        	echo "goveralls not found."; \
+        	echo "Installing cover... into ${GOPATH}/bin"; \
+        	GO111MODULE=off go get -u golang.org/x/tools/cmd/cover ; \
+        fi
 endef
 
 
@@ -142,3 +156,4 @@ dev-build:
 .PHONY: test-cover
 test-cover:
 	go test -covermode=count -coverprofile=coverage.out -mod=vendor -tags=dev ./...
+	goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $(COVERALLS_TOKEN)
