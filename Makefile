@@ -11,6 +11,8 @@ GO111MODULE=on
 
 GO_FILES := $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
+COVERALLS_TOKEN := $(if ${COVERALLS_TOKEN},${COVERALLS_TOKEN},empty)
+
 
 define LINT
 	@echo "Running code linters..."
@@ -156,4 +158,6 @@ dev-build:
 .PHONY: test-cover
 test-cover:
 	go test -covermode=count -coverprofile=coverage.out -mod=vendor -tags=dev ./...
+ifneq ($(COVERALLS_TOKEN),empty)
 	goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $(COVERALLS_TOKEN)
+endif
