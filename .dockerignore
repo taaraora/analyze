@@ -9,4 +9,4 @@
 # dotenv environment variables file
 .env
 
-
+coverage.out

@@ -11,6 +11,8 @@ GO111MODULE=on
 
 GO_FILES := $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
+COVERALLS_TOKEN := $(if ${COVERALLS_TOKEN},${COVERALLS_TOKEN},empty)
+
 
 define LINT
 	@echo "Running code linters..."
@@ -34,6 +36,20 @@ define TOOLS
         	echo "swagger not found."; \
         	echo "Installing swagger... into ${GOPATH}/bin"; \
         	GO111MODULE=off go get -u github.com/go-swagger/go-swagger/cmd/swagger ; \
+        fi
+
+        if [ ! -x "`which goveralls 2>/dev/null`" ]; \
+        then \
+        	echo "goveralls not found."; \
+        	echo "Installing goveralls... into ${GOPATH}/bin"; \
+        	GO111MODULE=off go get -u github.com/mattn/goveralls ; \
+        fi
+
+        if [ ! -x "`which cover 2>/dev/null`" ]; \
+        then \
+        	echo "goveralls not found."; \
+        	echo "Installing cover... into ${GOPATH}/bin"; \
+        	GO111MODULE=off go get -u golang.org/x/tools/cmd/cover ; \
         fi
 endef
 
@@ -138,3 +154,10 @@ dev-build:
 	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f ./Dockerfile .
 	docker tag $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKER_IMAGE_NAME):latest
 	docker push $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+
+.PHONY: test-cover
+test-cover:
+	go test -covermode=count -coverprofile=coverage.out -mod=vendor -tags=dev ./...
+ifneq ($(COVERALLS_TOKEN),empty)
+	goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $(COVERALLS_TOKEN)
+endif
